@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io.connect('http://localhost');
+      socket.on('news', function (data) {
+        console.log('socket data');
+        console.log(data);
+        socket.emit('my other event', { my: 'data' });
+      });
+    </script>
+
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
+    <p>Welcome to {{ title }}</p>
+    <button>ping</button>
+
+    <script>
+        socket.on('pong', function (data) {
+            $("#msgbox").append("Ping server<br>"+JSON.stringify(data));
+            console.log(data)});
+
+        $("button").click(function(){
+            socket.emit("ping",{txt:"this is a message from client" });
+
+          });
+    </script>
+
+  <div id="msgbox" ></div>
+
+  </body>
+</html>
