@@ -42,7 +42,8 @@ server.listen(3000);
 
 // game
 var Game = require('./game');
-var game = Game.new();
+var game = new Game;
+game.shuffle();
 console.log(game);
 //
 

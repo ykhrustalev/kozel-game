@@ -27,8 +27,8 @@ var gameSchema = new Schema({
   ],
 
   score: {
-    team1: Number,
-    team2: Number
+    team1: { type: Number, default: 0 },
+    team2: { type: Number, default: 0 }
   },
 
   hands: {
@@ -50,27 +50,18 @@ var gameSchema = new Schema({
 
 var Deck = require('./deck');
 
-gameSchema.statics.new = function () {
+gameSchema.methods.shuffle = function () {
 
   var split = Deck.split(4);
-  var getIds = function (collection) {
-    return _.map(collection, function (value) {
-      return value.id;
-    });
+
+  var getCardIds = Deck.getCardIds;
+
+  this.hands = {
+    player1: getCardIds(split[0]),
+    player2: getCardIds(split[1]),
+    player3: getCardIds(split[2]),
+    player4: getCardIds(split[3])
   };
-
-  var game = new Game({
-    active: true,
-    score: {team1: 0, team2: 0},
-    hands: {
-      player1: getIds(split[0]),
-      player2: getIds(split[1]),
-      player3: getIds(split[2]),
-      player4: getIds(split[3])
-    }
-  });
-
-  return game;
 };
 
 var Game = db.model('Game', gameSchema);

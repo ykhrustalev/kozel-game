@@ -54,6 +54,12 @@ var Deck = {
       return index % times;
     });
     return _.values(grouped);
+  },
+
+  getCardIds: function (cards) {
+    return _.map(cards, function (value) {
+      return value.id;
+    });
   }
 };
 
