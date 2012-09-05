@@ -8,6 +8,9 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       var socket = io.connect('http://localhost');
+      socket.on('game:list', function (data) {
+        console.log(data);
+      });
       socket.on('news', function (data) {
         console.log('socket data');
         console.log(data);
@@ -18,16 +21,16 @@
   </head>
   <body>
     <h1>{{ title }}</h1>
-    <p>Welcome to {{ title }}</p>
-    <button>ping</button>
+    <button id="newGame">Создать игру</button>
 
     <script>
         socket.on('pong', function (data) {
             $("#msgbox").append("Ping server<br>"+JSON.stringify(data));
             console.log(data)});
 
-        $("button").click(function(){
-            socket.emit("ping",{txt:"this is a message from client" });
+        $("#newGame").click(function(){
+          console.log("game:new");
+            socket.emit("game:new");
 
           });
     </script>

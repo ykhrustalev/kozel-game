@@ -2,7 +2,7 @@ var _ = require('underscore')._;
 
 
 var mongoose = require('mongoose');
-var db = mongoose.createConnection('localhost', 'test');
+var db = mongoose.createConnection('localhost', 'kozel');
 
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
@@ -15,7 +15,9 @@ var gameSchema = new Schema({
 
   crated: { type: Date, default: Date.now },
   finished: Date,
-  active: Boolean,
+  active: { type: Boolean, default: true },
+
+  playersCount: {type: Number, default: 1},
 
   players: [
     {
@@ -50,7 +52,7 @@ var gameSchema = new Schema({
 
 var Deck = require('./deck');
 
-gameSchema.methods.shuffle = function () {
+gameSchema.methods.start = function () {
 
   var split = Deck.split(4);
 
@@ -62,6 +64,16 @@ gameSchema.methods.shuffle = function () {
     player3: getCardIds(split[2]),
     player4: getCardIds(split[3])
   };
+};
+
+gameSchema.statics.findAvailableForJoin = function (callback) {
+  this.find()
+    .where('active').equals(true)
+    .where('playersCount').lt(4)
+    .limit(30)
+    .sort('+created')
+    .select('_id playersCount players crated score')
+    .exec(callback);
 };
 
 var Game = db.model('Game', gameSchema);
