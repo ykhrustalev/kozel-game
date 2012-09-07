@@ -10,12 +10,16 @@ require.config({
     backbone: "lib/backbone",
     backboneValidation: "lib/backbone-validation-amd",
     backboneModelBinding: "lib/backbone.modelbinding",
-    hogan: "lib/template-2.0.0"
+    hogan: "lib/template-2.0.0",
+    io: "lib/socket.io"
   },
 
   shim: {
     hogan: {
       exports: 'Hogan'
+    },
+    io : {
+      exports: 'io'
     },
     underscore: {
       exports: "_"

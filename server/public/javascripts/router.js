@@ -2,8 +2,9 @@ define([
   'backbone',
   'util/dispatcher',
   'view/dashboard',
-  'view/game/new'
-], function(Backbone, dispatcher, dashboard, newGame) {
+  'view/game/new',
+  'io'
+], function(Backbone, dispatcher, dashboard, newGame, io) {
 
   'use strict';
 
@@ -50,7 +51,18 @@ define([
     dispatcher.on('game:created', function(contest) {
       appRouter.navigate("", {trigger: true});
     });
-    
+
+    // TODO: remove
+    var socket = io.connect('http://localhost');
+    socket.on('game:list', function (data) {
+      console.log(data);
+    });
+    socket.on('news', function (data) {
+      console.log('socket data');
+      console.log(data);
+      socket.emit('my other event', { my: 'data' });
+    });
+
 //    console.log(window.location.search);
 
     /*

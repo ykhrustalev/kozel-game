@@ -1,0 +1,7 @@
+define(['hogan'], function() {
+  return {
+  {{#templates}}
+  "{{id}}": new Hogan.Template({{{script}}}){{^last}},{{/last}}
+  {{/templates}}
+  };
+});

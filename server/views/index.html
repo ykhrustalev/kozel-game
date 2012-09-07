@@ -4,18 +4,10 @@
     <title>{{ title }}</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
 
-    <script src="/socket.io/socket.io.js"></script>
+    <!--<script src="/socket.io/socket.io.js"></script>-->
     <script src="/javascripts/lib/require.js" data-main="/javascripts/config"></script>
     <script>
-      var socket = io.connect('http://localhost');
-      socket.on('game:list', function (data) {
-        console.log(data);
-      });
-      socket.on('news', function (data) {
-        console.log('socket data');
-        console.log(data);
-        socket.emit('my other event', { my: 'data' });
-      });
+
     </script>
 
   </head>
@@ -25,9 +17,6 @@
     <button id="newGame">Создать игру</button>
 
     <script>
-        socket.on('pong', function (data) {
-            $("#msgbox").append("Ping server<br>"+JSON.stringify(data));
-            console.log(data)});
 
         $("#newGame").click(function(){
           console.log("game:new");

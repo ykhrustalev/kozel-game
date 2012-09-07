@@ -4,7 +4,7 @@ module.exports.api = function (app) {
     fs = require('fs'),
     compiledFile = __dirname + "/public/javascripts/templates.js",
     scanDir = __dirname + "/views/shared/",
-    wrapperFile = __dirname + "/views/wrapper.hjs",
+    wrapperFile = __dirname + "/views/wrapper.html",
     sharedTemplateTemplate = hogan.compile(removeByteOrderMark(fs.readFileSync(wrapperFile, "utf8")));
 
   // Remove utf-8 byte order mark, http://en.wikipedia.org/wiki/Byte_order_mark
