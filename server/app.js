@@ -5,19 +5,17 @@
 var express = require('express')
   , routes = require('./routes')
   , http = require('http')
-  , path = require('path');
-
-var app = express();
-
-//
-var server = http.createServer(app)
+  , path = require('path')
+  , app = express()
+  , server = http.createServer(app)
   , io = require('socket.io').listen(server);
-//
+
 
 app.configure(function () {
 //  app.set('port', process.env.PORT || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'hjs');
+//  app.set('env', 'production');
   app.use(express.favicon());
   app.use(express.logger('dev'));
   app.use(express.bodyParser());
@@ -34,6 +32,9 @@ app.configure('development', function () {
 
 app.get('/', routes.index);
 
+// templates
+require('./templates').api(app);
+
 http.createServer(app).listen(app.get('port'), function () {
   console.log("Express server listening on port " + app.get('port'));
 });
@@ -49,11 +50,11 @@ io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
 
   socket.on('game:new', function (data) {
-    console.log('game:new',socket);
+    console.log('game:new', socket);
     var game = new Game;
     game.save();
 
-    Game.findAvailableForJoin(function(err, objects){
+    Game.findAvailableForJoin(function (err, objects) {
       io.sockets.emit("game:list", objects)
     });
   });

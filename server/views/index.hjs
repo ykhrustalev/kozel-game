@@ -4,8 +4,8 @@
     <title>{{ title }}</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/javascripts/lib/require.js" data-main="/javascripts/config"></script>
     <script>
       var socket = io.connect('http://localhost');
       socket.on('game:list', function (data) {
@@ -20,6 +20,7 @@
 
   </head>
   <body>
+  <div id="container"></div>
     <h1>{{ title }}</h1>
     <button id="newGame">Создать игру</button>
 
