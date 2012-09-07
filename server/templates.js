@@ -1,14 +1,13 @@
-function tpl(app) {
+module.exports.api = function (app) {
   var
     hogan = require('hogan.js'),
     fs = require('fs'),
     compiledFile = __dirname + "/public/javascripts/templates.js",
-    templateDirectory = __dirname + "/views/",
-    sharedTemplateDirectory = templateDirectory + "shared/",
-    sharedTemplatesTemplatePath = templateDirectory + "wrapper.hjs",
-    sharedTemplateTemplate = hogan.compile(removeByteOrderMark(fs.readFileSync(sharedTemplatesTemplatePath, "utf8")));
+    scanDir = __dirname + "/views/shared/",
+    wrapperFile = __dirname + "/views/wrapper.hjs",
+    sharedTemplateTemplate = hogan.compile(removeByteOrderMark(fs.readFileSync(wrapperFile, "utf8")));
 
-// Remove utf-8 byte order mark, http://en.wikipedia.org/wiki/Byte_order_mark
+  // Remove utf-8 byte order mark, http://en.wikipedia.org/wiki/Byte_order_mark
   function removeByteOrderMark(text) {
     if (text.charCodeAt(0) === 0xfeff) {
       return text.substring(1);
@@ -33,7 +32,7 @@ function tpl(app) {
    * directory to stringified javascript functions.
    */
   function readSharedTemplates() {
-    var sharedTemplateFiles = fs.readdirSync(sharedTemplateDirectory);
+    var sharedTemplateFiles = fs.readdirSync(scanDir);
 
     // Here we'll stash away the shared templates compiled script (as a string) and the name of the template.
     app.sharedTemplates = [];
@@ -47,7 +46,7 @@ function tpl(app) {
     // used on the client
     sharedTemplateFiles.forEach(function (template, i) {
       var functionName = template.substr(0, template.lastIndexOf(".")),
-        fileContents = removeByteOrderMark(fs.readFileSync(sharedTemplateDirectory + template, "utf8"));
+        fileContents = removeByteOrderMark(fs.readFileSync(scanDir + template, "utf8"));
 
       // Stash the partial reference.
       app.sharedPartials[functionName] = fileContents;
@@ -69,7 +68,7 @@ function tpl(app) {
   }
 
 
-// Read the templates initially when starting up
+  // Read the templates initially when starting up
   readSharedTemplates();
 
   /**
@@ -92,6 +91,4 @@ function tpl(app) {
     });
     fs.writeFileSync(compiledFile, content, "utf8");
   }
-}
-
-module.exports.api = tpl;
+};
