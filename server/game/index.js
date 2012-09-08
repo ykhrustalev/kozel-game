@@ -13,7 +13,7 @@ var Schema = mongoose.Schema;
 
 var gameSchema = new Schema({
 
-  crated: { type: Date, default: Date.now },
+  created: { type: Date, default: Date.now },
   finished: Date,
   active: { type: Boolean, default: true },
 
@@ -70,7 +70,7 @@ gameSchema.statics.findAvailableForJoin = function (callback) {
   this.find()
     .where('active').equals(true)
     .where('playersCount').lt(4)
-    .limit(30)
+    .limit(10)
     .sort('+created')
     .select('_id playersCount players crated score')
     .exec(callback);

@@ -9,7 +9,7 @@ require.config({
     underscore: "lib/underscore",
     backbone: "lib/backbone",
     backboneValidation: "lib/backbone-validation-amd",
-    backboneModelBinding: "lib/backbone.modelbinding",
+    backboneModelBinder: "lib/Backbone.ModelBinder",
     hogan: "lib/template-2.0.0",
     io: "lib/socket.io"
   },

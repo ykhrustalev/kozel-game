@@ -3,8 +3,8 @@ define([
   'util/dispatcher',
   'view/dashboard',
   'view/game/new',
-  'io'
-], function(Backbone, dispatcher, dashboard, newGame, io) {
+  'util/socket'
+], function(Backbone, dispatcher, dashboard, newGame, socket) {
 
   'use strict';
 
@@ -20,11 +20,11 @@ define([
     },
 
     showDashboard: function() {
-      this.setView(dashboard);
+      this.setPage(dashboard);
     },
 
     showNewGame: function() {
-      this.setView(newGame);
+      this.setPage(newGame);
     },
 
     showGame: function(id) {
@@ -33,7 +33,7 @@ define([
 //      contest.render();
     },
 
-    setView: function(view) {
+    setPage: function(view) {
       if (this.activeView) {
         this.activeView.close();
       }
@@ -52,31 +52,21 @@ define([
       appRouter.navigate("", {trigger: true});
     });
 
-    // TODO: remove
-    var socket = io.connect('http://localhost');
-    socket.on('game:list', function (data) {
-      console.log(data);
+    dispatcher.on('view:update', function(view) {
+      // TODO: make it general
+      if (view =='dashboard' && appRouter.activeView.tpl) {
+        appRouter.setPage(appRouter.activeView);
+        console.log();
+      }
     });
+
+    // TODO: remove
+
     socket.on('news', function (data) {
       console.log('socket data');
       console.log(data);
       socket.emit('my other event', { my: 'data' });
     });
-
-//    console.log(window.location.search);
-
-    /*
-    var data = window.location.search.slice(1);
-    $.ajax({
-      url: '/login/',
-      data: data,
-//      type: 'json',
-      success: function(response){
-        console.log(response);
-        $.ajax(response);
-      }
-    });
-    */
 
   };
 

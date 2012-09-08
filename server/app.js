@@ -46,6 +46,12 @@ server.listen(3000);
 var Game = require('./game');
 //
 
+function emitAvailableGames (){
+  Game.findAvailableForJoin(function (err, objects) {
+    io.sockets.emit("games:available", objects)
+  });
+}
+
 io.sockets.on('connection', function (socket) {
 
   socket.emit('news', { hello: 'world' });
@@ -55,10 +61,10 @@ io.sockets.on('connection', function (socket) {
     var game = new Game;
     game.save();
 
-    Game.findAvailableForJoin(function (err, objects) {
-      io.sockets.emit("game:list", objects)
-    });
+    emitAvailableGames();
   });
+
+  socket.on("games:available", emitAvailableGames);
 
   socket.on('disconnect', function () {
     console.log('user disconnected: ', arguments);

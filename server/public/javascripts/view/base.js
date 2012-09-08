@@ -1,7 +1,7 @@
 define([
   'backbone',
   'templates',
-  'backboneModelBinding',
+  'backboneModelBinder',
   'backboneValidation'
 ], function(Backbone, Templates) {
 
@@ -25,6 +25,25 @@ define([
     // template name to use
     tpl: '',
 
+    _modelBinder: undefined,
+
+    initialize:function () {
+      this._modelBinder = new Backbone.ModelBinder();
+    },
+
+    /**
+     * Cleans resources and releases binds for the view-model.
+     * Should be called on view life end.
+     */
+    close: function() {
+      this.onClose && this.onClose();
+      this.unbind();
+      if (this.model) {
+        this._modelBinder.unbind();
+        Backbone.Validation.unbind(this);
+      }
+    },
+
     /**
      * Uses Handlebars library for templates rendering. Requires `tpl`
      * property defined in view.
@@ -32,6 +51,7 @@ define([
      * @return `this`
      */
     render: function() {
+      this.onRender && this.onRender();
       var template = Templates[this.tpl];
       this.$el.html(template.render(this.getData()));
 
@@ -50,7 +70,7 @@ define([
         });
 
         // model view data flow
-        Backbone.ModelBinding.bind(this);
+        this._modelBinder.bind(this.model, this.el);
       }
 
       return this;
@@ -62,18 +82,6 @@ define([
      */
     getData: function() {
       return this.model ? this.model.toJSON() : {}
-    },
-
-    /**
-     * Cleans resources and releases binds for the view-model.
-     * Should be called on view life end.
-     */
-    close: function() {
-      this.unbind();
-      if (this.model) {
-        Backbone.ModelBinding.unbind(this);
-        Backbone.Validation.unbind(this);
-      }
     }
 
   });

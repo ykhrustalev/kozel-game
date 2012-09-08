@@ -1,1 +1,8 @@
 <h2>Доступные игры</h2>
+<ul>
+  {{#games}}
+  <li>{{> created}} ({{playersCount}})</li>
+  {{/games}}
+</ul>
+<hr/>
+<button class="newGame">Создать игру</button>
