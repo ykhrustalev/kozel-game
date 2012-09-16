@@ -24,7 +24,8 @@ define([
     },
 
     events: {
-      "click .newGame": "newGame"
+      "click .newGame": "newGame",
+      "click .joinGame": "joinGame"
     },
 
     getData: function () {
@@ -33,6 +34,11 @@ define([
 
     newGame: function () {
       socket.emit("game:new");
+    },
+
+    joinGame: function () {
+      console.log(arguments);
+//      socket.emit("game:join");
     }
 
 

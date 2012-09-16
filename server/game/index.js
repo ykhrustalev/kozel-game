@@ -2,7 +2,7 @@ var _ = require('underscore')._;
 
 
 var mongoose = require('mongoose');
-var db = mongoose.createConnection('localhost', 'kozel');
+var db = mongoose.createConnection('localhost', 'kozel-dev');
 
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
@@ -72,7 +72,7 @@ gameSchema.statics.findAvailableForJoin = function (callback) {
     .where('playersCount').lt(4)
     .limit(10)
     .sort('+created')
-    .select('_id playersCount players crated score')
+    .select('_id playersCount players created score')
     .exec(callback);
 };
 

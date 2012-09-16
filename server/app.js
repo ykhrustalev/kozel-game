@@ -64,6 +64,14 @@ io.sockets.on('connection', function (socket) {
     emitAvailableGames();
   });
 
+  socket.on('game:join', function (data) {
+    console.log('game:join', socket);
+    Game.find('_id', data.gameId).select('_id playersCount players created score')
+      .exec(function(results){
+        console.log(results);
+      });
+  });
+
   socket.on("games:available", emitAvailableGames);
 
   socket.on('disconnect', function () {
