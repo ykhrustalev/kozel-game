@@ -3,12 +3,12 @@
  */
 
 var express = require('express')
-  , routes = require('./routes')
-  , http = require('http')
-  , path = require('path')
-  , app = express()
-  , server = http.createServer(app)
-  , io = require('socket.io').listen(server);
+    , routes = require('./routes')
+    , http = require('http')
+    , path = require('path')
+    , app = express()
+    , server = http.createServer(app)
+    , io = require('socket.io').listen(server);
 
 
 app.configure(function () {
@@ -46,7 +46,22 @@ server.listen(3000);
 var Game = require('./game');
 //
 
-function emitAvailableGames (){
+io.configure(function () {
+  io.set('authorization', function (handshakeData, callback) {
+
+    var vk = require("./vk");
+    var referer = handshakeData.headers.referer;
+    var data = vk.parseUrl(referer);
+
+    if (data.isAuthenticated) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  });
+});
+
+function emitAvailableGames() {
   Game.findAvailableForJoin(function (err, objects) {
     io.sockets.emit("games:available", objects)
   });
@@ -65,11 +80,11 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on('game:join', function (data) {
-    console.log('game:join', socket);
-    Game.find('_id', data.gameId).select('_id playersCount players created score')
-      .exec(function(results){
-        console.log(results);
-      });
+    console.log('game:join', data, "socket", socket);
+    Game.find('_id', data.id).select('_id playersCount players created score')
+        .exec(function (results) {
+          console.log(results);
+        });
   });
 
   socket.on("games:available", emitAvailableGames);
