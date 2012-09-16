@@ -1,8 +1,6 @@
-var _ = require('underscore')._;
-
-
-var mongoose = require('mongoose');
-var db = mongoose.createConnection('localhost', 'kozel-dev');
+var _ = require('underscore')._,
+    mongoose = require('mongoose'),
+    db = mongoose.createConnection('localhost', 'kozel-dev');
 
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
@@ -13,15 +11,15 @@ var Schema = mongoose.Schema;
 
 var gameSchema = new Schema({
 
-  created: { type: Date, default: Date.now },
+  created : { type: Date, default: Date.now },
   finished: Date,
-  active: { type: Boolean, default: true },
+  active  : { type: Boolean, default: true },
 
   playersCount: {type: Number, default: 0},
 
   players: [
     {
-      id: String,
+      id  : String,
       name: String,
       date: Date,
       team: String
@@ -38,7 +36,7 @@ var gameSchema = new Schema({
     player2: [String],
     player3: [String],
     player4: [String]
-  },
+  }
 
 //  takes: [
 //    {
@@ -72,7 +70,7 @@ gameSchema.methods.addPlayer = function (profile) {
   }
 
   var isSigned = false;
-  this.players.forEach(function(player){
+  this.players.forEach(function (player) {
     if (player.id == profile.uid) {
       isSigned = true;
     }
@@ -83,14 +81,14 @@ gameSchema.methods.addPlayer = function (profile) {
   }
 
   this.players.push({
-    id: profile.uid,
-    name: profile.first_name +' '+profile.last_name,
+    id  : profile.uid,
+    name: profile.first_name + ' ' + profile.last_name,
     date: new Date,
     team: 0
   });
   this.playersCount += 1;
 
-  return  true;
+  return true;
 };
 
 gameSchema.statics.create = function (profile, callback) {
@@ -101,21 +99,19 @@ gameSchema.statics.create = function (profile, callback) {
 
 gameSchema.statics.findAvailableForJoin = function (callback) {
   this.find()
-    .where('active').equals(true)
-    .where('playersCount').lt(4)
-    .limit(10)
-    .sort('+created')
-    .select('_id playersCount players created score')
-    .exec(callback);
+      .where('active').equals(true)
+      .where('playersCount').lt(4)
+      .limit(10)
+      .sort('+created')
+      .select('_id playersCount players created score')
+      .exec(callback);
 };
 
 gameSchema.statics.join = function (gameId, profile, callback) {
 
   this.findOne({"_id": gameId}, function (error, game) {
     game.addPlayer(profile);
-    game.save();
-
-//    this.update({players:players}, {}, callback);
+    game.save(callback);
   });
 };
 

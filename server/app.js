@@ -63,8 +63,8 @@ io.configure(function () {
 });
 
 function emitAvailableGames() {
-  Game.findAvailableForJoin(function (err, objects) {
-    io.sockets.emit("games:available", objects)
+  Game.findAvailableForJoin(function (err, games) {
+    io.sockets.emit("games:available", games)
   });
 }
 
