@@ -36,9 +36,11 @@ define([
       socket.emit("game:new");
     },
 
-    joinGame: function () {
-      console.log(arguments);
-//      socket.emit("game:join");
+    joinGame: function (e) {
+      e.preventDefault();
+      var id = $(e.currentTarget).data("id");
+      socket.emit("game:join", {id: id});
+      return false;
     }
 
 

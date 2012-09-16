@@ -8,6 +8,8 @@ define([
 
     urlRoot: '/api/game/',
 
+    idAttribute: "_id",
+
     defaults: {
       genders_allowed: 0
     },
