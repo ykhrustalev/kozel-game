@@ -1,15 +1,12 @@
-// TODO: move to config, like require("./config)
-var VK_APP_ID = "3128240";
-var VK_APP_SECRET = "MPaH8nH7lmyq9hM8LGli";
-
-var url = require('url'),
+var config = require("./config"),
+    url = require('url'),
     querystring = require("querystring"),
     crypto = require('crypto');
 
 function getAuthKey(params) {
   var appId = params['api_id'],
       viewerId = params['viewer_id'],
-      apiSecret = VK_APP_SECRET;
+      apiSecret = config.VK_APP_SECRET;
 
   var md5sum = crypto.createHash('md5');
   md5sum.update(appId + '_' + viewerId + '_' + apiSecret);
@@ -26,7 +23,7 @@ var Vk = {
 
     // TODO: handle incorrect url and exceptions
 
-    if (urlParams['api_id'] !== VK_APP_ID) {
+    if (urlParams['api_id'] !== config.VK_APP_ID) {
       console.log("app_id from different application");
       isAuthenticated = false;
     }
