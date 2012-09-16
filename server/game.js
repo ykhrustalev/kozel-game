@@ -64,6 +64,10 @@ gameSchema.methods.start = function () {
   };
 };
 
+gameSchema.methods.isReadyToStart = function () {
+  return this.players.length == 4;
+};
+
 gameSchema.methods.addPlayer = function (profile) {
   if (this.players.length >= 4) {
     return false;
@@ -107,11 +111,16 @@ gameSchema.statics.findAvailableForJoin = function (callback) {
       .exec(callback);
 };
 
-gameSchema.statics.join = function (gameId, profile, callback) {
+gameSchema.statics.join = function (gameId, profile, joinCallback, startCallback) {
 
   this.findOne({"_id": gameId}, function (error, game) {
     game.addPlayer(profile);
-    game.save(callback);
+    if (game.isReadyToStart()) {
+      game.start();
+      game.save(startCallback)
+    } else {
+      game.save(joinCallback);
+    }
   });
 };
 
