@@ -1,6 +1,8 @@
-var _ = require('underscore')._,
-    mongoose = require('mongoose'),
-    db = mongoose.createConnection('localhost', 'kozel-dev');
+var _ = require("underscore")._,
+    Deck = require("./deck"),
+    config = require("./config"),
+    mongoose = require("mongoose"),
+    db = mongoose.createConnection(config.db.host, config.db.name);
 
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function () {
@@ -47,8 +49,6 @@ var gameSchema = new Schema({
 //  ]
 });
 
-
-var Deck = require('./deck');
 
 gameSchema.methods.start = function () {
 

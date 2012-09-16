@@ -5,7 +5,7 @@ var config = require("./config"),
 function getAuthKey(params) {
   var appId = params['api_id'],
       viewerId = params['viewer_id'],
-      apiSecret = config.VK_APP_SECRET;
+      apiSecret = config.vk.appSecret;
 
   var md5sum = crypto.createHash('md5');
   md5sum.update(appId + '_' + viewerId + '_' + apiSecret);
@@ -22,7 +22,7 @@ var Vk = {
 
     // TODO: handle incorrect url and exceptions
 
-    if (urlParams['api_id'] !== config.VK_APP_ID) {
+    if (urlParams['api_id'] !== config.vk.appId) {
       console.log("app_id from different application");
       isAuthenticated = false;
     }

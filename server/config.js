@@ -1,4 +1,12 @@
 module.exports = {
-  VK_APP_ID    : "3128240",
-  VK_APP_SECRET: "MPaH8nH7lmyq9hM8LGli"
+
+  vk: {
+    appId    : "3128240",
+    appSecret: "MPaH8nH7lmyq9hM8LGli"
+  },
+
+  db: {
+    host: "localhost",
+    name: "kozel"
+  }
 };
