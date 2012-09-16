@@ -54,6 +54,7 @@ io.configure(function () {
     var data = vk.parseUrl(referer);
 
     if (data.isAuthenticated) {
+      handshakeData.profile = data.profile;
       callback(null, true);
     } else {
       callback(null, false);
@@ -72,19 +73,11 @@ io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
 
   socket.on('game:new', function (data) {
-    console.log('game:new', socket);
-    var game = new Game;
-    game.save();
-
-    emitAvailableGames();
+    Game.create(socket.handshake.profile, emitAvailableGames);
   });
 
   socket.on('game:join', function (data) {
-    console.log('game:join', data, "socket", socket);
-    Game.find('_id', data.id).select('_id playersCount players created score')
-        .exec(function (results) {
-          console.log(results);
-        });
+    Game.join(data.id, socket.handshake.profile, emitAvailableGames);
   });
 
   socket.on("games:available", emitAvailableGames);
