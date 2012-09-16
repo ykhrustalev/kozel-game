@@ -1,6 +1,5 @@
 var config = require("./config"),
     url = require('url'),
-    querystring = require("querystring"),
     crypto = require('crypto');
 
 function getAuthKey(params) {
