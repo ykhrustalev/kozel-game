@@ -78,7 +78,7 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('game:join', function (data) {
     Game.join(data.id, socket.handshake.profile, emitAvailableGames, function(game){
-      console.log(arguments);
+      console.log(game);
       io.sockets.emit("game:start", game);
     });
   });

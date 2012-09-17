@@ -18,19 +18,20 @@ var gameSchema = new Schema({
 
   players: [
     {
-      id  : String,
-      name: String,
-      date: { type: Date, default: Date.now }
+      uid : String,
+      name: String
     }
   ],
 
-  teams: [
-    {
-      score       : {type: Number, default: 0},
-      playersCount: {type: Number, default: 0},
-      players     : [String]
-    }
-  ],
+  teams: {
+    team0: [Number],
+    team1: [Number]
+  },
+
+  score: {
+    team0: {type: Number, default: 0},
+    team1: {type: Number, default: 0}
+  },
 
   hands: [
     {
@@ -71,7 +72,7 @@ gameSchema.methods.isPlayerJoined = function (profile) {
   var isSigned = false;
   this.players.forEach(function (player) {
     if (player.id == profile.uid) {
-      isSigned = true;
+//      isSigned = true;
     }
   });
   return isSigned;
@@ -86,11 +87,48 @@ gameSchema.methods.addPlayer = function (profile) {
   this.playersCount += 1;
 
   this.players.push({
-    id  : profile.uid,
+    uid : profile.uid,
     name: profile.first_name + ' ' + profile.last_name
   });
 
+  this.assignToTeam(this.players.length - 1);
+
   return true;
+};
+
+gameSchema.methods.assignToTeam = function (id) {
+  var teams = this.teams,
+      team = (teams.team0.length <= teams.team1.length)
+          ? teams.team0
+          : teams.team1;
+  team.push(id);
+};
+
+gameSchema.methods.exportForPlayer = function (uid) {
+
+  var playerId;
+  for (var i = 0, len = this.players.length; i < len; i++) {
+    if (this.players[i].uid == uid) {
+      playerId = i;
+      break;
+    }
+  }
+
+  var teamId = (this.teams.team1.indexOf(playerId) >= 0) ? 0 : 1;
+
+  var players = [];
+  if (teamId == 0) {
+
+  }
+
+
+  return {
+    active  : this.active,
+    created : this.created,
+    finished: this.finished,
+    playerId: playerId,
+    teamId  : teamId
+  };
 };
 
 gameSchema.statics.create = function (profile, callback) {

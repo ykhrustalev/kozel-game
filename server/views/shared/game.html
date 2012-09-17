@@ -1,10 +1,13 @@
-<h2>{{created}} ({{playersCount}})</h2>
-<button class="update">update</button>
 <div>
+    <h2>Счет: {{score.team1}} : {{score:team2}}</h2>
+</div>
+<div>
+    <h2>Игороки</h2>
     <ul>
         {{#players}}
         <li>{{name}}</li>
         {{/players}}
     </ul>
+
 </div>
 
