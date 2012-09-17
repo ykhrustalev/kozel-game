@@ -6,14 +6,14 @@ define([
 
   'use strict';
 
-  var NewContest = BaseView.extend({
+  var View = BaseView.extend({
 
-    tpl: 'gameNew',
+    tpl: 'game',
 
     model: new Game,
 
     events: {
-      'submit form': 'save'
+      '.turn': 'save'
     },
 
     save: function() {
@@ -29,5 +29,5 @@ define([
 
   });
 
-  return new NewContest;
+  return new View;
 });

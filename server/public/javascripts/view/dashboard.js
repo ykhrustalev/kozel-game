@@ -24,7 +24,7 @@ define([
     },
 
     events: {
-      "click .newGame": "newGame",
+      "click .newGame" : "newGame",
       "click .joinGame": "joinGame"
     },
 
