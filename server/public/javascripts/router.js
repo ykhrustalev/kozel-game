@@ -1,73 +1,71 @@
 define([
-  'backbone',
-  'util/dispatcher',
-  'view/dashboard',
-  'view/game/new',
-  'util/socket'
-], function(Backbone, dispatcher, dashboard, newGame, socket) {
+  "backbone",
+  "util/dispatcher",
+  "util/socket",
+  "view/dashboard",
+  "view/game"
+], function (Backbone, dispatcher, socket, dashboardView, gameView ) {
 
-  'use strict';
+  "use strict";
 
   var AppRouter = Backbone.Router.extend({
 
     routes: {
-      '': 'showDashboard',
-      'new': 'showNewGame',
-      'contest/:id': 'showGame',
+      ""        : "showDashboard",
+      "!/game"  : "showGame",
 
       // Default
-      '*actions': 'showDashboard'
+      "*actions": "showDashboard"
     },
 
-    showDashboard: function() {
-      this.setPage(dashboard);
+    showDashboard: function () {
+      console.log("show dashobard");
+      this.setActivePage(dashboardView);
     },
 
-    showNewGame: function() {
-      this.setPage(newGame);
+    showGame: function (data) {
+      if (data) {
+        gameView.model.set(data);
+      }
+      this.setActivePage(gameView);
     },
 
-    showGame: function(id) {
-
-      console.log('game ' + id);
-//      contest.render();
-    },
-
-    setPage: function(view) {
+    setActivePage: function (view) {
       if (this.activeView) {
         this.activeView.close();
       }
       this.activeView = view;
       view.render();
-    }
+    },
 
+    bindSocket: function () {
+
+      var appRouter = this;
+
+      dispatcher.on("game:created", function () {
+        appRouter.navigate("", {trigger: true});
+      });
+
+      dispatcher.on("view:update", function (view) {
+        // TODO: make it general
+        if (view == 'dashboard' && appRouter.activeView.tpl) {
+          appRouter.setActivePage(appRouter.activeView);
+        }
+      });
+
+
+      socket.on("game:start", function (data) {
+        appRouter.navigate("!/game", {trigger: false});
+        appRouter.showGame(data);
+      });
+    }
 
   });
 
-  var initialize = function() {
+  var initialize = function () {
     var appRouter = new AppRouter;
     Backbone.history.start();
-
-    dispatcher.on('game:created', function(contest) {
-      appRouter.navigate("", {trigger: true});
-    });
-
-    dispatcher.on('view:update', function(view) {
-      // TODO: make it general
-      if (view =='dashboard' && appRouter.activeView.tpl) {
-        appRouter.setPage(appRouter.activeView);
-        console.log();
-      }
-    });
-
-    // TODO: remove
-
-    socket.on('news', function (data) {
-      console.log('socket data');
-      console.log(data);
-      socket.emit('my other event', { my: 'data' });
-    });
-
+    appRouter.bindSocket();
   };
 
   return { initialize: initialize };

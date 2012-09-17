@@ -13,7 +13,7 @@ define([
     model: new Game,
 
     events: {
-      '.turn': 'save'
+//      '.turn': 'save'
     },
 
     save: function() {

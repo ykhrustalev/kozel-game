@@ -5,17 +5,14 @@ var _ = require("underscore")._,
     db = mongoose.createConnection(config.db.host, config.db.name);
 
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function () {
-  console.log("open complete")
-});
 
 var Schema = mongoose.Schema;
 
 var gameSchema = new Schema({
 
+  active  : { type: Boolean, default: true },
   created : { type: Date, default: Date.now },
   finished: Date,
-  active  : { type: Boolean, default: true },
 
   playersCount: {type: Number, default: 0},
 
@@ -23,30 +20,33 @@ var gameSchema = new Schema({
     {
       id  : String,
       name: String,
-      date: Date,
-      team: String
+      date: { type: Date, default: Date.now }
     }
   ],
 
-  score: {
-    team1: { type: Number, default: 0 },
-    team2: { type: Number, default: 0 }
-  },
+  teams: [
+    {
+      score       : {type: Number, default: 0},
+      playersCount: {type: Number, default: 0},
+      players     : [String]
+    }
+  ],
 
-  hands: {
-    player1: [String],
-    player2: [String],
-    player3: [String],
-    player4: [String]
-  }
+  hands: [
+    {
+      player: String,
+      cards : [String]
+    }
+  ],
 
-//  takes: [
-//    {
-//      date: Date,
-//      cards: [[String]],
-//      score: Number
-//    }
-//  ]
+  takes: [
+    {
+      date : { type: Date, default: Date.now },
+      cards: [String],
+      value: Number,
+      owner: String
+    }
+  ]
 });
 
 
@@ -54,43 +54,41 @@ gameSchema.methods.start = function () {
 
   var split = Deck.split(4);
 
-  var getCardIds = Deck.getCardIds;
-
-  this.hands = {
-    player1: getCardIds(split[0]),
-    player2: getCardIds(split[1]),
-    player3: getCardIds(split[2]),
-    player4: getCardIds(split[3])
-  };
+  var game = this;
+  game.players.forEach(function (player) {
+    game.hands.push({
+      player: player.id,
+      cards : Deck.getCardIds(split.shift())
+    });
+  })
 };
 
 gameSchema.methods.isReadyToStart = function () {
-  return this.players.length == 4;
+  return this.playersCount == 4;
 };
 
-gameSchema.methods.addPlayer = function (profile) {
-  if (this.players.length >= 4) {
-    return false;
-  }
-
+gameSchema.methods.isPlayerJoined = function (profile) {
   var isSigned = false;
   this.players.forEach(function (player) {
     if (player.id == profile.uid) {
       isSigned = true;
     }
   });
+  return isSigned;
+};
 
-  if (isSigned) {
+gameSchema.methods.addPlayer = function (profile) {
+
+  if (this.playersCount >= 4 || this.isPlayerJoined(profile)) {
     return false;
   }
 
+  this.playersCount += 1;
+
   this.players.push({
     id  : profile.uid,
-    name: profile.first_name + ' ' + profile.last_name,
-    date: new Date,
-    team: 0
+    name: profile.first_name + ' ' + profile.last_name
   });
-  this.playersCount += 1;
 
   return true;
 };
@@ -117,7 +115,9 @@ gameSchema.statics.join = function (gameId, profile, joinCallback, startCallback
     game.addPlayer(profile);
     if (game.isReadyToStart()) {
       game.start();
-      game.save(startCallback)
+      game.save(function () {
+        startCallback(game);
+      })
     } else {
       game.save(joinCallback);
     }
