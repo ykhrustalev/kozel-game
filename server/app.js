@@ -2,13 +2,16 @@
  * Module dependencies.
  */
 
-var express = require('express')
-    , routes = require('./routes')
-    , http = require('http')
-    , path = require('path')
+var express = require("express")
+    , routes = require("./routes")
+    , http = require("http")
+    , path = require("path")
     , app = express()
     , server = http.createServer(app)
-    , io = require('socket.io').listen(server);
+    , io = require("socket.io").listen(server)
+    , config = require("./config")
+    , Game = require('./game')
+    , _= require("underscore")._;
 
 
 app.configure(function () {
@@ -16,12 +19,12 @@ app.configure(function () {
   app.set('views', __dirname + '/views');
   app.set('view engine', 'html');
   app.engine('html', require('consolidate').hogan);
-//  app.set('env', 'production');
+  app.set("env", config.env);
   app.use(express.favicon());
-  app.use(express.logger('dev'));
+  app.use(express.logger("dev"));
   app.use(express.bodyParser());
   app.use(express.methodOverride());
-  app.use(express.cookieParser('sdkjhlwbgibevb23rvke'));
+  app.use(express.cookieParser(config.secret));
   app.use(express.session());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
@@ -40,18 +43,32 @@ http.createServer(app).listen(app.get('port'), function () {
   console.log("Express server listening on port " + app.get('port'));
 });
 
-server.listen(3000);
+server.listen(config.port);
 
 // game
-var Game = require('./game');
-//
 
 io.configure(function () {
+
+  // vk authentication on demand
   io.set('authorization', function (handshakeData, callback) {
 
-    var vk = require("./vk");
-    var referer = handshakeData.headers.referer;
-    var data = vk.parseUrl(referer);
+    var data;
+    if (!config.isLocal) {
+
+      var vk = require("./vk");
+      var referer = handshakeData.headers.referer;
+      data = vk.parseUrl(referer);
+
+    } else {
+      data = {
+        isAuthenticated: true,
+        profile        : {
+          uid       : _.identity(),
+          first_name: "first_name",
+          last_name : "last_name"
+        }
+      };
+    }
 
     if (data.isAuthenticated) {
       handshakeData.profile = data.profile;
@@ -70,20 +87,34 @@ function emitAvailableGames() {
 
 io.sockets.on('connection', function (socket) {
 
+  var profile = socket.handshake.profile;
+
   socket.emit('news', { hello: 'world' });
 
-  socket.on('game:new', function (data) {
-    Game.create(socket.handshake.profile, emitAvailableGames);
+  socket.on("game:new", function () {
+    Game.create(profile, function(game){
+      socket.emit("game:current", game.exportForPlayer(profile.uid));
+    });
   });
 
-  socket.on('game:join', function (data) {
-    Game.join(data.id, socket.handshake.profile, emitAvailableGames, function(game){
-      console.log(game);
+  socket.on("game:join", function (data) {
+    Game.join(data.id, socket.handshake.profile, emitAvailableGames, function (game) {
       io.sockets.emit("game:start", game);
+      console.log("game:start", game);
     });
   });
 
   socket.on("games:available", emitAvailableGames);
+
+  socket.on("game:current", function(){
+    Game.findByUser(socket.handshake.profile, function(error, data) {
+      if (data &&data[0]){
+        socket.emit("game:current", data[0].exportForPlayer(socket.handshake.profile.uid));
+      } else {
+        socket.emit("game:current", null);
+      }
+    });
+  });
 
   socket.on('disconnect', function () {
     console.log('user disconnected: ', arguments);

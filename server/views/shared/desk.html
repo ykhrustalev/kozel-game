@@ -1,0 +1,24 @@
+<div>
+    <h2>Счет: {{score.team0}} : {{score.team1}}</h2>
+</div>
+<div>
+    <h2>Игроки</h2>
+    <ul>
+        {{#players}}
+        <li>{{.}}</li>
+        {{/players}}
+    </ul>
+
+</div>
+<div>
+    {{#cards}}
+    <h2>Ваши карты</h2>
+    <ul>
+        {{#cards}}
+        <li><a class="turn" href="#">{{.}}</a></li>
+        {{/cards}}
+    </ul>
+    {{/cards}}
+
+</div>
+

@@ -3,31 +3,37 @@ define([
   "util/dispatcher",
   "util/socket",
   "view/dashboard",
-  "view/game"
-], function (Backbone, dispatcher, socket, dashboardView, gameView ) {
+  "view/desk"
+], function (Backbone, dispatcher, socket, dashboardView, deskView) {
 
   "use strict";
 
   var AppRouter = Backbone.Router.extend({
 
     routes: {
-      ""        : "showDashboard",
-      "!/game"  : "showGame",
+      ""        : "triggerDashboard",
+      "!/desk"  : "triggerDesk",
 
       // Default
-      "*actions": "showDashboard"
+      "*actions": "triggerDashboard"
     },
 
+
     showDashboard: function () {
-      console.log("show dashobard");
       this.setActivePage(dashboardView);
     },
 
-    showGame: function (data) {
-      if (data) {
-        gameView.model.set(data);
-      }
-      this.setActivePage(gameView);
+    triggerDashboard: function () {
+      socket.emit("game:current");
+    },
+
+    triggerDesk: function() {
+      socket.emit("game:current");
+    },
+
+    showDesk: function (data) {
+      deskView.model.set(data);
+      this.setActivePage(deskView);
     },
 
     setActivePage: function (view) {
@@ -48,15 +54,25 @@ define([
 
       dispatcher.on("view:update", function (view) {
         // TODO: make it general
-        if (view == 'dashboard' && appRouter.activeView.tpl) {
+        if (view == 'dashboard' && appRouter.activeView && appRouter.activeView.tpl) {
           appRouter.setActivePage(appRouter.activeView);
         }
       });
 
 
+      socket.on("game:current", function (game) {
+        if (game) {
+          appRouter.navigate("!/desk", {trigger: false});
+          appRouter.showDesk(game);
+        } else {
+          appRouter.navigate("", {trigger: false});
+          appRouter.showDashboard();
+        }
+      });
+
       socket.on("game:start", function (data) {
-        appRouter.navigate("!/game", {trigger: false});
-        appRouter.showGame(data);
+        appRouter.navigate("!/desk", {trigger: false});
+        appRouter.showDesk(data);
       });
     }
 

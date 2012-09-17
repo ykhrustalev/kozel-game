@@ -16,18 +16,6 @@ module.exports.api = function (app) {
   }
 
   /**
-   * The Express hogan template renderer.
-   */
-  var hoganHtmlRenderer = {
-    compile: function (source, options) {
-      return function (options) {
-        var template = hogan.compile(source);
-        return template.render(options.context, options.partials);
-      };
-    }
-  };
-
-  /**
    * Reads and compiles hogan templates from the shared template
    * directory to stringified javascript functions.
    */

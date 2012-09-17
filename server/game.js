@@ -33,6 +33,10 @@ var gameSchema = new Schema({
     team1: {type: Number, default: 0}
   },
 
+  turn: [String],
+
+  playerTurn: Number,
+
   hands: [
     {
       player: String,
@@ -91,20 +95,22 @@ gameSchema.methods.addPlayer = function (profile) {
     name: profile.first_name + ' ' + profile.last_name
   });
 
-  this.assignToTeam(this.players.length - 1);
+  this.assignUserToTeam(this.players.length - 1);
 
   return true;
 };
 
-gameSchema.methods.assignToTeam = function (id) {
+gameSchema.methods.assignUserToTeam = function (uid) {
   var teams = this.teams,
       team = (teams.team0.length <= teams.team1.length)
           ? teams.team0
           : teams.team1;
-  team.push(id);
+  team.push(uid);
 };
 
 gameSchema.methods.exportForPlayer = function (uid) {
+
+  var self = this;
 
   var playerId;
   for (var i = 0, len = this.players.length; i < len; i++) {
@@ -116,25 +122,54 @@ gameSchema.methods.exportForPlayer = function (uid) {
 
   var teamId = (this.teams.team1.indexOf(playerId) >= 0) ? 0 : 1;
 
-  var players = [];
-  if (teamId == 0) {
 
+  var playerIds = [];
+  if (playerId == 0) {
+    playerIds = [1, 2, 3, 0];
+  } else if (playerId == 1) {
+    playerIds = [2, 3, 0, 1];
+  } else if (playerId == 2) {
+    playerIds = [3, 0, 1, 2];
+  } else {
+    playerIds = [0, 1, 2, 3];
+  }
+
+  var players = [];
+  playerIds.forEach(function (id) {
+    var name = self.players[id] ? self.players[id].name : "";
+    players.push(name);
+  });
+
+  var turn = [];
+  if (this.turn && this.turn.length) {
+    playerIds.forEach(function (id) {
+      turn.push(self.turn[id])
+    });
+  }
+
+  var cards = [];
+  if (this.hands && this.hands[playerId]) {
+    cards = this.hands[playerId].cards;
   }
 
 
   return {
-    active  : this.active,
-    created : this.created,
-    finished: this.finished,
-    playerId: playerId,
-    teamId  : teamId
+    score  : {
+      team0: this.score["team" + teamId],
+      team1: this.score["team" + (teamId ? 0 : 1)]
+    },
+    players: players,
+    cards  : cards,
+    turn   : turn
   };
 };
 
 gameSchema.statics.create = function (profile, callback) {
   var game = new this;
   game.addPlayer(profile);
-  game.save(callback);
+  game.save(function(){
+    callback(game);
+  });
 };
 
 gameSchema.statics.findAvailableForJoin = function (callback) {
@@ -147,18 +182,57 @@ gameSchema.statics.findAvailableForJoin = function (callback) {
       .exec(callback);
 };
 
-gameSchema.statics.join = function (gameId, profile, joinCallback, startCallback) {
+gameSchema.statics.findByUser = function (profile, callback) {
+  this.find()
+      .where('active').equals(true)
+      .where('players.uid').in([profile.uid])
+      .limit(10)
+      .sort('+created')
+//      .select('_id playersCount players created score')
+      .exec(callback);
+};
 
-  this.findOne({"_id": gameId}, function (error, game) {
-    game.addPlayer(profile);
-    if (game.isReadyToStart()) {
-      game.start();
-      game.save(function () {
-        startCallback(game);
-      })
-    } else {
-      game.save(joinCallback);
+gameSchema.statics.join = function (gameId, profile, failCallback, successCallback) {
+
+  var self = this;
+  this.findByUser(profile, function (error, games) {
+
+    // there another game assigned, should not happen
+    if (games && games.length) {
+      successCallback(games[0]);
+      return;
     }
+
+    self.findOne({"_id": gameId}, function (error, game) {
+
+      // could not find game, or error
+      if (error || !game) {
+        failCallback();
+        return
+      }
+
+      // already in game, should not happen
+      if (game.isPlayerJoined(profile)) {
+        successCallback(game);
+        return;
+      }
+
+      // could not get in
+      if (!game.addPlayer(profile)) {
+        failCallback();
+        return
+      }
+
+      // game ready to start, prepare data
+      if (game.isReadyToStart()) {
+        game.start();
+      }
+
+      game.save(function () {
+        successCallback(game);
+      })
+    });
+
   });
 };
 
