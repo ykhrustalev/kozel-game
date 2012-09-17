@@ -22,18 +22,24 @@ var Vk = {
 
     // TODO: handle incorrect url and exceptions
 
-    if (urlParams['api_id'] !== config.vk.appId) {
+    var apiId = urlParams['api_id'],
+        authKey = urlParams["auth_key"],
+        apiResult = urlParams["api_result"];
+
+    if (apiId && apiId !== config.vk.appId) {
       console.log("app_id from different application");
       isAuthenticated = false;
     }
 
-    if (urlParams["auth_key"].toLocaleLowerCase()
+    if (authKey && authKey.toLocaleLowerCase()
         !== getAuthKey(urlParams).toLocaleLowerCase()) {
       console.log("wrong key");
       isAuthenticated = false;
     }
 
-    profile = JSON.parse(urlParams["api_result"]).response[0];
+    if (apiResult) {
+      profile = JSON.parse(apiResult).response[0];
+    }
 
     return {
       profile        : profile,
