@@ -122,7 +122,6 @@ gameSchema.methods.exportForPlayer = function (uid) {
 
   var teamId = (this.teams.team1.indexOf(playerId) >= 0) ? 0 : 1;
 
-
   var playerIds = [];
   if (playerId == 0) {
     playerIds = [1, 2, 3, 0];
@@ -160,14 +159,15 @@ gameSchema.methods.exportForPlayer = function (uid) {
     },
     players: players,
     cards  : cards,
-    turn   : turn
+    turn   : turn,
+    active : this.hands && this.hands.length
   };
 };
 
 gameSchema.statics.create = function (profile, callback) {
   var game = new this;
   game.addPlayer(profile);
-  game.save(function(){
+  game.save(function () {
     callback(game);
   });
 };

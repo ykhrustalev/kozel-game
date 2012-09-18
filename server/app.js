@@ -98,8 +98,8 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:join", function (data) {
-    Game.join(data.id, socket.handshake.profile, emitAvailableGames, function (game) {
-      io.sockets.emit("game:start", game);
+    Game.join(data.id, profile, emitAvailableGames, function (game) {
+      io.sockets.emit("game:start", game.exportForPlayer(profile.uid));
       console.log("game:start", game);
     });
   });
@@ -107,9 +107,9 @@ io.sockets.on('connection', function (socket) {
   socket.on("games:available", emitAvailableGames);
 
   socket.on("game:current", function(){
-    Game.findByUser(socket.handshake.profile, function(error, data) {
+    Game.findByUser(profile, function(error, data) {
       if (data &&data[0]){
-        socket.emit("game:current", data[0].exportForPlayer(socket.handshake.profile.uid));
+        socket.emit("game:current", data[0].exportForPlayer(profile.uid));
       } else {
         socket.emit("game:current", null);
       }
@@ -118,7 +118,7 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('disconnect', function () {
     console.log('user disconnected: ', arguments);
-    io.sockets.emit('user disconnected');
+    io.sockets.emit('user disconnected', profile);
   });
 
 });
