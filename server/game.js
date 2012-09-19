@@ -1,123 +1,183 @@
 var _ = require("underscore")._,
-    Deck = require("./deck"),
+    deck = require("./deck"),
     config = require("./config"),
-    mongoose = require("mongoose"),
-    db = mongoose.createConnection(config.db.host, config.db.name);
-
-db.on('error', console.error.bind(console, 'connection error:'));
+    mongoose = require("mongoose");
 
 var Schema = mongoose.Schema;
 
-var gameSchema = new Schema({
+var PlayerSchema = {
+  uid   : String,
+  teamId: Number, // 1|2
+  name  : String
+};
 
-  active  : { type: Boolean, default: true },
-  created : { type: Date, default: Date.now },
-  finished: Date,
+var GameSchema = new Schema({
 
-  playersCount: {type: Number, default: 0},
-
-  players: [
-    {
-      uid : String,
-      name: String
-    }
-  ],
-
-  teams: {
-    team0: [Number],
-    team1: [Number]
+  meta: {
+    created     : { type: Date, default: Date.now },
+    started     : Date,
+    active      : { type: Boolean, default: false },
+    playersCount: { type: Number, default: 0 },
+    score       : {
+      team1: { type: Number, default: 0 },
+      team2: { type: Number, default: 0 }
+    },
+    hasEquals   : Boolean
   },
 
-  score: {
-    team0: {type: Number, default: 0},
-    team1: {type: Number, default: 0}
+  players: {
+    player1: PlayerSchema,
+    player2: PlayerSchema,
+    player3: PlayerSchema,
+    player4: PlayerSchema
   },
 
-  turn: [String],
+  round: {
+    created: { type: Date, default: Date.now },
 
-  playerTurn: Number,
+    shufflePlayer: String,
 
-  hands: [
-    {
-      player: String,
-      cards : [String]
+    rate: { type: Number, default: 1},
+
+    score: {
+      team1: { type: Number, default: 0 },
+      team2: { type: Number, default: 0 }
+    },
+
+    turn: {
+      created      : { type: Date, default: Date.now },
+      currentPlayer: String, // player{1,2,3,4}
+      player1      : String,
+      player2      : String,
+      player3      : String,
+      player4      : String
+    },
+
+    cards: {
+      player1: [String],
+      player2: [String],
+      player3: [String],
+      player4: [String]
     }
-  ],
 
-  takes: [
-    {
-      date : { type: Date, default: Date.now },
-      cards: [String],
-      value: Number,
-      owner: String
-    }
-  ]
+  }
+
 });
 
 
-gameSchema.methods.start = function () {
+GameSchema.methods.start = function () {
 
-  var split = Deck.split(4);
+  if (this.meta.active) {
+    console.error("game already started", this);
+    throw new Error("game already started");
+  }
 
-  var game = this;
-  game.players.forEach(function (player) {
-    game.hands.push({
-      player: player.id,
-      cards : Deck.getCardIds(split.shift())
-    });
-  })
+  if (this.meta.playersCount!=4) {
+    console.error("not enough players", this);
+    throw new Error("not enough players");
+  }
+
+  this.meta.active = true;
+  this.meta.started = new Date;
+
+  this.newRound();
+  var player = this.findPlayerByCard(deck.Suite.Diamonds, deck.Type.Ace);
+  this.newTurn(player);
+
 };
 
-gameSchema.methods.isReadyToStart = function () {
-  return this.playersCount == 4;
+GameSchema.methods.newRound = function (rate) {
+
+  var split = deck.split(4),
+      round = this.round,
+      cards = round.cards;
+
+  cards.player1 = deck.getCardIds(split.shift());
+  cards.player2 = deck.getCardIds(split.shift());
+  cards.player3 = deck.getCardIds(split.shift());
+  cards.player4 = deck.getCardIds(split.shift());
+
+  if (rate) {
+    round.rate = rate;
+  }
+
 };
 
-gameSchema.methods.isPlayerJoined = function (profile) {
-  var isSigned = false;
-  this.players.forEach(function (player) {
-    if (player.id == profile.uid) {
-//      isSigned = true;
-    }
-  });
-  return isSigned;
+GameSchema.methods.newTurn = function (firstPlayer) {
+
+  var turn = this.round.turn;
+
+  turn.created = new Date;
+  turn.currentPlayer = firstPlayer;
+  turn.player1 = "";
+  turn.player2 = "";
+  turn.player3 = "";
+  turn.player4 = "";
+
 };
 
-gameSchema.methods.addPlayer = function (profile) {
+GameSchema.methods.findPlayerByCard = function (suite, type) {
 
-  if (this.playersCount >= 4 || this.isPlayerJoined(profile)) {
+  var cardId = deck.cardIdFor(suite, type),
+      cards = this.round.cards,
+      playerId = cards.player1.indexOf(cardId) >= 0 ? 1
+          : cards.player2.indexOf(cardId) >= 0 ? 2
+          : cards.player3.indexOf(cardId) >= 0 ? 3
+          : cards.player4.indexOf(cardId) >= 0 ? 4 : -1;
+
+  if (playerId === -1) {
+    console.error("unknown card", cardId, cards);
+    throw new Error("unknown card");
+  }
+
+  return "player" + playerId;
+};
+
+GameSchema.methods.isReadyToStart = function () {
+  return this.meta.playersCount == 4;
+};
+
+GameSchema.methods.isPlayerJoined = function (user) {
+  var p = this.players,
+      uid = user.uid;
+  return p.player1.uid == uid
+      || p.player2.uid == uid
+      || p.player3.uid == uid
+      || p.player4.uid == uid;
+};
+
+GameSchema.methods.addPlayer = function (user) {
+
+  if (this.meta.playersCount >= 4 || this.isPlayerJoined(user)) {
     return false;
   }
 
-  this.playersCount += 1;
+  this.meta.playersCount += 1;
 
-  this.players.push({
-    uid : profile.uid,
-    name: profile.first_name + ' ' + profile.last_name
-  });
-
-  this.assignUserToTeam(this.players.length - 1);
+  this.players["player" + this.meta.playersCount] = {
+    uid   : user.uid,
+    teamId: (this.meta.playersCount % 2) ? 1 : 2,
+    name  : user.first_name + ' ' + user.last_name
+  };
 
   return true;
 };
 
-gameSchema.methods.assignUserToTeam = function (uid) {
-  var teams = this.teams,
-      team = (teams.team0.length <= teams.team1.length)
-          ? teams.team0
-          : teams.team1;
-  team.push(uid);
-};
+GameSchema.methods.exportForPlayer = function (profile) {
 
-gameSchema.methods.exportForPlayer = function (uid) {
+  var self = this,
+      uid = profile.uid;
 
-  var self = this;
-
-  var playerId;
+  var playerId = -1;
   for (var i = 0, len = this.players.length; i < len; i++) {
     if (this.players[i].uid == uid) {
       playerId = i;
       break;
     }
+  }
+
+  if (playerId === -1) {
+    throw new Error("player out of scope", this, uid)
   }
 
   var teamId = (this.teams.team1.indexOf(playerId) >= 0) ? 0 : 1;
@@ -164,15 +224,13 @@ gameSchema.methods.exportForPlayer = function (uid) {
   };
 };
 
-gameSchema.statics.create = function (profile, callback) {
+GameSchema.statics.new = function (user) {
   var game = new this;
-  game.addPlayer(profile);
-  game.save(function () {
-    callback(game);
-  });
+  game.addPlayer(user);
+  return game;
 };
 
-gameSchema.statics.findAvailableForJoin = function (callback) {
+GameSchema.statics.findAvailableForJoin = function (callback) {
   this.find()
       .where('active').equals(true)
       .where('playersCount').lt(4)
@@ -182,17 +240,16 @@ gameSchema.statics.findAvailableForJoin = function (callback) {
       .exec(callback);
 };
 
-gameSchema.statics.findByUser = function (profile, callback) {
+GameSchema.statics.findByUser = function (profile, callback) {
   this.find()
       .where('active').equals(true)
       .where('players.uid').in([profile.uid])
       .limit(10)
       .sort('+created')
-//      .select('_id playersCount players created score')
       .exec(callback);
 };
 
-gameSchema.statics.join = function (gameId, profile, failCallback, successCallback) {
+GameSchema.statics.join = function (gameId, profile, failCallback, successCallback) {
 
   var self = this;
   this.findByUser(profile, function (error, games) {
@@ -236,6 +293,9 @@ gameSchema.statics.join = function (gameId, profile, failCallback, successCallba
   });
 };
 
-var Game = db.model('Game', gameSchema);
 
-module.exports = Game;
+module.exports = {
+  model: function (db) {
+    return db.model("Game", GameSchema);
+  }
+};

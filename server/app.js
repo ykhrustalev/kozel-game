@@ -10,8 +10,7 @@ var express = require("express")
     , server = http.createServer(app)
     , io = require("socket.io").listen(server)
     , config = require("./config")
-    , Game = require('./game')
-    , _= require("underscore")._;
+    , _ = require("underscore")._;
 
 
 app.configure(function () {
@@ -46,6 +45,15 @@ http.createServer(app).listen(app.get('port'), function () {
 server.listen(config.port);
 
 // game
+var mongoose = require("mongoose"),
+    gameSchema = require('./game');
+
+db = mongoose.createConnection(config.db.host, config.db.name);
+
+var Game = db.model('Game', gameSchema);
+
+db.on('error', console.error.bind(console, 'connection error:'));
+
 
 io.configure(function () {
 
@@ -89,26 +97,27 @@ io.sockets.on('connection', function (socket) {
 
   var profile = socket.handshake.profile;
 
-  socket.emit('news', { hello: 'world' });
-
-  socket.on("game:new", function () {
-    Game.create(profile, function(game){
-      socket.emit("game:current", game.exportForPlayer(profile.uid));
+  socket.on("game:create", function () {
+    Game.create(profile, function (data) {
+      socket.emit("game:created", data);
     });
   });
 
   socket.on("game:join", function (data) {
-    Game.join(data.id, profile, emitAvailableGames, function (game) {
-      io.sockets.emit("game:start", game.exportForPlayer(profile.uid));
-      console.log("game:start", game);
-    });
+    Game.join(data.id, profile,
+        function () {
+
+        },
+        function (game) {
+          io.sockets.emit("game:started", game);
+        });
   });
 
   socket.on("games:available", emitAvailableGames);
 
-  socket.on("game:current", function(){
-    Game.findByUser(profile, function(error, data) {
-      if (data &&data[0]){
+  socket.on("game:current", function () {
+    Game.findByUser(profile, function (error, data) {
+      if (data && data[0]) {
         socket.emit("game:current", data[0].exportForPlayer(profile.uid));
       } else {
         socket.emit("game:current", null);

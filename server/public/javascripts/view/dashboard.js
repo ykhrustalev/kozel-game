@@ -12,14 +12,7 @@ define([
     tpl: 'dashboard',
 
     initialize: function () {
-      var collection = this.collection = new GameCollection;
-
-      socket.on("games:available", function (data) {
-        collection.reset();
-        collection.add(data);
-        dispatcher.trigger("view:update", "dashboard");
-      });
-
+      this.collection = new GameCollection;
       socket.emit("games:available");
     },
 

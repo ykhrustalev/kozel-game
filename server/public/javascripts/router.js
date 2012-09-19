@@ -52,10 +52,12 @@ define([
         appRouter.navigate("", {trigger: true});
       });
 
-      dispatcher.on("view:update", function (view) {
-        // TODO: make it general
-        if (view == 'dashboard' && appRouter.activeView && appRouter.activeView.tpl) {
-          appRouter.setActivePage(appRouter.activeView);
+      socket.on("games:available", function (data) {
+        var view = appRouter.activeView;
+        if (view && view.tpl== "dashboard") {
+          view.collection.reset();
+          view.collection.add(data);
+          appRouter.setActivePage(view);
         }
       });
 
