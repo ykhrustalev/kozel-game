@@ -30,6 +30,22 @@ module.exports = {
     });
   },
 
+  testPrevPlayer: function (test) {
+    test.equals(Game.prevPlayer("player1"), "player4");
+    test.equals(Game.prevPlayer("player2"), "player1");
+    test.equals(Game.prevPlayer("player3"), "player2");
+    test.equals(Game.prevPlayer("player4"), "player3");
+    test.done();
+  },
+
+  testNextPlayer: function (test) {
+    test.equals(Game.nextPlayer("player1"), "player2");
+    test.equals(Game.nextPlayer("player2"), "player3");
+    test.equals(Game.nextPlayer("player3"), "player4");
+    test.equals(Game.nextPlayer("player4"), "player1");
+    test.done();
+  },
+
   testListAvailable: function (test) {
     var game;
 
@@ -125,7 +141,7 @@ module.exports = {
     test.done();
   },
 
-  testStart: function (test) {
+  testStart   : function (test) {
 
     test.expect(3);
 
@@ -154,7 +170,7 @@ module.exports = {
   },
 
   //TODO: complete
-  testNewRound: function(test) {
+  testNewRound: function (test) {
     var game = new Game(),
       cards;
 

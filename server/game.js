@@ -84,7 +84,7 @@ var GameSchema = new Schema({
 
 
 /**
- * Helper for passing error to callback
+ * Helper for passing error to callback.
  *
  * @param callback - callback
  * @param message  - erorr message
@@ -93,7 +93,12 @@ function wrapError(callback, message) {
   callback(message);
 }
 
-//TODO
+/**
+ * Returns previous player id from provided.
+ *
+ * @param playerId - current player
+ * @return {String} "player{1|2|3|4}"
+ */
 function prevPlayer(playerId) {
   if (playerId === "player1") {
     return "player4";
@@ -108,7 +113,12 @@ function prevPlayer(playerId) {
   }
 }
 
-//TODO
+/**
+ * Returns next player id from provided.
+ *
+ * @param playerId - current player
+ * @return {String} "player{1|2|3|4}"
+ */
 function nextPlayer(playerId) {
   if (playerId === "player1") {
     return "player2";
@@ -321,10 +331,10 @@ GameSchema.methods.forPlayer = function (user) {
 };
 
 //TODO: remove
-GameSchema.methods.exportForPlayer = function (profile) {
+GameSchema.methods.exportForPlayer = function (user) {
 
   var self = this,
-    uid = profile.uid;
+    uid = user.uid;
 
   var playerId = -1;
   for (var i = 0, len = this.players.length; i < len; i++) {
