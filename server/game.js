@@ -1,12 +1,12 @@
 var _ = require("underscore")._,
-    deck = require("./deck"),
-    config = require("./config"),
-    mongoose = require("mongoose");
+  deck = require("./deck"),
+  config = require("./config"),
+  mongoose = require("mongoose");
 
 var Schema = mongoose.Schema;
 
 var PlayerSchema = {
-  uid   : String,
+  uid   : Number,
   teamId: Number, // 1|2
   name  : String
 };
@@ -40,19 +40,19 @@ var GameSchema = new Schema({
   },
 
   round: {
-    created: { type: Date, default: Date.now },
+    created: { type: Date, "default": Date.now },
 
     shufflePlayer: String,
 
-    rate: { type: Number, default: 1},
+    rate: { type: Number, "default": 1},
 
     score: {
-      team1: { type: Number, default: 0 },
-      team2: { type: Number, default: 0 }
+      team1: { type: Number, "default": 0 },
+      team2: { type: Number, "default": 0 }
     },
 
     turn: {
-      created      : { type: Date, default: Date.now },
+      created      : { type: Date, "default": Date.now },
       currentPlayer: String, // player{1,2,3,4}
       player1      : String,
       player2      : String,
@@ -71,36 +71,59 @@ var GameSchema = new Schema({
 
 });
 
-// TODO: test
-GameSchema.statics.listAvailable = function (callback) {
+
+/**
+ * Helper for passing error to callback
+ *
+ * @param callback - callback
+ * @param message  - erorr message
+ */
+function wrapError(callback, message) {
+  callback(message);
+}
+
+/**
+ * Lists games available for join, ordered desc by create date.
+ *
+ * @param callback(games) - succed action,
+ *                          `games` - collection of available games
+ * @param limit           - collection size, default 10
+ */
+GameSchema.statics.listAvailable = function (callback, limit) {
   this.find()
-      .where("meta.active").equals(false)
-      .where("meta.playersCount").lt(4)
-      .limit(10)
-      .sort("+meta.created")
-      .select("_id meta players")
-      .exec(function (error, data) {
-        callback(data);
-      });
+    .where("meta.active").equals(false)
+    .where("meta.playersCount").lt(4)
+    .limit(limit || 10)
+    .sort("+meta.created")
+    .select("_id meta players")
+    .exec(function (error, data) {
+      callback(data);
+    });
 };
 
-// TODO: test
+/**
+ * Creates game from scratch
+ *
+ * @param user            - starter game
+ * @param successCallback - succed action
+ * @param errorCallback   - error action
+ */
 GameSchema.statics.create = function (user, successCallback, errorCallback) {
   var Game = this;
   Game.findByUser(user, function (error, games) {
 
-    if (games) {
+    if (games && games.length) {
       wrapError(errorCallback, "user already joined");
       return;
     }
 
-    var game = new Game;
+    var game = new Game();
     if (!game.addPlayer(user)) {
       wrapError(errorCallback, "user could not be joined");
       return;
     }
     game.save(function () {
-      successCallback(game.export(user));
+      successCallback(game.forPlayer(user));
     });
 
   });
@@ -110,7 +133,7 @@ GameSchema.statics.create = function (user, successCallback, errorCallback) {
 // TODO
 GameSchema.methods.start = function () {
 
-  if (this.meta.active || this.meta.playersCount != 4) {
+  if (this.meta.active || this.meta.playersCount !== 4) {
     console.error("can't start", this);
     return false;
   }
@@ -129,8 +152,8 @@ GameSchema.methods.start = function () {
 GameSchema.methods.newRound = function (rate) {
 
   var split = deck.split(4),
-      round = this.round,
-      cards = round.cards;
+    round = this.round,
+    cards = round.cards;
 
   cards.player1 = deck.getCardIds(split.shift());
   cards.player2 = deck.getCardIds(split.shift());
@@ -157,14 +180,15 @@ GameSchema.methods.newTurn = function (firstPlayer) {
 
 };
 
+// TODO test
 GameSchema.methods.findPlayerByCard = function (suite, type) {
 
   var cardId = deck.cardIdFor(suite, type),
-      cards = this.round.cards,
-      playerId = cards.player1.indexOf(cardId) >= 0 ? 1
-          : cards.player2.indexOf(cardId) >= 0 ? 2
-          : cards.player3.indexOf(cardId) >= 0 ? 3
-          : cards.player4.indexOf(cardId) >= 0 ? 4 : -1;
+    cards = this.round.cards,
+    playerId = cards.player1.indexOf(cardId) >= 0 ? 1
+      : cards.player2.indexOf(cardId) >= 0 ? 2
+      : cards.player3.indexOf(cardId) >= 0 ? 3
+      : cards.player4.indexOf(cardId) >= 0 ? 4 : -1;
 
   if (playerId === -1) {
     console.error("unknown card", cardId, cards);
@@ -179,14 +203,19 @@ GameSchema.methods.canBeStarted = function () {
   return this.meta.playersCount == 4;
 };
 
-//TODO
+/**
+ * Checks whether user is already joined the game
+ *
+ * @param user - user to check
+ * @return {Boolean}
+ */
 GameSchema.methods.isUserJoined = function (user) {
   var p = this.players,
-      uid = user.uid;
-  return p.player1.uid == uid
-      || p.player2.uid == uid
-      || p.player3.uid == uid
-      || p.player4.uid == uid;
+    uid = user.uid;
+  return p.player1.uid === uid
+    || p.player2.uid === uid
+    || p.player3.uid === uid
+    || p.player4.uid === uid;
 };
 
 // TODO: test
@@ -209,15 +238,16 @@ GameSchema.methods.addPlayer = function (user, sessionId) {
   return true;
 };
 
-GameSchema.methods.export = function (user) {
+GameSchema.methods.forPlayer = function (user) {
   //TODO: complete
   return this;
 };
 
+//TODO: remove
 GameSchema.methods.exportForPlayer = function (profile) {
 
   var self = this,
-      uid = profile.uid;
+    uid = profile.uid;
 
   var playerId = -1;
   for (var i = 0, len = this.players.length; i < len; i++) {
@@ -278,16 +308,16 @@ GameSchema.methods.exportForPlayer = function (profile) {
 //TODO: test
 GameSchema.statics.findByUser = function (user, callback, limit) {
   this.find()
-      .where("meta.active").equals(true)
-      .where({ $or: [
-        { "players.player1.uid": user.uid },
-        { "players.player2.uid": user.uid },
-        { "players.player3.uid": user.uid },
-        { "players.player4.uid": user.uid }
-      ]})
-      .limit(limit || 10)
-      .sort("+meta.created")
-      .exec(callback);
+    .where("meta.active").equals(true)
+    .or([
+    { "players.player1.uid": user.uid },
+    { "players.player2.uid": user.uid },
+    { "players.player3.uid": user.uid },
+    { "players.player4.uid": user.uid }
+  ])
+    .limit(limit || 10)
+    .sort("+meta.created")
+    .exec(callback);
 };
 
 // TODO: test
@@ -311,7 +341,7 @@ GameSchema.statics.join = function (gameId, user, sessionId, successCallback, er
         return wrapError(errorCallback, "user could not join the game");
 
       if (game.canBeStarted() && !game.start())
-          return wrapError(errorCallback, "failed to start game");
+        return wrapError(errorCallback, "failed to start game");
 
       game.save(function () {
         successCallback(game);
@@ -321,9 +351,6 @@ GameSchema.statics.join = function (gameId, user, sessionId, successCallback, er
   });
 };
 
-function wrapError(callback, message) {
-  callback(message);
-}
 
 module.exports = {
   model: function (db) {

@@ -2,15 +2,15 @@
  * Module dependencies.
  */
 
-var express = require("express")
-    , routes = require("./routes")
-    , http = require("http")
-    , path = require("path")
-    , app = express()
-    , server = http.createServer(app)
-    , io = require("socket.io").listen(server)
-    , config = require("./config")
-    , _ = require("underscore")._;
+var express = require("express"),
+  routes = require("./routes"),
+  http = require("http"),
+  path = require("path"),
+  app = express(),
+  server = http.createServer(app),
+  io = require("socket.io").listen(server),
+  config = require("./config"),
+  _ = require("underscore")._;
 
 
 app.configure(function () {
@@ -46,11 +46,10 @@ server.listen(config.port);
 
 // game
 var mongoose = require("mongoose"),
-    gameSchema = require('./game');
+  gameSchema = require('./game');
 
-db = mongoose.createConnection(config.db.host, config.db.name);
-
-var Game = db.model('Game', gameSchema);
+var db = mongoose.createConnection(config.db.host, config.db.name),
+  Game = db.model('Game', gameSchema);
 
 db.on('error', console.error.bind(console, 'connection error:'));
 
@@ -129,27 +128,27 @@ io.sockets.on('connection', function (socket) {
 
   socket.on("game:create", function () {
     Game.create(
-        user,
-        function (game) {
-          socket.emit("game:created", game);
-        },
-        function (error) {
-          socket.emit("game:createfailed", error);
-        }
+      user,
+      function (game) {
+        socket.emit("game:created", game);
+      },
+      function (error) {
+        socket.emit("game:createfailed", error);
+      }
     );
   });
 
   socket.on("game:join", function (data) {
     Game.join(data.id, user, socket.id,
-        function (game) {
-          //TODO: emit players
-          io.sockets.emit("game:started", game);
-          //TODO emit all not in game with new availalble list
-        },
-        function (error) {
-          //TODO: emit players
-          socket.emit("game:createfailed", error);
-        });
+      function (game) {
+        //TODO: emit players
+        io.sockets.emit("game:started", game);
+        //TODO emit all not in game with new availalble list
+      },
+      function (error) {
+        //TODO: emit players
+        socket.emit("game:createfailed", error);
+      });
   });
 
   socket.on("game:current", function () {
@@ -161,6 +160,18 @@ io.sockets.on('connection', function (socket) {
           socket.emit.emit("game:list:available", games)
         });
     });
+  });
+
+  socket.on("game:turn", function (data) {
+    Game.turn(data.id,
+      function (game, flag) {
+
+        //TODO: define flags, define states
+      },
+      function (error) {
+        socket.emit("game:turnfailed", error);
+      }
+    );
   });
 
   socket.on('disconnect', function () {
