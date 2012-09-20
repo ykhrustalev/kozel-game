@@ -139,7 +139,7 @@ GameSchema.methods.start = function () {
   }
 
   this.meta.active = true;
-  this.meta.started = new Date;
+  this.meta.started = new Date();
 
   this.newRound();
   var player = this.findPlayerByCard(deck.Suite.Diamonds, deck.Type.Ace);

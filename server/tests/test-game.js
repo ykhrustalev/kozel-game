@@ -123,6 +123,34 @@ module.exports = {
     assertUser(game, "player4", user4, 2);
 
     test.done();
+  },
+
+  testStart: function (test) {
+
+    test.expect(3);
+
+    Game.create(createUser(), function (game) {
+      game.addPlayer(createUser());
+      game.addPlayer(createUser());
+      game.addPlayer(createUser());
+      game.save(function () {
+        test.ok(game.start(), "failed to start game");
+        test.ok(!game.start(), "started already running game");
+
+        Game.create(createUser(), function (game) {
+          game.addPlayer(createUser());
+          game.addPlayer(createUser());
+          game.save(function () {
+            test.ok(!game.start(), "started game with incomplete player set");
+            test.done();
+          });
+
+        });
+      }, function () {
+        test.done();
+      });
+    });
+
   }
 
 };
