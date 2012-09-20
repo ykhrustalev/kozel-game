@@ -107,49 +107,65 @@ io.sockets.on('connection', function (socket) {
    * <- game:created (game) [all:available]
    * <- game:createfailed (error) [user]
    *
-   * -> game:join ()
+   * -> game:join (id)
    * <- game:joined (game) [players]
    * <- game:joinfailed (error) [user]
    * <- game:started (game) [palyers]
    *
+   * -> game:current ()
    * -> game:turn (card)
    * <- game:turnfailed [user]
-   * <- game:turned (game) [players]
+   * <- game:current (game) [players]
    * <- game:roundend (game) [players]
    * <- game:gameend (game) [players]
    *
    */
 
-  socket.on("game:create", function () {
-    Game.create(user, function (data) {
-      socket.emit("game:created", data);
+  socket.on("game:list:available:", function () {
+    Game.listAvailable(function (games) {
+      socket.emit.emit("game:list:available", games)
     });
   });
 
-  socket.on("game:join", function (data) {
-    Game.join(data.id, user,
-        function () {
-
-        },
+  socket.on("game:create", function () {
+    Game.create(
+        user,
         function (game) {
+          socket.emit("game:created", game);
+        },
+        function (error) {
+          socket.emit("game:createfailed", error);
+        }
+    );
+  });
+
+  socket.on("game:join", function (data) {
+    Game.join(data.id, user, socket.id,
+        function (game) {
+          //TODO: emit players
           io.sockets.emit("game:started", game);
+          //TODO emit all not in game with new availalble list
+        },
+        function (error) {
+          //TODO: emit players
+          socket.emit("game:createfailed", error);
         });
   });
 
-  socket.on("games:available", emitAvailableGames);
-
   socket.on("game:current", function () {
-    Game.findByUser(user, function (error, data) {
-      if (data && data[0]) {
-        socket.emit("game:current", data[0].exportForPlayer(user.uid));
-      } else {
-        socket.emit("game:current", null);
-      }
+    Game.current(user, function (game) {
+      if (game)
+        socket.emit("game:current", game);
+      else
+        Game.listAvailable(function (games) {
+          socket.emit.emit("game:list:available", games)
+        });
     });
   });
 
   socket.on('disconnect', function () {
     console.log('user disconnected: ', arguments);
+    // TODO: notify game
     io.sockets.emit('user disconnected', user);
   });
 
