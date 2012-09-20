@@ -5,22 +5,31 @@ var _ = require("underscore")._,
 
 var Schema = mongoose.Schema;
 
+/**
+ * Helper schema for player
+ * @type {Object}
+ */
 var PlayerSchema = {
   uid   : Number,
   teamId: Number, // 1|2
   name  : String
 };
 
+/**
+ * Game schema, how it is kept in db
+ *
+ * @type {Schema}
+ */
 var GameSchema = new Schema({
 
   meta: {
-    created     : { type: Date, default: Date.now },
+    created     : { type: Date, "default": Date.now },
     started     : Date,
-    active      : { type: Boolean, default: false },
-    playersCount: { type: Number, default: 0 },
+    active      : { type: Boolean, "default": false },
+    playersCount: { type: Number, "default": 0 },
     score       : {
-      team1: { type: Number, default: 0 },
-      team2: { type: Number, default: 0 }
+      team1: { type: Number, "default": 0 },
+      team2: { type: Number, "default": 0 }
     },
     hasEquals   : Boolean
   },
@@ -130,7 +139,12 @@ GameSchema.statics.create = function (user, successCallback, errorCallback) {
 };
 
 
-// TODO
+/**
+ * Starts game, shuffles cards ands prepares to the first round, does not
+ * saves game.
+ *
+ * @return {Boolean}
+ */
 GameSchema.methods.start = function () {
 
   if (this.meta.active || this.meta.playersCount !== 4) {
@@ -171,7 +185,7 @@ GameSchema.methods.newTurn = function (firstPlayer) {
 
   var turn = this.round.turn;
 
-  turn.created = new Date;
+  turn.created = new Date();
   turn.currentPlayer = firstPlayer;
   turn.player1 = "";
   turn.player2 = "";
@@ -185,10 +199,11 @@ GameSchema.methods.findPlayerByCard = function (suite, type) {
 
   var cardId = deck.cardIdFor(suite, type),
     cards = this.round.cards,
-    playerId = cards.player1.indexOf(cardId) >= 0 ? 1
-      : cards.player2.indexOf(cardId) >= 0 ? 2
-      : cards.player3.indexOf(cardId) >= 0 ? 3
-      : cards.player4.indexOf(cardId) >= 0 ? 4 : -1;
+    playerId = cards.player1.indexOf(cardId) >= 0
+      ? 1 : cards.player2.indexOf(cardId) >= 0
+      ? 2 : cards.player3.indexOf(cardId) >= 0
+      ? 3 : cards.player4.indexOf(cardId) >= 0
+      ? 4 : -1;
 
   if (playerId === -1) {
     console.error("unknown card", cardId, cards);
@@ -198,9 +213,13 @@ GameSchema.methods.findPlayerByCard = function (suite, type) {
   return "player" + playerId;
 };
 
-//TODO
+/**
+ * Checks wether game is ready to start.
+ *
+ * @return {Boolean}
+ */
 GameSchema.methods.canBeStarted = function () {
-  return this.meta.playersCount == 4;
+  return this.meta.playersCount === 4;
 };
 
 /**
@@ -218,7 +237,13 @@ GameSchema.methods.isUserJoined = function (user) {
     || p.player4.uid === uid;
 };
 
-// TODO: test
+/**
+ * Assigns user to game with his session
+ *
+ * @param user      - user to assing
+ * @param sessionId - users' session id
+ * @return {Boolean}
+ */
 GameSchema.methods.addPlayer = function (user, sessionId) {
 
   if (this.meta.playersCount >= 4 || this.isUserJoined(user)) {
