@@ -51,7 +51,9 @@ var GameSchema = new Schema({
   round: {
     created: { type: Date, "default": Date.now },
 
-    shufflePlayer: String,
+    number: { type: Number, "default": 0 },
+
+    shuffledPlayer: String,
 
     rate: { type: Number, "default": 1},
 
@@ -90,6 +92,37 @@ var GameSchema = new Schema({
 function wrapError(callback, message) {
   callback(message);
 }
+
+//TODO
+function prevPlayer(playerId) {
+  if (playerId === "player1") {
+    return "player4";
+  } else if (playerId === "player2") {
+    return "player1";
+  } else if (playerId === "player3") {
+    return "player2";
+  } else if (playerId === "player4") {
+    return "player3";
+  } else {
+    throw new Error("unknown playerId " + playerId);
+  }
+}
+
+//TODO
+function nextPlayer(playerId) {
+  if (playerId === "player1") {
+    return "player2";
+  } else if (playerId === "player2") {
+    return "player3";
+  } else if (playerId === "player3") {
+    return "player4";
+  } else if (playerId === "player4") {
+    return "player1";
+  } else {
+    throw new Error("unknown playerId " + playerId);
+  }
+}
+
 
 /**
  * Lists games available for join, ordered desc by create date.
@@ -148,7 +181,6 @@ GameSchema.statics.create = function (user, successCallback, errorCallback) {
 GameSchema.methods.start = function () {
 
   if (this.meta.active || this.meta.playersCount !== 4) {
-    console.error("can't start", this);
     return false;
   }
 
@@ -156,8 +188,6 @@ GameSchema.methods.start = function () {
   this.meta.started = new Date();
 
   this.newRound();
-  var player = this.findPlayerByCard(deck.Suite.Diamonds, deck.Type.Ace);
-  this.newTurn(player);
 
   return true;
 };
@@ -167,17 +197,40 @@ GameSchema.methods.newRound = function (rate) {
 
   var split = deck.split(4),
     round = this.round,
-    cards = round.cards;
+    cards = round.cards,
+    isFirstRound = !round.number,
+    winner,
+    firstHand;
+
+
+  if (isFirstRound) {
+    winner = "team" + (round.score.team1 > round.score.team2 ? 1 : 2);
+    this.meta.score[winner] += 2 * round.rate;
+  }
+
+  round.created = new Date();
+  round.numver += 1;
+  round.score.team1 = 0;
+  round.score.team2 = 0;
+  round.rate = rate || 1;
 
   cards.player1 = deck.getCardIds(split.shift());
   cards.player2 = deck.getCardIds(split.shift());
   cards.player3 = deck.getCardIds(split.shift());
   cards.player4 = deck.getCardIds(split.shift());
 
-  if (rate) {
-    round.rate = rate;
+  if (isFirstRound) {
+    firstHand = this.findPlayerByCard(
+      deck.Suite.Diamonds,
+      deck.Type.Ace
+    );
+    round.shuffledPlayer = prevPlayer(firstHand);
+  } else {
+    round.shuffledPlayer = nextPlayer(round.shuffledPlayer);
+    firstHand = nextPlayer(round.shuffledPlayer);
   }
 
+  this.newTurn(firstHand);
 };
 
 // TODO
@@ -206,8 +259,7 @@ GameSchema.methods.findPlayerByCard = function (suite, type) {
       ? 4 : -1;
 
   if (playerId === -1) {
-    console.error("unknown card", cardId, cards);
-    throw new Error("unknown card");
+    throw new Error("unknown card " + cardId);
   }
 
   return "player" + playerId;
@@ -356,8 +408,10 @@ GameSchema.statics.join = function (gameId, user, sessionId, successCallback, er
 
     Game.findOne({"_id": gameId}, function (error, game) {
 
-      if (error || !game)
-        return wrapError(errorCallback, "game not found");
+      if (error || !game) {
+        wrapError(errorCallback, "game not found");
+        return
+      }
 
       if (game.isUserJoined(user))
         return wrapError(errorCallback, "user already joined that game");
@@ -376,6 +430,9 @@ GameSchema.statics.join = function (gameId, user, sessionId, successCallback, er
   });
 };
 
+GameSchema.statics.prevPlayer = prevPlayer;
+
+GameSchema.statics.nextPlayer = nextPlayer;
 
 module.exports = {
   model: function (db) {

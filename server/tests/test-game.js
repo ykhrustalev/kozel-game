@@ -151,6 +151,18 @@ module.exports = {
       });
     });
 
+  },
+
+  //TODO: complete
+  testNewRound: function(test) {
+    var game = new Game(),
+      cards;
+
+    game.newRound();
+    cards = _.clone(game.cards);
+//    test.done(_.inter)
+
+    test.done();
   }
 
 };
