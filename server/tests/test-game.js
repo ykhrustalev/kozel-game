@@ -169,6 +169,39 @@ module.exports = {
 
   },
 
+  testGetArrangedPlayersForPlayer: function (test) {
+    var game = new Game(),
+      user1 = createUser(),
+      user2 = createUser(),
+      user3 = createUser(),
+      user4 = createUser();
+    game.addPlayer(user1, "1");
+    game.addPlayer(user2, "2");
+    game.addPlayer(user3, "3");
+    game.addPlayer(user4, "4");
+
+    function assertArrangement(arranged, expected) {
+      var item,
+        user;
+      test.equals(arranged.length, expected.length);
+      for (item = arranged.shift(); item; item = arranged.shift()) {
+        user = expected.shift();
+        test.equals(item.uid, user.uid);
+      }
+    }
+
+    assertArrangement(game.getArrangedPlayersForPlayer("player1"),
+                      [user2, user3, user4, user1]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player2"),
+                      [user3, user4, user1, user2]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player3"),
+                      [user4, user1, user2, user3]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player4"),
+                      [user1, user2, user3, user4]);
+
+    test.done();
+  },
+
   //TODO: complete
   testNewRound: function (test) {
     var game = new Game(),

@@ -95,6 +95,7 @@ function wrapError(callback, message) {
 
 /**
  * Returns previous player id from provided.
+ * Client should take care of exception.
  *
  * @param playerId - current player
  * @return {String} "player{1|2|3|4}"
@@ -115,6 +116,7 @@ function prevPlayer(playerId) {
 
 /**
  * Returns next player id from provided.
+ * Client should take care of exception.
  *
  * @param playerId - current player
  * @return {String} "player{1|2|3|4}"
@@ -175,7 +177,7 @@ GameSchema.statics.create = function (user, successCallback, errorCallback) {
       return;
     }
     game.save(function () {
-      successCallback(game.forPlayer(user));
+      successCallback(game);
     });
 
   });
@@ -314,82 +316,69 @@ GameSchema.methods.addPlayer = function (user, sessionId) {
 
   this.meta.playersCount += 1;
 
-  this.players["player" + this.meta.playersCount] = {
+  var playerId = "player" + this.meta.playersCount;
+
+  this.players[playerId] = {
     uid   : user.uid,
     teamId: (this.meta.playersCount % 2) ? 1 : 2,
     name  : user.first_name + ' ' + user.last_name
   };
 
-  this.sessions["player" + this.meta.playersCount] = sessionId;
+  this.sessions[playerId] = sessionId;
 
   return true;
 };
 
-GameSchema.methods.forPlayer = function (user) {
-  //TODO: complete
-  return this;
+//TODO: test
+GameSchema.methods.getPlayerIdForUser = function (user) {
+  var p = this.players,
+    uid = user.uid,
+    id;
+  id = p.player1.uid === uid
+    ? 1 : p.player2.uid === uid
+    ? 2 : p.player3.uid === uid
+    ? 3 : p.player4.uid === uid ? 4 : null;
+  return id ? "player" + id : id;
+};
+
+//TODO: test
+GameSchema.methods.getArrangedPlayersForPlayer = function (playerId) {
+  var source = this.players,
+    result = [],
+    i;
+  for (i = 0; i < 4; i += 1) {
+    playerId = nextPlayer(playerId);
+    result.push(source[playerId]);
+  }
+  return result;
 };
 
 //TODO: remove
-GameSchema.methods.exportForPlayer = function (user) {
+GameSchema.methods.forUser = function (user) {
 
-  var self = this,
-    uid = user.uid;
+  var playerId,
+    exportData = {};
 
-  var playerId = -1;
-  for (var i = 0, len = this.players.length; i < len; i++) {
-    if (this.players[i].uid == uid) {
-      playerId = i;
-      break;
-    }
+  playerId = this.getPlayerIdForUser(user);
+  if (!playerId) {
+    console.log("player is not in game", user, this);
+    return null;
   }
 
-  if (playerId === -1) {
-    throw new Error("player out of scope", this, uid)
-  }
+  exportData.players = this.getArrangedPlayersForPlayer(playerId);
 
-  var teamId = (this.teams.team1.indexOf(playerId) >= 0) ? 0 : 1;
+  exportData.meta = this.meta;
 
-  var playerIds = [];
-  if (playerId == 0) {
-    playerIds = [1, 2, 3, 0];
-  } else if (playerId == 1) {
-    playerIds = [2, 3, 0, 1];
-  } else if (playerId == 2) {
-    playerIds = [3, 0, 1, 2];
-  } else {
-    playerIds = [0, 1, 2, 3];
-  }
-
-  var players = [];
-  playerIds.forEach(function (id) {
-    var name = self.players[id] ? self.players[id].name : "";
-    players.push(name);
-  });
-
-  var turn = [];
-  if (this.turn && this.turn.length) {
-    playerIds.forEach(function (id) {
-      turn.push(self.turn[id])
-    });
-  }
-
-  var cards = [];
-  if (this.hands && this.hands[playerId]) {
-    cards = this.hands[playerId].cards;
-  }
-
-
-  return {
-    score  : {
-      team0: this.score["team" + teamId],
-      team1: this.score["team" + (teamId ? 0 : 1)]
-    },
-    players: players,
-    cards  : cards,
-    turn   : turn,
-    active : this.hands && this.hands.length
+  exportData.player = {
+    cards   : this.round.cards[playerId],
+    teamId  : this.players[playerId].teamId,
+    playerId: playerId
   };
+
+  exportData.round = this.round;
+  delete exportData.round.cards;
+
+  return exportData;
 };
 
 //TODO: test
@@ -397,44 +386,42 @@ GameSchema.statics.findByUser = function (user, callback, limit) {
   this.find()
     .where("meta.active").equals(true)
     .or([
-    { "players.player1.uid": user.uid },
-    { "players.player2.uid": user.uid },
-    { "players.player3.uid": user.uid },
-    { "players.player4.uid": user.uid }
-  ])
+      { "players.player1.uid": user.uid },
+      { "players.player2.uid": user.uid },
+      { "players.player3.uid": user.uid },
+      { "players.player4.uid": user.uid }
+    ])
     .limit(limit || 10)
     .sort("+meta.created")
     .exec(callback);
 };
 
 // TODO: test
-GameSchema.statics.join = function (gameId, user, sessionId, successCallback, errorCallback) {
+GameSchema.statics.join = function (gameId, user, sessionId,
+                                    successCallback, errorCallback) {
   var Game = this;
 
   this.findByUser(user, function (error, games) {
 
-    if (games)
-      return wrapError(errorCallback, "user is assigned to other game");
+    if (games) {
+      wrapError(errorCallback, "user is assigned to other game");
+      return;
+    }
 
     Game.findOne({"_id": gameId}, function (error, game) {
-
       if (error || !game) {
         wrapError(errorCallback, "game not found");
-        return
+      } else if (game.isUserJoined(user)) {
+        wrapError(errorCallback, "user already joined that game");
+      } else if (!game.addPlayer(user, sessionId)) {
+        wrapError(errorCallback, "user could not join the game");
+      } else if (game.canBeStarted() && !game.start()) {
+        wrapError(errorCallback, "failed to start game");
+      } else {
+        game.save(function () {
+          successCallback(game);
+        });
       }
-
-      if (game.isUserJoined(user))
-        return wrapError(errorCallback, "user already joined that game");
-
-      if (!game.addPlayer(user, sessionId))
-        return wrapError(errorCallback, "user could not join the game");
-
-      if (game.canBeStarted() && !game.start())
-        return wrapError(errorCallback, "failed to start game");
-
-      game.save(function () {
-        successCallback(game);
-      })
     });
 
   });
@@ -444,6 +431,7 @@ GameSchema.statics.prevPlayer = prevPlayer;
 
 GameSchema.statics.nextPlayer = nextPlayer;
 
+// TODO: export schema only?
 module.exports = {
   model: function (db) {
     return db.model("Game", GameSchema);
