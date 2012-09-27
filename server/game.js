@@ -82,16 +82,11 @@ var GameSchema = new Schema({
 
 });
 
-
-/**
- * Helper for passing error to callback.
- *
- * @param callback - callback
- * @param message  - erorr message
- */
-function wrapError(callback, message) {
-  callback(message);
-}
+var ERRORS = {
+  USER_ALREADY_JOINED           : 1,
+  USER_COULD_NOT_BE_JOINED      : 2,
+  USER_IS_ASSIGNED_TO_OTHER_GAME: 3
+};
 
 /**
  * Returns previous player id from provided.
@@ -164,16 +159,16 @@ GameSchema.statics.listAvailable = function (callback, limit) {
  */
 GameSchema.statics.create = function (user, successCallback, errorCallback) {
   var Game = this;
-  Game.findByUser(user, function (error, games) {
+  Game.findByUser(user, function (games) {
 
     if (games && games.length) {
-      wrapError(errorCallback, "user already joined");
+      errorCallback(ERRORS.USER_ALREADY_JOINED);
       return;
     }
 
     var game = new Game();
     if (!game.addPlayer(user)) {
-      wrapError(errorCallback, "user could not be joined");
+      errorCallback(ERRORS.USER_COULD_NOT_BE_JOINED);
       return;
     }
     game.save(function () {
@@ -381,42 +376,52 @@ GameSchema.methods.forUser = function (user) {
   return exportData;
 };
 
-//TODO: test
-GameSchema.statics.findByUser = function (user, callback, limit) {
+//TODO: test findActiveGame
+GameSchema.statics.findByUser = function (user, callback, limit, active) {
+  var uid = user.uid,
+    uidCondition = [
+      { "players.player1.uid": uid },
+      { "players.player2.uid": uid },
+      { "players.player3.uid": uid },
+      { "players.player4.uid": uid }
+    ];
   this.find()
-    .where("meta.active").equals(true)
-    .or([
-      { "players.player1.uid": user.uid },
-      { "players.player2.uid": user.uid },
-      { "players.player3.uid": user.uid },
-      { "players.player4.uid": user.uid }
-    ])
+//    .where("meta.active").equals(!!active)
+    .or(uidCondition)
     .limit(limit || 10)
     .sort("+meta.created")
-    .exec(callback);
+    .exec(function (error, games) {
+      callback(games);
+    });
+};
+
+GameSchema.statics.currentForUser = function (user, callback) {
+  this.findByUser(user, function (games) {
+    callback(games && games.length ? games[0] : null);
+  });
 };
 
 // TODO: test
-GameSchema.statics.join = function (gameId, user, sessionId,
-                                    successCallback, errorCallback) {
+GameSchema.statics.join = function (gameId, user, sessionId, successCallback, errorCallback) {
   var Game = this;
 
-  this.findByUser(user, function (error, games) {
+  this.findByUser(user, function (games) {
 
     if (games) {
-      wrapError(errorCallback, "user is assigned to other game");
+      errorCallback(ERRORS.USER_IS_ASSIGNED_TO_OTHER_GAME);
       return;
     }
 
+    //TODO error to constants
     Game.findOne({"_id": gameId}, function (error, game) {
       if (error || !game) {
-        wrapError(errorCallback, "game not found");
+        errorCallback("game not found");
       } else if (game.isUserJoined(user)) {
-        wrapError(errorCallback, "user already joined that game");
+        errorCallback("user already joined that game");
       } else if (!game.addPlayer(user, sessionId)) {
-        wrapError(errorCallback, "user could not join the game");
+        errorCallback("user could not join the game");
       } else if (game.canBeStarted() && !game.start()) {
-        wrapError(errorCallback, "failed to start game");
+        errorCallback("failed to start game");
       } else {
         game.save(function () {
           successCallback(game);
@@ -431,9 +436,10 @@ GameSchema.statics.prevPlayer = prevPlayer;
 
 GameSchema.statics.nextPlayer = nextPlayer;
 
-// TODO: export schema only?
 module.exports = {
   model: function (db) {
     return db.model("Game", GameSchema);
-  }
+  },
+
+  ERRORS: ERRORS
 };

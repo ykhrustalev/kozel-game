@@ -20,7 +20,7 @@ app.configure(function () {
   app.engine('html', require('consolidate').hogan);
   app.set("env", config.env);
   app.use(express.favicon());
-  app.use(express.logger("dev"));
+//  app.use(express.logger("dev"));
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser(config.secret));
@@ -59,6 +59,7 @@ io.configure(function () {
   // vk authentication on demand
   io.set('authorization', function (handshakeData, callback) {
 
+  console.log("!!authorization", handshakeData.sessionID);
     var data;
     if (!config.isLocal) {
 
@@ -71,8 +72,8 @@ io.configure(function () {
         isAuthenticated: true,
         profile        : {
           uid       : _.uniqueId(),
-          first_name: "first_name",
-          last_name : "last_name"
+          first_name: "first_name " + _.uniqueId(),
+          last_name : "last_name " + _.uniqueId()
         }
       };
     }
@@ -158,10 +159,9 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:current", function () {
-
-    Game.findByUser(user, function (error, games) {
-      if (games && games.length) {
-        socket.emit("game:current", games[0]);
+    Game.currentForUser(user, function (game) {
+      if (game) {
+        socket.emit("game:current", game);
       } else {
         Game.listAvailable(function (games) {
           socket.emit("game:list:available", games);

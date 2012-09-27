@@ -141,7 +141,7 @@ module.exports = {
     test.done();
   },
 
-  testStart   : function (test) {
+  testStart: function (test) {
 
     test.expect(3);
 
@@ -191,19 +191,44 @@ module.exports = {
     }
 
     assertArrangement(game.getArrangedPlayersForPlayer("player1"),
-                      [user2, user3, user4, user1]);
+      [user2, user3, user4, user1]);
     assertArrangement(game.getArrangedPlayersForPlayer("player2"),
-                      [user3, user4, user1, user2]);
+      [user3, user4, user1, user2]);
     assertArrangement(game.getArrangedPlayersForPlayer("player3"),
-                      [user4, user1, user2, user3]);
+      [user4, user1, user2, user3]);
     assertArrangement(game.getArrangedPlayersForPlayer("player4"),
-                      [user1, user2, user3, user4]);
+      [user1, user2, user3, user4]);
 
     test.done();
   },
 
+  testFindByUser: function (test) {
+    var user = createUser();
+    test.expect(4);
+    Game.create(user, function (game) {
+      Game.findByUser(user, function (games) {
+        test.ok(games);
+        test.ok(games.length === 1);
+        test.ok(game.id);
+        test.equals(game.id, games[0].id);
+        test.done();
+      });
+    });
+  },
+
+  testCurrentForUser: function (test) {
+    var user = createUser();
+    test.expect(1);
+    Game.create(user, function (created) {
+      Game.currentForUser(user, function (found) {
+        test.equals(created.id, found.id);
+        test.done();
+      });
+    });
+  },
+
   //TODO: complete
-  testNewRound: function (test) {
+  testNewRound      : function (test) {
     var game = new Game(),
       cards;
 

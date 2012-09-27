@@ -1,10 +1,11 @@
 define([
+  "underscore",
   "backbone",
   "util/dispatcher",
   "util/socket",
   "view/dashboard",
   "view/desk"
-], function (Backbone, dispatcher, socket, dashboardView, deskView) {
+], function (_, Backbone, dispatcher, socket, dashboardView, deskView) {
 
   "use strict";
 
@@ -49,12 +50,8 @@ define([
         router.showDashboard(games);
       });
 
-      socket.on("game:current", function (game) {
-        if (game) {
-          router.showDesk(game);
-        } else {
-          socket.emit("game:list:available");
-        }
+      socket.on("game:current", function (data) {
+        router.showDesk(data);
       });
 
       socket.on("game:start", function (game) {
