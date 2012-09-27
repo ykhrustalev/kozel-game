@@ -46,10 +46,10 @@ server.listen(config.port);
 
 // game
 var mongoose = require("mongoose"),
-  gameSchema = require('./game');
+  g = require('./game');
 
 var db = mongoose.createConnection(config.db.host, config.db.name),
-  Game = db.model('Game', gameSchema);
+  Game = g.model(db);
 
 db.on('error', console.error.bind(console, 'connection error:'));
 
@@ -70,7 +70,7 @@ io.configure(function () {
       data = {
         isAuthenticated: true,
         profile        : {
-          uid       : _.identity(),
+          uid       : _.uniqueId(),
           first_name: "first_name",
           last_name : "last_name"
         }
@@ -95,6 +95,8 @@ function emitAvailableGames() {
 io.sockets.on('connection', function (socket) {
 
   var user = socket.handshake.profile;
+
+  socket.join("available");
 
   /**
    * client API:
@@ -122,7 +124,7 @@ io.sockets.on('connection', function (socket) {
 
   socket.on("game:list:available:", function () {
     Game.listAvailable(function (games) {
-      socket.emit.emit("game:list:available", games)
+      socket.emit.emit("game:list:available", games);
     });
   });
 
@@ -130,6 +132,8 @@ io.sockets.on('connection', function (socket) {
     Game.create(
       user,
       function (game) {
+        socket.leave("available");
+        socket.join("game:" + game._id);
         socket.emit("game:created", game);
       },
       function (error) {
@@ -142,7 +146,9 @@ io.sockets.on('connection', function (socket) {
     Game.join(data.id, user, socket.id,
       function (game) {
         //TODO: emit players
-        io.sockets.emit("game:started", game);
+        socket.leave("available");
+        socket.join("game:" + game._id);
+        io.sockets["game:" + game._id].emit("game:started", game);
         //TODO emit all not in game with new availalble list
       },
       function (error) {
@@ -152,13 +158,15 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:current", function () {
-    Game.current(user, function (game) {
-      if (game)
-        socket.emit("game:current", game);
-      else
+
+    Game.findByUser(user, function (error, games) {
+      if (games && games.length) {
+        socket.emit("game:current", games[0]);
+      } else {
         Game.listAvailable(function (games) {
-          socket.emit.emit("game:list:available", games)
+          socket.emit("game:list:available", games);
         });
+      }
     });
   });
 

@@ -1,9 +1,10 @@
 define([
+  "jquery",
   'view/base',
   'collection/games',
   'util/socket',
   'util/dispatcher'
-], function (BaseView, GameCollection, socket, dispatcher) {
+], function ($, BaseView, GameCollection, socket, dispatcher) {
 
   'use strict';
 
@@ -12,8 +13,7 @@ define([
     tpl: 'dashboard',
 
     initialize: function () {
-      this.collection = new GameCollection;
-      socket.emit("games:available");
+      this.collection = new GameCollection();
     },
 
     events: {
@@ -26,7 +26,7 @@ define([
     },
 
     newGame: function () {
-      socket.emit("game:new");
+      socket.emit("game:create");
     },
 
     joinGame: function (e) {
@@ -39,6 +39,6 @@ define([
 
   });
 
-  return new View;
+  return new View();
 
 });

@@ -11,24 +11,17 @@ define([
   var AppRouter = Backbone.Router.extend({
 
     routes: {
-      ""        : "triggerDashboard",
-      "!/desk"  : "triggerDesk",
-
-      // Default
-      "*actions": "triggerDashboard"
+      "*actions": "updateState"
     },
 
+    updateState: function () {
+      socket.emit("game:current");
+    },
 
-    showDashboard: function () {
+    showDashboard: function (games) {
+      dashboardView.collection.reset();
+      dashboardView.collection.add(games);
       this.setActivePage(dashboardView);
-    },
-
-    triggerDashboard: function () {
-      socket.emit("game:current");
-    },
-
-    triggerDesk: function() {
-      socket.emit("game:current");
     },
 
     showDesk: function (data) {
@@ -46,45 +39,37 @@ define([
 
     bindSocket: function () {
 
-      var appRouter = this;
+      var router = this;
 
-      dispatcher.on("game:created", function () {
-        appRouter.navigate("", {trigger: true});
+      socket.on("game:created", function (game) {
+        router.showDesk(game);
       });
 
-      socket.on("games:available", function (data) {
-        var view = appRouter.activeView;
-        if (view && view.tpl== "dashboard") {
-          view.collection.reset();
-          view.collection.add(data);
-          appRouter.setActivePage(view);
-        }
+      socket.on("game:list:available", function (games) {
+        router.showDashboard(games);
       });
-
 
       socket.on("game:current", function (game) {
         if (game) {
-          appRouter.navigate("!/desk", {trigger: false});
-          appRouter.showDesk(game);
+          router.showDesk(game);
         } else {
-          appRouter.navigate("", {trigger: false});
-          appRouter.showDashboard();
+          socket.emit("game:list:available");
         }
       });
 
-      socket.on("game:start", function (data) {
-        appRouter.navigate("!/desk", {trigger: false});
-        appRouter.showDesk(data);
+      socket.on("game:start", function (game) {
+        router.showDesk(game);
       });
     }
 
   });
 
-  var initialize = function () {
-    var appRouter = new AppRouter;
-    Backbone.history.start();
-    appRouter.bindSocket();
-  };
 
-  return { initialize: initialize };
+  return {
+    initialize: function () {
+      var appRouter = new AppRouter();
+      Backbone.history.start();
+      appRouter.bindSocket();
+    }
+  };
 });
