@@ -1,27 +1,26 @@
 define([
-  'view/base'         ,
-  'model/game',
-  'util/dispatcher'
-], function(BaseView, Game, dispatcher) {
+  "view/base",
+  "model/game",
+  "util/dispatcher"
+], function (BaseView, Game, dispatcher) {
 
-  'use strict';
+  "use strict";
 
   var View = BaseView.extend({
 
-    tpl: 'desk',
+    tpl: "desk",
 
-    model: new Game,
+    model: new Game(),
 
     events: {
-      'click .turn': 'doTurn'
+      'click .turn': "doTurn"
     },
 
-    doTurn: function() {
-
+    doTurn: function () {
       return false;
     }
 
   });
 
-  return new View;
+  return new View();
 });

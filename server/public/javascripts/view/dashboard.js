@@ -1,16 +1,16 @@
 define([
   "jquery",
-  'view/base',
-  'collection/games',
-  'util/socket',
-  'util/dispatcher'
+  "view/base",
+  "collection/games",
+  "util/socket",
+  "util/dispatcher"
 ], function ($, BaseView, GameCollection, socket, dispatcher) {
 
-  'use strict';
+  "use strict";
 
   var View = BaseView.extend({
 
-    tpl: 'dashboard',
+    tpl: "dashboard",
 
     initialize: function () {
       this.collection = new GameCollection();
@@ -35,7 +35,6 @@ define([
       socket.emit("game:join", {id: id});
       return false;
     }
-
 
   });
 

@@ -1,9 +1,9 @@
 define([
-  'backbone',
-  'model/game'
-], function(Backbone, GameModel) {
+  "backbone",
+  "model/game"
+], function (Backbone, GameModel) {
 
-  'use strict';
+  "use strict";
 
   return Backbone.Collection.extend({
     model: GameModel

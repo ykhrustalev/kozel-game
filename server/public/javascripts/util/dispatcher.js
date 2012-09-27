@@ -1,9 +1,9 @@
 define([
   "underscore",
   "backbone"
-], function(_, Backbone) {
+], function (_, Backbone) {
 
-  'use strict';
+  "use strict";
 
   return _.clone(Backbone.Events);
 });

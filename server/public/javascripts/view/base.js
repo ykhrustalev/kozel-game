@@ -1,11 +1,11 @@
 define([
-  'backbone',
-  'templates',
-  'backboneModelBinder',
-  'backboneValidation'
-], function(Backbone, Templates) {
+  "backbone",
+  "templates",
+  "backboneModelBinder",
+  "backboneValidation"
+], function (Backbone, Templates) {
 
-  'use strict';
+  "use strict";
 
   // force models to be updated with failed validation values
   Backbone.Validation.configure({
@@ -20,14 +20,14 @@ define([
   return Backbone.View.extend({
 
     // base binding DOM node for application views
-    el: '#container',
+    el : "#container",
 
     // template name to use
-    tpl: '',
+    tpl: "",
 
     _modelBinder: undefined,
 
-    initialize:function () {
+    initialize: function () {
       this._modelBinder = new Backbone.ModelBinder();
     },
 
@@ -35,8 +35,10 @@ define([
      * Cleans resources and releases binds for the view-model.
      * Should be called on view life end.
      */
-    close: function() {
-      this.onClose && this.onClose();
+    close: function () {
+      if (this.onClose) {
+        this.onClose();
+      }
       this.unbind();
       if (this.model) {
         this._modelBinder.unbind();
@@ -45,13 +47,14 @@ define([
     },
 
     /**
-     * Uses Handlebars library for templates rendering. Requires `tpl`
+     * Uses Hogan library for templates rendering. Requires `tpl`
      * property defined in view.
-     * Uses '#<tpl>-template' notation to search for the templates.
      * @return `this`
      */
-    render: function() {
-      this.onRender && this.onRender();
+    render: function () {
+      if (this.onRender) {
+        this.onRender();
+      }
       var template = Templates[this.tpl];
       this.$el.html(template.render(this.getData()));
 
@@ -59,13 +62,13 @@ define([
 
         // validation rendering
         Backbone.Validation.bind(this, {
-          valid: function(view, attr) {
-            view.$el.find('.group-' + attr).removeClass('error');
-            view.$el.find('.validation-' + attr).html('').hide();
+          valid  : function (view, attr) {
+            view.$el.find(".group-" + attr).removeClass("error");
+            view.$el.find(".validation-" + attr).html("").hide();
           },
-          invalid: function(view, attr, error) {
-            view.$el.find('.group-' + attr).addClass('error');
-            view.$el.find('.validation-' + attr).html(error).show();
+          invalid: function (view, attr, error) {
+            view.$el.find(".group-" + attr).addClass("error");
+            view.$el.find(".validation-" + attr).html(error).show();
           }
         });
 
@@ -80,8 +83,8 @@ define([
      * Derives data from view's binding to model
      * @return {*}
      */
-    getData: function() {
-      return this.model ? this.model.toJSON() : {}
+    getData: function () {
+      return this.model ? this.model.toJSON() : {};
     }
 
   });

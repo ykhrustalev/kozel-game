@@ -1,12 +1,10 @@
 define([
-  'backbone'
-], function(Backbone) {
+  "backbone"
+], function (Backbone) {
 
-  'use strict';
+  "use strict";
 
   return Backbone.Model.extend({
-
-    urlRoot: '/api/game/',
 
     idAttribute: "_id",
 
@@ -14,7 +12,7 @@ define([
       genders_allowed: 0
     },
 
-    initialize: function() {
+    initialize: function () {
 //      this.id = null;
       this.title = '';
       this.owner = '';
@@ -24,15 +22,14 @@ define([
       title: [
         {
           required: true,
-          msg: 'Обязательное поле'
+          msg     : 'Обязательное поле'
         },
         {
           maxLength: 255,
-          msg: 'Максимум 255 символов'
+          msg      : 'Максимум 255 символов'
         }
       ]
     }
 
   });
-})
-;
+});
