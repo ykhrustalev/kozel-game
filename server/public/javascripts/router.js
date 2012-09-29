@@ -16,6 +16,8 @@ define([
     },
 
     updateState: function () {
+      // TODO: remove debug
+      socket.emit("session");
       socket.emit("game:current");
     },
 
@@ -56,6 +58,11 @@ define([
 
       socket.on("game:start", function (game) {
         router.showDesk(game);
+      });
+
+      // TODO: remove debug
+      socket.on("session", function (data) {
+        console.log("session", data.handshake.sessionID, data.handshake);
       });
     }
 
