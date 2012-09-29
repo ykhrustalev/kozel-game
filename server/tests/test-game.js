@@ -1,8 +1,8 @@
-var _ = require('underscore')._,
-  mongoose = require("mongoose"),
-  g = require("../game"),
-  connection,
-  Game;
+var _ = require('underscore')._
+  , mongoose = require("mongoose")
+  , g = require("../game")
+  , connection
+  , Game;
 
 function createUser() {
   return {
@@ -117,12 +117,9 @@ module.exports = {
       game = new Game();
 
     function assertUser(game, playerId, user, teamId) {
-      test.equals(game.players[playerId].uid, user.uid,
-        "wrong player's order in game");
-      test.equals(game.players[playerId].teamId, teamId,
-        "wrong player's team in game");
-      test.equals(game.sessions[playerId], user.sessionId,
-        "wrong session assigned in game");
+      test.equals(game.players[playerId].uid, user.uid, "wrong player's order in game");
+      test.equals(game.players[playerId].teamId, teamId, "wrong player's team in game");
+      test.equals(game.sessions[playerId], user.sessionId, "wrong session assigned in game");
     }
 
     test.ok(game.addPlayer(user1));
@@ -170,11 +167,12 @@ module.exports = {
   },
 
   testGetArrangedPlayersForPlayer: function (test) {
-    var game = new Game(),
-      user1 = createUser(),
-      user2 = createUser(),
-      user3 = createUser(),
-      user4 = createUser();
+    var game = new Game()
+      , user1 = createUser()
+      , user2 = createUser()
+      , user3 = createUser()
+      , user4 = createUser();
+
     game.addPlayer(user1, "1");
     game.addPlayer(user2, "2");
     game.addPlayer(user3, "3");
@@ -190,14 +188,10 @@ module.exports = {
       }
     }
 
-    assertArrangement(game.getArrangedPlayersForPlayer("player1"),
-      [user2, user3, user4, user1]);
-    assertArrangement(game.getArrangedPlayersForPlayer("player2"),
-      [user3, user4, user1, user2]);
-    assertArrangement(game.getArrangedPlayersForPlayer("player3"),
-      [user4, user1, user2, user3]);
-    assertArrangement(game.getArrangedPlayersForPlayer("player4"),
-      [user1, user2, user3, user4]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player1"), [user2, user3, user4, user1]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player2"), [user3, user4, user1, user2]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player3"), [user4, user1, user2, user3]);
+    assertArrangement(game.getArrangedPlayersForPlayer("player4"), [user1, user2, user3, user4]);
 
     test.done();
   },
@@ -227,8 +221,27 @@ module.exports = {
     });
   },
 
+  testGetPlayerIdForUser: function (test) {
+    var p1 = createUser()
+      , p2 = createUser()
+      , p3 = createUser()
+      , p4 = createUser();
+
+    test.expect(4);
+    Game.create(p1, function (game) {
+      game.addPlayer(p2);
+      game.addPlayer(p3);
+      game.addPlayer(p4);
+      test.equals("player1", game.getPlayerIdForUser(p1));
+      test.equals("player2", game.getPlayerIdForUser(p2));
+      test.equals("player3", game.getPlayerIdForUser(p3));
+      test.equals("player4", game.getPlayerIdForUser(p4));
+      test.done();
+    });
+  },
+
   //TODO: complete
-  testNewRound      : function (test) {
+  testNewRound          : function (test) {
     var game = new Game(),
       cards;
 

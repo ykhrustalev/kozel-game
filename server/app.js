@@ -75,7 +75,6 @@ io.configure(function () {
   io.set("authorization", function (data, accept) {
 
     trace("authorization");
-    console.log("data: ", data);
     try {
       var _signed_cookies = cookie.parse(decodeURIComponent(data.headers.cookie));
       data.cookie = connect.utils.parseSignedCookies(_signed_cookies, config.secret);
@@ -110,8 +109,7 @@ io.configure(function () {
       trace("session valid");
       data.session = new Session(data, session);
 
-      var userResolver = config.isLocal ? utils.mockUser : vk.parseUrl,
-        userData = userResolver(data.headers.referer);
+      var userData = (config.isLocal ? utils.mockUser : vk.parseUrl)(data.headers.referer);
 
       if (userData.isAuthenticated) {
         data.profile = userData.profile;
@@ -165,7 +163,7 @@ io.sockets.on('connection', function (socket) {
       function (game) {
         socket.leave("available");
         socket.join("game:" + game._id);
-        socket.emit("game:created", game);
+        socket.emit("game:created", game.forUser(user));
       },
       function (error) {
         socket.emit("game:createfailed", error);
@@ -179,6 +177,7 @@ io.sockets.on('connection', function (socket) {
         //TODO: emit players
         socket.leave("available");
         socket.join("game:" + game._id);
+        // TODO: emit message directly to with .forUser(user)
         io.sockets["game:" + game._id].emit("game:started", game);
         //TODO emit all not in game with new availalble list
       },
