@@ -1,13 +1,11 @@
 var _ = require("underscore")._,
   deck = require("./deck"),
-  config = require("./config"),
   mongoose = require("mongoose");
 
 var Schema = mongoose.Schema;
 
 /**
  * Helper schema for player
- * @type {Object}
  */
 var PlayerSchema = {
   uid   : Number,
@@ -16,9 +14,7 @@ var PlayerSchema = {
 };
 
 /**
- * Game schema, how it is kept in db
- *
- * @type {Schema}
+ * Game schema, represents data structure in db
  */
 var GameSchema = new Schema({
 
