@@ -8,12 +8,13 @@ module.exports = {
 
   mockUser: function (queryString) {
     var queryParams = url.parse(queryString, true).query;
+    var uid = parseInt(queryParams.uid) || _.uniqueId();
     return {
       isAuthenticated: true,
       profile        : {
-        uid       : queryParams.uid || _.uniqueId(),
-        first_name: "first_name " + _.uniqueId(),
-        last_name : "last_name " + _.uniqueId()
+        uid       : uid,
+        first_name: "first_name " + uid,
+        last_name : "last_name " + uid
       }
     };
   }

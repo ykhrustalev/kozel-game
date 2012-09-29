@@ -1,11 +1,12 @@
 <div>
-    <h2>Счет: {{score.team0}} : {{score.team1}}</h2>
+    <h2>Счет: {{meta.score.team1}} : {{meta.score.team2}}</h2>
 </div>
+
 <div>
     <h2>Игроки</h2>
     <ul>
         {{#players}}
-        <li>{{.}}</li>
+        <li>{{#name}}{{name}}{{/name}}{{^name}}свободно{{/name}}</li>
         {{/players}}
     </ul>
 

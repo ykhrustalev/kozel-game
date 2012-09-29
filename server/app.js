@@ -152,8 +152,9 @@ io.sockets.on('connection', function (socket) {
    */
 
   socket.on("game:list:available:", function () {
+    // TODO: check that user is in game?
     Game.listAvailable(function (games) {
-      socket.emit.emit("game:list:available", games);
+      socket.emit("game:list:available", games);
     });
   });
 
@@ -164,6 +165,9 @@ io.sockets.on('connection', function (socket) {
         socket.leave("available");
         socket.join("game:" + game._id);
         socket.emit("game:created", game.forUser(user));
+        Game.listAvailable(function (games) {
+          io.sockets.in("available").emit("game:list:available", games);
+        });
       },
       function (error) {
         socket.emit("game:createfailed", error);
@@ -173,24 +177,28 @@ io.sockets.on('connection', function (socket) {
 
   socket.on("game:join", function (data) {
     Game.join(data.id, user, socket.id,
-      function (game) {
+      function (game, started) {
         //TODO: emit players
+        //TODO: emit message directly to with .forUser(user)
+        //TODO emit all not in game with new availalble list
         socket.leave("available");
         socket.join("game:" + game._id);
-        // TODO: emit message directly to with .forUser(user)
-        io.sockets["game:" + game._id].emit("game:started", game);
-        //TODO emit all not in game with new availalble list
+        io.sockets.in("game:" + game._id).emit("game:update", game);
+        Game.listAvailable(function (games) {
+          io.sockets.in("available").emit("game:list:available", games);
+        });
       },
       function (error) {
         //TODO: emit players
-        socket.emit("game:createfailed", error);
+        console.warn(error);
+        socket.emit("game:joinfailed", error);
       });
   });
 
   socket.on("game:current", function () {
     Game.currentForUser(user, function (game) {
       if (game) {
-        socket.emit("game:current", game);
+        socket.emit("game:current", game.forUser(user));
       } else {
         Game.listAvailable(function (games) {
           socket.emit("game:list:available", games);
@@ -217,8 +225,8 @@ io.sockets.on('connection', function (socket) {
     io.sockets.emit('user disconnected', user);
   });
 
-  socket.on("session", function () {
-    socket.emit("session", {id: socket.id, handshake: socket.handshake});
-  });
+//  socket.on("session", function () {
+//    socket.emit("session", {id: socket.id, handshake: socket.handshake});
+//  });
 
 });

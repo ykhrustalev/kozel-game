@@ -28,6 +28,7 @@ define([
     },
 
     showDesk: function (data) {
+      console.log(data);
       deskView.model.set(data);
       this.setActivePage(deskView);
     },
@@ -60,10 +61,14 @@ define([
         router.showDesk(game);
       });
 
-      // TODO: remove debug
-      socket.on("session", function (data) {
-        console.log("session", data.handshake.sessionID, data.handshake);
+      socket.on("game:update", function (game) {
+        router.updateState();
       });
+
+      // TODO: remove debug
+//      socket.on("session", function (data) {
+//        console.log("session", data.handshake.sessionID, data.handshake);
+//      });
     }
 
   });

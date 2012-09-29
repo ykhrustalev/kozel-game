@@ -352,7 +352,7 @@ GameSchema.methods.forUser = function (user) {
 
   playerId = this.getPlayerIdForUser(user);
   if (!playerId) {
-    console.log("player is not in game", user, this);
+    console.warn("player is not in game", user, this);
     return null;
   }
 
@@ -401,9 +401,9 @@ GameSchema.statics.currentForUser = function (user, callback) {
 GameSchema.statics.join = function (gameId, user, sessionId, successCallback, errorCallback) {
   var Game = this;
 
-  this.findByUser(user, function (games) {
+  this.currentForUser(user, function (game) {
 
-    if (games) {
+    if (game) {
       errorCallback(ERRORS.USER_IS_ASSIGNED_TO_OTHER_GAME);
       return;
     }
@@ -416,11 +416,17 @@ GameSchema.statics.join = function (gameId, user, sessionId, successCallback, er
         errorCallback("user already joined that game");
       } else if (!game.addPlayer(user, sessionId)) {
         errorCallback("user could not join the game");
-      } else if (game.canBeStarted() && !game.start()) {
-        errorCallback("failed to start game");
+      } else if (game.canBeStarted()) {
+        if (game.start()) {
+          game.save(function () {
+            successCallback(game, true);
+          });
+        } else {
+          errorCallback("failed to start game");
+        }
       } else {
         game.save(function () {
-          successCallback(game);
+          successCallback(game, false);
         });
       }
     });
