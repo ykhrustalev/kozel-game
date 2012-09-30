@@ -121,6 +121,18 @@ io.configure(function () {
   });
 });
 
+function notifyAvailable(){
+  Game.listAvailable(function (games) {
+    io.sockets.in("available").emit("game:list:available", games);
+  });
+}
+
+function notifyGameRoom(room, game){
+  io.sockets.clients(room).forEach(function (socket) {
+    socket.emit("game:current", game.forUser(socket.handshake.profile));
+  });
+}
+
 io.sockets.on('connection', function (socket) {
 
   var user = socket.handshake.profile;
@@ -162,12 +174,11 @@ io.sockets.on('connection', function (socket) {
     Game.create(
       user,
       function (game) {
+        var room = "game:" + game._id;
         socket.leave("available");
-        socket.join("game:" + game._id);
+        socket.join(room);
         socket.emit("game:created", game.forUser(user));
-        Game.listAvailable(function (games) {
-          io.sockets.in("available").emit("game:list:available", games);
-        });
+        notifyAvailable();
       },
       function (error) {
         socket.emit("game:createfailed", error);
@@ -178,15 +189,11 @@ io.sockets.on('connection', function (socket) {
   socket.on("game:join", function (data) {
     Game.join(data.id, user, socket.id,
       function (game, started) {
-        //TODO: emit players
-        //TODO: emit message directly to with .forUser(user)
-        //TODO emit all not in game with new availalble list
+        var room = "game:" + game._id;
         socket.leave("available");
-        socket.join("game:" + game._id);
-        io.sockets.in("game:" + game._id).emit("game:update", game);
-        Game.listAvailable(function (games) {
-          io.sockets.in("available").emit("game:list:available", games);
-        });
+        socket.join(room);
+        notifyGameRoom(room, game);
+        notifyAvailable();
       },
       function (error) {
         //TODO: emit players
