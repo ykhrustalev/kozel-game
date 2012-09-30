@@ -127,7 +127,14 @@ function notifyAvailable() {
   });
 }
 
-function notifyGameRoom(room, game, state) {
+function joinGame(socket, game) {
+  var room = "game:" + game._id;
+  socket.leave("available");
+  socket.join(room);
+}
+
+function notifyGameRoom(game, state) {
+  var room = "game:" + game._id;
   state = state || "current";
   io.sockets.clients(room).forEach(function (socket) {
     socket.emit("game:" + state, game.forUser(socket.handshake.profile));
@@ -176,9 +183,7 @@ io.sockets.on('connection', function (socket) {
     Game.create(
       user,
       function (game) {
-        var room = "game:" + game._id;
-        socket.leave("available");
-        socket.join(room);
+        joinGame(socket, game);
         socket.emit("game:created", game.forUser(user));
         notifyAvailable();
       },
@@ -191,10 +196,8 @@ io.sockets.on('connection', function (socket) {
   socket.on("game:join", function (data) {
     Game.join(data.id, user, socket.id,
       function (game, started) {
-        var room = "game:" + game._id;
-        socket.leave("available");
-        socket.join(room);
-        notifyGameRoom(room, game);
+        joinGame(socket, game);
+        notifyGameRoom(game, "current");
         notifyAvailable();
       },
       function (error) {
@@ -207,6 +210,7 @@ io.sockets.on('connection', function (socket) {
   socket.on("game:current", function () {
     Game.currentForUser(user, function (game) {
       if (game) {
+        joinGame(socket, game);
         socket.emit("game:current", game.forUser(user));
       } else {
         Game.listAvailable(function (games) {
@@ -219,8 +223,7 @@ io.sockets.on('connection', function (socket) {
   socket.on("game:turn", function (data) {
     Game.turn(user, data.cardId,
       function (game, state) {
-        //TODO: define flags, define states
-        notifyGameRoom("game:" + game._id, game, state);
+        notifyGameRoom(game, state);
       },
       function (error) {
         socket.emit("game:turnfailed", error);
