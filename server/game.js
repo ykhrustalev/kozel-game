@@ -364,10 +364,12 @@ GameSchema.methods.forUser = function (user) {
   exportData.player = {
     cards   : this.round.cards[playerId],
     teamId  : this.players[playerId].teamId,
-    playerId: playerId
+    playerId: playerId,
+    turn    : this.round.turn && this.round.turn.currentPlayer && this.round.turn.currentPlayer === playerId
   };
 
   exportData.round = this.round;
+  exportData.status = exportData.player.turn ? "Ваш ход" : "Ходит " + this.players[playerId].name;
   delete exportData.round.cards;
 
   return exportData;
