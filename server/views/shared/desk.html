@@ -12,14 +12,14 @@
 
 </div>
 <div>
-    {{#active}}
+    {{#meta.active}}
     <h2>Ваши карты</h2>
     <ul>
-        {{#cards}}
+        {{#player.cards}}
         <li><a class="turn" href="#">{{.}}</a></li>
-        {{/cards}}
+        {{/player.cards}}
     </ul>
-    {{/active}}
+    {{/meta.active}}
 
 </div>
 

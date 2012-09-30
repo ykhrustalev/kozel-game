@@ -79,9 +79,9 @@ var GameSchema = new Schema({
 });
 
 var ERRORS = {
-  USER_ALREADY_JOINED           : 1,
-  USER_COULD_NOT_BE_JOINED      : 2,
-  USER_IS_ASSIGNED_TO_OTHER_GAME: 3
+  USER_ALREADY_JOINED           : "USER_ALREADY_JOINED",
+  USER_COULD_NOT_BE_JOINED      : "USER_COULD_NOT_BE_JOINED",
+  USER_IS_ASSIGNED_TO_OTHER_GAME: "USER_IS_ASSIGNED_TO_OTHER_GAME"
 };
 
 /**
@@ -205,8 +205,9 @@ GameSchema.methods.newRound = function (rate) {
     winner,
     firstHand;
 
+  console.warn(this); //TODO: remove
 
-  if (isFirstRound) {
+  if (!isFirstRound) {
     winner = "team" + (round.score.team1 > round.score.team2 ? 1 : 2);
     this.meta.score[winner] += 2 * round.rate;
   }
@@ -344,7 +345,7 @@ GameSchema.methods.getArrangedPlayersForPlayer = function (playerId) {
   return result;
 };
 
-//TODO: remove
+//TODO: test
 GameSchema.methods.forUser = function (user) {
 
   var playerId,
