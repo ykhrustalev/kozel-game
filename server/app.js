@@ -121,20 +121,22 @@ io.configure(function () {
   });
 });
 
-function notifyAvailable(){
+function notifyAvailable() {
   Game.listAvailable(function (games) {
     io.sockets.in("available").emit("game:list:available", games);
   });
 }
 
-function notifyGameRoom(room, game){
+function notifyGameRoom(room, game, state) {
+  state = state || "current";
   io.sockets.clients(room).forEach(function (socket) {
-    socket.emit("game:current", game.forUser(socket.handshake.profile));
+    socket.emit("game:" + state, game.forUser(socket.handshake.profile));
   });
 }
 
 io.sockets.on('connection', function (socket) {
 
+  // TODO: rename handshake.profile -> handshake.user
   var user = socket.handshake.profile;
 
   socket.join("available");
@@ -215,10 +217,10 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:turn", function (data) {
-    Game.turn(data.id,
-      function (game, flag) {
-
+    Game.turn(user, data.cardId,
+      function (game, state) {
         //TODO: define flags, define states
+        notifyGameRoom("game:" + game._id, game, state);
       },
       function (error) {
         socket.emit("game:turnfailed", error);

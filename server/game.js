@@ -81,7 +81,8 @@ var GameSchema = new Schema({
 var ERRORS = {
   USER_ALREADY_JOINED           : "USER_ALREADY_JOINED",
   USER_COULD_NOT_BE_JOINED      : "USER_COULD_NOT_BE_JOINED",
-  USER_IS_ASSIGNED_TO_OTHER_GAME: "USER_IS_ASSIGNED_TO_OTHER_GAME"
+  USER_IS_ASSIGNED_TO_OTHER_GAME: "USER_IS_ASSIGNED_TO_OTHER_GAME",
+  USER_NOT_IN_GAME              : "USER_NOT_IN_GAME"
 };
 
 /**
@@ -377,14 +378,15 @@ GameSchema.methods.forUser = function (user) {
 
 //TODO: test findActiveGame
 GameSchema.statics.findByUser = function (user, callback, limit, active) {
-  var uid = user.uid,
-    uidCondition = [
+  var uid = user.uid
+    , uidCondition = [
       { "players.player1.uid": uid },
       { "players.player2.uid": uid },
       { "players.player3.uid": uid },
       { "players.player4.uid": uid }
     ];
   this.find()
+    //TODO: define flag usage
 //    .where("meta.active").equals(!!active)
     .or(uidCondition)
     .limit(limit || 10)
@@ -434,6 +436,46 @@ GameSchema.statics.join = function (gameId, user, sessionId, successCallback, er
       }
     });
 
+  });
+};
+
+GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback) {
+  this.currentForUser(user, function (game) {
+    if (!game) {
+      errorCallback(ERRORS.USER_NOT_IN_GAME);
+      return;
+    }
+
+    //TODO: check game conditions
+    var suite
+      , value
+      , round = game.round
+      , turn = game.round.turn
+      , playerId = game.getPlayerIdForUser(user);
+
+    if (!playerId) {
+      errorCallback("user is not in game"); // TODO: export ERROR code
+      return; //TODO: add trace
+    }
+
+    if (turn.currentPlayer !== playerId) {
+      errorCallback("user is not allowed to turn");
+      return; // TODO: add trace
+    }
+
+    // TODO: check user made already turn
+    // TODO: check card belongs to user
+    // TODO: check card is suitable
+
+    var parts = cardId.split("-");
+    suite = parts[0];
+    value = parts[1];
+
+    turn[playerId] = cardId;
+
+    game.save(function () {
+      successCallback(game, "current"); // TODO: use callback names as io messages
+    });
   });
 };
 

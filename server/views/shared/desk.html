@@ -9,12 +9,12 @@
 {{#round.turn}}
 <div>
 
-    <h2>Ход</h2>
+    <h2>Текущий ход:</h2>
     <ul>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
+        <li>{{round.turn.player1}}</li>
+        <li>{{round.turn.player2}}</li>
+        <li>{{round.turn.player3}}</li>
+        <li>{{round.turn.player4}}</li>
     </ul>
 </div>
 {{/round.turn}}
@@ -34,7 +34,7 @@
     <h2>Ваши карты</h2>
     <ul>
         {{#player.cards}}
-        <li><a class="turn" href="#">{{.}}</a></li>
+        <li><a data-id="{{.}}" class="turn" href="#">{{.}}</a></li>
         {{/player.cards}}
     </ul>
     {{/meta.active}}

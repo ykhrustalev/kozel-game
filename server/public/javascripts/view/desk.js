@@ -1,8 +1,10 @@
 define([
+  "jquery",
   "view/base",
   "model/game",
-  "util/dispatcher"
-], function (BaseView, Game, dispatcher) {
+  "util/dispatcher",
+  "util/socket"
+], function ($, BaseView, Game, dispatcher, socket) {
 
   "use strict";
 
@@ -16,7 +18,10 @@ define([
       'click .turn': "doTurn"
     },
 
-    doTurn: function () {
+    doTurn: function (e) {
+      e.preventDefault();
+      var id = $(e.currentTarget).data("id");
+      socket.emit("game:turn", {cardId: id});
       return false;
     }
 
