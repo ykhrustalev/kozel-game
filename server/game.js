@@ -472,6 +472,8 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
     value = parts[1];
 
     turn[playerId] = cardId;
+    // TODO: correct next player
+//    turn.currentPlayer = prevPlayer(playerId);
 
     game.save(function () {
       successCallback(game, "current"); // TODO: use callback names as io messages
@@ -479,11 +481,12 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
   });
 };
 
+// keep exposed for testing purpose
 GameSchema.statics.prevPlayer = prevPlayer;
-
 GameSchema.statics.nextPlayer = nextPlayer;
 
 module.exports = {
+
   model: function (db) {
     return db.model("Game", GameSchema);
   },
