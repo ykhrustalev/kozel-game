@@ -71,15 +71,15 @@ var vk = require("./vk");
 
 io.configure(function () {
 
-  // vk authentication on demand
   io.set("authorization", function (data, accept) {
 
-    trace("authorization");
+    // Deriving express cookie here to define whether user has already
+    // established session
     try {
       var _signed_cookies = cookie.parse(decodeURIComponent(data.headers.cookie));
       data.cookie = connect.utils.parseSignedCookies(_signed_cookies, config.secret);
-      data.sessionID = data.cookie['express.sid']; // should be exactly `sessionID` as required by Session module
-      trace("session cookie: ", data.cookie, _signed_cookies);
+      // should be exactly `sessionID` as required by Session module
+      data.sessionID = data.cookie['express.sid'];
     } catch (err) {
       accept('Malformed cookie transmitted.', false);
       return;
@@ -99,20 +99,29 @@ io.configure(function () {
         // be due to server reset or cache flush. So need to create a new
         // session but notify the end user.
         console.warn("could not find session for cookie: ", session);
-        // TODO: check if it should fail or not
-        // TODO: make it create a new session
-        accept("Error", false);
+
+        // Client is actually not allowed to get session but in order to allow
+        // auto refresh on client we grand new session but mark it with
+        // `reload` flag to allow just one message to be send back with
+        // notification that connection reqiores reestablish
+        data.reset = true;
+        data.session = new Session(data, session);
+        accept(null, true);
+        // the following should be used to fully deny connectio but it would
+        // not make any client notification instead of request fail without
+        // knowing the actuall reason, also hard to catch in client javascript
+        // accept("Error", false);
         return;
       }
 
-      // Session restored
-      trace("session valid");
-      data.session = new Session(data, session);
-
+      // Resolve user, could be a locally mocked or from social network
       var userData = (config.isLocal ? utils.mockUser : vk.parseUrl)(data.headers.referer);
 
       if (userData.isAuthenticated) {
+        // User authorized, session restored
+        //TODO: save under `user` property
         data.profile = userData.profile;
+        data.session = new Session(data, session);
         accept(null, true);
       } else {
         accept(null, false);
@@ -142,6 +151,14 @@ function notifyGameRoom(game, state) {
 }
 
 io.sockets.on('connection', function (socket) {
+
+  // connection is marked as required reload, need notify user only once
+  // and close
+  if (socket.handshake.reset) {
+    socket.emit("game:reload");
+    socket.disconnect();
+    return;
+  }
 
   // TODO: rename handshake.profile -> handshake.user
   var user = socket.handshake.profile;

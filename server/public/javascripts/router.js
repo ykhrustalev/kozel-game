@@ -28,7 +28,6 @@ define([
     },
 
     showDesk: function (data) {
-      console.log(data);
       deskView.model.set(data);
       this.setActivePage(deskView);
     },
@@ -63,6 +62,10 @@ define([
 
       socket.on("game:update", function (game) {
         router.updateState();
+      });
+
+      socket.on("game:reload", function () {
+        window.location.reload();
       });
 
       // TODO: remove debug
