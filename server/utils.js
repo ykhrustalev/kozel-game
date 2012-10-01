@@ -13,8 +13,8 @@ module.exports = {
       isAuthenticated: true,
       profile        : {
         uid       : uid,
-        first_name: "first_name " + uid,
-        last_name : "last_name " + uid
+        first_name: "user " + uid,
+        last_name : ""
       }
     };
   }

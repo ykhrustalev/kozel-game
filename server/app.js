@@ -12,8 +12,6 @@ var express = require("express"),
   config = require("./config"),
   utils = require("./utils");
 
-var trace = utils.trace;
-
 var cookie = require("cookie")
   , connect = require("connect")
   , Session = connect.middleware.session.Session
@@ -59,11 +57,9 @@ http.createServer(app).listen(app.get('port'), function () {
 server.listen(config.port);
 
 // game
-var mongoose = require("mongoose"),
-  g = require('./game');
-
-var db = mongoose.createConnection(config.db.host, config.db.name),
-  Game = g.model(db);
+var mongoose = require("mongoose")
+  , db = mongoose.createConnection(config.db.host, config.db.name)
+  , Game = require('./game').model(db);
 
 db.on('error', console.error.bind(console, 'connection error:'));
 
@@ -119,7 +115,6 @@ io.configure(function () {
 
       if (userData.isAuthenticated) {
         // User authorized, session restored
-        //TODO: save under `user` property
         data.user = userData.profile;
         data.session = new Session(data, session);
         accept(null, true);
