@@ -1,6 +1,5 @@
 module.exports = {
 
-  isLocal: true, //TODO: merge with `env` option
 //  env    : "production",
   env    : "development",
 

@@ -115,7 +115,7 @@ io.configure(function () {
       }
 
       // Resolve user, could be a locally mocked or from social network
-      var userData = (config.isLocal ? utils.mockUser : vk.parseUrl)(data.headers.referer);
+      var userData = (config.env === "development" ? utils.mockUser : vk.parseUrl)(data.headers.referer);
 
       if (userData.isAuthenticated) {
         // User authorized, session restored
