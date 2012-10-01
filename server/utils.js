@@ -1,5 +1,5 @@
-var url = require("url"),
-  _ = require("underscore")._;
+var url = require("url")
+  , _ = require("underscore")._;
 
 module.exports = {
   trace: function (message) {
@@ -7,8 +7,8 @@ module.exports = {
   },
 
   mockUser: function (queryString) {
-    var queryParams = url.parse(queryString, true).query;
-    var uid = parseInt(queryParams.uid) || _.uniqueId();
+    var queryParams = url.parse(queryString, true).query
+      , uid = parseInt(queryParams.uid) || _.uniqueId();
     return {
       isAuthenticated: true,
       profile        : {
