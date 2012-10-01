@@ -120,7 +120,7 @@ io.configure(function () {
       if (userData.isAuthenticated) {
         // User authorized, session restored
         //TODO: save under `user` property
-        data.profile = userData.profile;
+        data.user = userData.profile;
         data.session = new Session(data, session);
         accept(null, true);
       } else {
@@ -146,7 +146,7 @@ function notifyGameRoom(game, state) {
   var room = "game:" + game._id;
   state = state || "current";
   io.sockets.clients(room).forEach(function (socket) {
-    socket.emit("game:" + state, game.forUser(socket.handshake.profile));
+    socket.emit("game:" + state, game.forUser(socket.handshake.user));
   });
 }
 
@@ -160,8 +160,7 @@ io.sockets.on('connection', function (socket) {
     return;
   }
 
-  // TODO: rename handshake.profile -> handshake.user
-  var user = socket.handshake.profile;
+  var user = socket.handshake.user;
 
   socket.join("available");
 
