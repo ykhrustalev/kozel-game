@@ -10,7 +10,8 @@ var express = require("express"),
   server = http.createServer(app),
   io = require("socket.io").listen(server),
   config = require("./config"),
-  utils = require("./utils");
+  utils = require("./utils"),
+  db = require("./db").instance();
 
 var cookie = require("cookie")
   , connect = require("connect")
@@ -57,11 +58,7 @@ http.createServer(app).listen(app.get('port'), function () {
 server.listen(config.port);
 
 // game
-var mongoose = require("mongoose")
-  , db = mongoose.createConnection(config.db.host, config.db.name)
-  , Game = require('./game').model(db);
-
-db.on('error', console.error.bind(console, 'connection error:'));
+var Game = require('./game').model(db);
 
 var vk = require("./vk");
 
