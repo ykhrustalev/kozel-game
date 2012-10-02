@@ -199,7 +199,7 @@ GameSchema.methods.start = function () {
 // TODO
 GameSchema.methods.newRound = function (rate) {
 
-  var split = deck.split(4),
+  var split = deck.shuffle(4),
     round = this.round,
     cards = round.cards,
     isFirstRound = !round.number,
@@ -219,15 +219,15 @@ GameSchema.methods.newRound = function (rate) {
   round.score.team2 = 0;
   round.rate = rate || 1;
 
-  cards.player1 = deck.getCardIds(split.shift());
-  cards.player2 = deck.getCardIds(split.shift());
-  cards.player3 = deck.getCardIds(split.shift());
-  cards.player4 = deck.getCardIds(split.shift());
+  cards.player1 = split.shift();
+  cards.player2 = split.shift();
+  cards.player3 = split.shift();
+  cards.player4 = split.shift();
 
   if (isFirstRound) {
     firstHand = this.findPlayerByCard(
-      deck.Suite.Diamonds,
-      deck.Type.Ace
+      deck.Suites.Diamonds,
+      deck.Types.Ace
     );
     round.shuffledPlayer = prevPlayer(firstHand);
   } else {
