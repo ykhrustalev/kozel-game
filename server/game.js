@@ -4,18 +4,14 @@ var _ = require("underscore")._,
 
 var Schema = mongoose.Schema;
 
-/**
- * Helper schema for player
- */
+// Helper schema for player
 var PlayerSchema = {
   uid   : Number,
   teamId: Number, // 1|2
   name  : String
 };
 
-/**
- * Game schema, represents data structure in db
- */
+// Game schema, represents data structure in db
 var GameSchema = new Schema({
 
   meta: {
@@ -491,5 +487,6 @@ module.exports = {
     return db.model("Game", GameSchema);
   },
 
+  // TODO: is it required info to expose?
   ERRORS: ERRORS
 };
