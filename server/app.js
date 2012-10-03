@@ -60,67 +60,10 @@ server.listen(config.port);
 // game
 var Game = require('./game').model(db);
 
-var vk = require("./vk");
 
-io.configure(function () {
+var authHandler = require("./authHandler");
 
-  io.set("authorization", function (data, accept) {
-
-    // Deriving express cookie here to define whether user has already
-    // established session
-    try {
-      var _signed_cookies = cookie.parse(decodeURIComponent(data.headers.cookie));
-      data.cookie = connect.utils.parseSignedCookies(_signed_cookies, config.secret);
-      // should be exactly `sessionID` as required by Session module
-      data.sessionID = data.cookie['express.sid'];
-    } catch (err) {
-      accept('Malformed cookie transmitted.', false);
-      return;
-    }
-    data.sessionStore = store;
-
-    store.load(data.sessionID, function (error, session) {
-      if (error) {
-        // error in session storage
-        console.warn("error in session storage: ", error);
-        accept("Server error", false);
-        return;
-      }
-
-      if (!session) {
-        // Cookie exists but session is missing in storage. Probably it could
-        // be due to server reset or cache flush. So need to create a new
-        // session but notify the end user.
-        console.warn("could not find session for cookie: ", session);
-
-        // Client is actually not allowed to get session but in order to allow
-        // auto refresh on client we grand new session but mark it with
-        // `reload` flag to allow just one message to be send back with
-        // notification that connection reqiores reestablish
-        data.reset = true;
-        data.session = new Session(data, session);
-        accept(null, true);
-        // the following should be used to fully deny connectio but it would
-        // not make any client notification instead of request fail without
-        // knowing the actuall reason, also hard to catch in client javascript
-        // accept("Error", false);
-        return;
-      }
-
-      // Resolve user, could be a locally mocked or from social network
-      var userData = (config.env === "development" ? utils.mockUser : vk.parseUrl)(data.headers.referer);
-
-      if (userData.isAuthenticated) {
-        // User authorized, session restored
-        data.user = userData.profile;
-        data.session = new Session(data, session);
-        accept(null, true);
-      } else {
-        accept(null, false);
-      }
-    });
-  });
-});
+authHandler(io, store);
 
 function notifyAvailable() {
   Game.listAvailable(function (games) {
