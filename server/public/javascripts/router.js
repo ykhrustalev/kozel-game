@@ -16,8 +16,6 @@ define([
     },
 
     updateState: function () {
-      // TODO: remove debug
-      socket.emit("session");
       socket.emit("game:current");
     },
 
@@ -68,10 +66,6 @@ define([
         window.location.reload();
       });
 
-      // TODO: remove debug
-//      socket.on("session", function (data) {
-//        console.log("session", data.handshake.sessionID, data.handshake);
-//      });
     }
 
   });

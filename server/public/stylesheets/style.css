@@ -1,8 +1,85 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+    padding: 50px;
+    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
 a {
-  color: #00B7FF;
+    color: #00B7FF;
+}
+
+h2 {
+    color: #777777;
+}
+
+.desk-player-list {
+    float: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    height: 200px;
+}
+
+.desk-player-element {
+    list-style: none;
+    margin: 10px;
+    padding: 0;
+    position: absolute;
+}
+
+.desk-player-1 {
+    top: 60px;
+    left: 0;
+}
+
+.desk-player-2 {
+    top: 0;
+    left: 100px;
+}
+
+.desk-player-3 {
+    top: 60px;
+    left: 200px;
+}
+
+.desk-player-4 {
+    left: 100px;
+    top: 120px;
+}
+
+.desk-cards-wrapper {
+    /*background: #008800;*/
+    /*height: 1%;*/
+    /*min-height: 1%;*/
+    /*height: auto;*/
+    /*overflow: auto;*/
+}
+
+.deck-cards-list {
+    float: none;
+    margin: 0;
+    padding: 0;
+}
+
+.desk-card-element {
+    float: left;
+    list-style: none;
+    margin: 10px;
+    padding: 0;
+    border: 1px dotted #cccccc;
+    height: 60px;
+    width: 40px;
+    border-radius: 4px;
+    background: #ffffff;
+
+    cursor: pointer;
+}
+
+.desk-card-element.suite-s,
+.desk-card-element.suite-c {
+    color: #000000;
+}
+
+.desk-card-element.suite-h,
+.desk-card-element.suite-d {
+    color: #ff0000;
 }

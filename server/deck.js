@@ -17,6 +17,10 @@ var Deck = function () {
 
 Deck.prototype = {
 
+  getInitialDeck: function () {
+    return _.clone(this._initialDeck);
+  },
+
   // TODO: do we need to keep names of the types
   Suites: {
     Spades  : {id: 's', name: 'Пики'},

@@ -1,8 +1,5 @@
+var Deck = require("../deck");
 
-/*
- * GET home page.
- */
-
-exports.index = function(req, res){
-  res.render('index', { title: '' });
+exports.index = function (req, res) {
+  res.render('index', { deck: Deck.getInitialDeck() });
 };

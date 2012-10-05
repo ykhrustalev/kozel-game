@@ -8,36 +8,34 @@
 
 {{#round.turn}}
 <div>
-
-    <h2>Текущий ход:</h2>
+    <!--<h2>Текущий ход:</h2>-->
     <ul>
-        <li>{{round.turn.player1}}</li>
-        <li>{{round.turn.player2}}</li>
-        <li>{{round.turn.player3}}</li>
-        <li>{{round.turn.player4}}</li>
+        <li class="desk-card-element suite-{{suite}}" data-id="{{id}}" >{{#round.turn.player1}}{{round.turn.player1.name}}{{/round.turn.player1}}</li>
+        <li class="desk-card-element suite-{{suite}}" data-id="{{id}}" >{{#round.turn.player2}}{{round.turn.player2.name}}{{/round.turn.player2}}</li>
+        <li class="desk-card-element suite-{{suite}}" data-id="{{id}}" >{{#round.turn.player3}}{{round.turn.player3.name}}{{/round.turn.player3}}</li>
+        <li class="desk-card-element suite-{{suite}}" data-id="{{id}}" >{{#round.turn.player4}}{{round.turn.player4.name}}{{/round.turn.player4}}</li>
     </ul>
 </div>
 {{/round.turn}}
 
 
-<div>
-    <h2>Игроки</h2>
-    <ul>
+<div class="desk-player-wrapper">
+    <!--<h2>Игроки</h2>-->
+    <ul class="desk-player-list">
         {{#players}}
-        <li>{{#name}}{{name}}{{/name}}{{^name}}свободно{{/name}}</li>
+        <li class="desk-player-element desk-player-{{order}}">{{#name}}{{name}}{{/name}}{{^name}}свободно{{/name}}</li>
         {{/players}}
     </ul>
 
 </div>
-<div>
+<div class="desk-cards-wrapper">
     {{#meta.active}}
-    <h2>Ваши карты</h2>
-    <ul>
+    <!--<h2>Ваши карты</h2>-->
+    <ul class="deck-cards-list">
         {{#player.cards}}
-        <li><a data-id="{{.}}" class="turn" href="#">{{.}}</a></li>
+        <li class="desk-card-element suite-{{suite}} {{#allowed}}allowed{{/allowed}}" data-id="{{id}}" >{{name}}</li>
         {{/player.cards}}
     </ul>
     {{/meta.active}}
-
 </div>
 

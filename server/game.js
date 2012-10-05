@@ -332,12 +332,18 @@ GameSchema.methods.getPlayerIdForUser = function (user) {
 
 //TODO: test
 GameSchema.methods.getArrangedPlayersForPlayer = function (playerId) {
-  var source = this.players,
-    result = [],
-    i;
+  var source = this.players
+    , result = []
+    , player
+    , i;
   for (i = 0; i < 4; i += 1) {
     playerId = nextPlayer(playerId);
-    result.push(source[playerId]);
+    player = source[playerId];
+    result.push({
+      name  : player.name,
+      order : i + 1,
+      teamId: player.teamId
+    });
   }
   return result;
 };

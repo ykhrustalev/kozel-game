@@ -188,6 +188,7 @@ module.exports = {
       }
     }
 
+    //TODO: remove, need a whole data test
     assertArrangement(game.getArrangedPlayersForPlayer("player1"), [user2, user3, user4, user1]);
     assertArrangement(game.getArrangedPlayersForPlayer("player2"), [user3, user4, user1, user2]);
     assertArrangement(game.getArrangedPlayersForPlayer("player3"), [user4, user1, user2, user3]);
