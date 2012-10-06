@@ -53,7 +53,7 @@ define([
         , cardsOnHands = data.player.cards
         , cardsAllowed = data.player.cardsAllowed
         , cards = []
-        , turn = data.round.turn;
+        , players = data.player.players;
 
       // on hands cards
       _.each(cardsOnHands, function (id) {
@@ -64,12 +64,10 @@ define([
       data.player.cards = cards;
 
       // turn cards
-      data.round.turn = {
-        player1: getCardData(turn.player1),
-        player2: getCardData(turn.player2),
-        player3: getCardData(turn.player3),
-        player4: getCardData(turn.player4)
-      };
+      _.each(players, function (player) {
+        player.turnCard = getCardData(player.turnCard);
+        console.log(player);
+      });
 
       return data;
     }

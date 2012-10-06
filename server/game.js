@@ -109,6 +109,7 @@ function prevPlayer(playerId) {
  * @param playerId - current player
  * @return {String} "player{1|2|3|4}"
  */
+// TODO: rename nextplayerId
 function nextPlayer(playerId) {
   if (playerId === "player1") {
     return "player2";
@@ -318,15 +319,16 @@ GameSchema.methods.addPlayer = function (user, sessionId) {
   return true;
 };
 
-//TODO: test
+//TODO: test, make private
 GameSchema.methods.getPlayerIdForUser = function (user) {
-  var p = this.players,
-    uid = user.uid,
-    id;
-  id = p.player1.uid === uid
-    ? 1 : p.player2.uid === uid
-    ? 2 : p.player3.uid === uid
-    ? 3 : p.player4.uid === uid ? 4 : null;
+  var p = this.players
+    , uid = user.uid
+    , id;
+  id = p.player1.uid === uid ? 1
+    : p.player2.uid === uid ? 2
+    : p.player3.uid === uid ? 3
+    : p.player4.uid === uid ? 4
+    : null;
   return id ? "player" + id : id;
 };
 
@@ -351,31 +353,36 @@ GameSchema.methods.getArrangedPlayersForPlayer = function (playerId) {
 //TODO: test
 GameSchema.methods.forUser = function (user) {
 
-  var playerId,
-    exportData = {};
-
-  playerId = this.getPlayerIdForUser(user);
+  var playerId = this.getPlayerIdForUser(user);
   if (!playerId) {
     console.warn("player is not in game", user, this);
     return null;
   }
 
-  exportData.players = this.getArrangedPlayersForPlayer(playerId);
+  var currTurnPid = this.round.turn.currentPlayer
+    , isTurn = currTurnPid === playerId
+    , players = [];
 
-  exportData.meta = this.meta;
+  for (var i = 0; i < 4; i++) {
+    var pid = nextPlayer(playerId)
+      , player = this.players[pid];
+    players.push({
+      order     : i + 1,
+      name      : player.name,
+      cardsCount: this.round.cards[pid].length,
+      turnCard  : this.round.turn[pid]
+    });
+  }
 
-  exportData.player = {
-    cards   : this.round.cards[playerId],
-    teamId  : this.players[playerId].teamId,
-    playerId: playerId,
-    turn    : this.round.turn && this.round.turn.currentPlayer && this.round.turn.currentPlayer === playerId
+  return {
+    meta  : this.meta,
+    player: {
+      cards  : this.round.cards[playerId],
+      isTurn : isTurn,
+      status : isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name,
+      players: players
+    }
   };
-
-  exportData.round = this.round;
-  exportData.status = exportData.player.turn ? "Ваш ход" : "Ходит " + this.players[playerId].name;
-  delete exportData.round.cards;
-
-  return exportData;
 };
 
 //TODO: test findActiveGame
@@ -489,7 +496,7 @@ GameSchema.statics.nextPlayer = nextPlayer;
 
 module.exports = {
 
-  model: function (db) {
+  model : function (db) {
     return db.model("Game", GameSchema);
   },
 
