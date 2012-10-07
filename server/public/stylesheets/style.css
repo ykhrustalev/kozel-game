@@ -1,7 +1,7 @@
 body {
-    padding: 50px;
     font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
+
 
 a {
     color: #00B7FF;
@@ -11,12 +11,20 @@ h2 {
     color: #777777;
 }
 
+#container {
+    padding: 20px;
+}
+
+
+.desk-player-wrapper {
+    /*margin: 0 20px 20px 60px;*/
+    height: 240px;
+}
 .desk-player-list {
     float: none;
     margin: 0;
     padding: 0;
     position: relative;
-    height: 200px;
 }
 
 .desk-player-element {
@@ -33,16 +41,16 @@ h2 {
 
 .desk-player-2 {
     top: 0;
-    left: 100px;
+    left: 80px;
 }
 
 .desk-player-3 {
     top: 60px;
-    left: 200px;
+    left: 160px;
 }
 
 .desk-player-4 {
-    left: 100px;
+    left: 80px;
     top: 120px;
 }
 

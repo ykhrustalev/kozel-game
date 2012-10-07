@@ -1,4 +1,12 @@
 <div>
+    <dl>
+        <dt>Общий счет: </dt>
+        <dd>{{gameScore.team1}} : {{gameScore.team2}}</dd>
+    </dl>
+    <dl>
+        <dt>Текущий кон: </dt>
+        <dd>{{roundScore.team1}} : {{roundScore.team2}}</dd>
+    </dl>
     <h2>Счет: {{meta.score.team1}} : {{meta.score.team2}}</h2>
 </div>
 
@@ -6,35 +14,44 @@
     <h2>Статус: {{status}}</h2>
 </div>
 
-<div>
-    <!--<h2>Текущий ход:</h2>-->
-    <ul>
-        {{#player.players}}
-        <li class="desk-player-element desk-player-{{order}}">
-            <div class="desk-player-name">{{name}}</div>
-            <div class="desk-card-element suite-{{suite}}">{{turnCard}}</div>
-        </li>
-        {{/player.players}}
-    </ul>
-</div>
-
-
 <div class="desk-player-wrapper">
-    <!--<h2>Игроки</h2>-->
-    <ul class="desk-player-list">
-        {{#players}}
-        <li class="desk-player-element desk-player-{{order}}">{{#name}}{{name}}{{/name}}{{^name}}свободно{{/name}}</li>
-        {{/players}}
-    </ul>
 
+    <div class="desk-player-1">
+        <div class="desk-player-name">{{players.player1}}</div>
+        {{#turn.player4}}
+        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+        {{/turn.player4}}
+    </div>
+
+    <div class="desk-player-2">
+        <div class="desk-player-name">{{players.player2}}</div>
+        {{#turn.player4}}
+        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+        {{/turn.player4}}
+    </div>
+
+    <div class="desk-player-3">
+        <div class="desk-player-name">{{players.player3}}</div>
+        {{#turn.player4}}
+        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+        {{/turn.player4}}
+    </div>
+
+    <div class="desk-player-4">
+        {{#turn.player4}}
+        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+        {{/turn.player4}}
+    </div>
 </div>
+
+
 <div class="desk-cards-wrapper">
     {{#meta.active}}
     <h2>Ваши карты</h2>
     <ul class="deck-cards-list">
-        {{#player.cards}}
-        <li class="desk-card-element suite-{{suite}} {{#allowed}}allowed{{/allowed}}" data-id="{{id}}">{{name}}</li>
-        {{/player.cards}}
+        {{#cards}}
+        <li class="desk-card-element suite-{{suite}} {{#allowed}}card-allowed{{/allowed}}" data-id="{{id}}">{{name}}</li>
+        {{/cards}}
     </ul>
     {{/meta.active}}
 </div>

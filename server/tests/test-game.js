@@ -92,7 +92,7 @@ module.exports = {
       test.equals(game.meta.playersCount, 1);
       test.equals(player.uid, user.uid);
       test.equals(player.name, user.first_name + " " + user.last_name);
-      test.equals(player.teamId, 1);
+      test.equals(player.teamId, "team1");
 
       test.done();
     }, function () {
@@ -123,17 +123,17 @@ module.exports = {
     }
 
     test.ok(game.addPlayer(user1));
-    test.equals(game.players.player1.teamId, 1);
+    test.equals(game.players.player1.teamId, "team1");
     test.ok(!game.addPlayer(user1));
     test.ok(game.addPlayer(user2));
     test.ok(game.addPlayer(user3));
     test.ok(game.addPlayer(user4));
     test.ok(!game.addPlayer(createUser()), "5th player joined the game");
 
-    assertUser(game, "player1", user1, 1);
-    assertUser(game, "player2", user2, 2);
-    assertUser(game, "player3", user3, 1);
-    assertUser(game, "player4", user4, 2);
+    assertUser(game, "player1", user1, "team1");
+    assertUser(game, "player2", user2, "team2");
+    assertUser(game, "player3", user3, "team1");
+    assertUser(game, "player4", user4, "team2");
 
     test.done();
   },

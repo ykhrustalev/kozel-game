@@ -7,7 +7,7 @@ var Schema = mongoose.Schema;
 // Helper schema for player
 var PlayerSchema = {
   uid   : Number,
-  teamId: Number, // 1|2
+  teamId: String, // 1|2
   name  : String
 };
 
@@ -89,16 +89,17 @@ var ERRORS = {
  * @return {String} "player{1|2|3|4}"
  */
 function prevPlayer(playerId) {
-  if (playerId === "player1") {
-    return "player4";
-  } else if (playerId === "player2") {
-    return "player1";
-  } else if (playerId === "player3") {
-    return "player2";
-  } else if (playerId === "player4") {
-    return "player3";
-  } else {
-    throw new Error("unknown playerId " + playerId);
+  switch (playerId) {
+    case "player1":
+      return "player4";
+    case "player2":
+      return "player1";
+    case "player3":
+      return "player2";
+    case "player4":
+      return "player3";
+    default:
+      throw new Error("unknown playerId " + playerId);
   }
 }
 
@@ -111,16 +112,28 @@ function prevPlayer(playerId) {
  */
 // TODO: rename nextplayerId
 function nextPlayer(playerId) {
-  if (playerId === "player1") {
-    return "player2";
-  } else if (playerId === "player2") {
-    return "player3";
-  } else if (playerId === "player3") {
-    return "player4";
-  } else if (playerId === "player4") {
-    return "player1";
-  } else {
-    throw new Error("unknown playerId " + playerId);
+  switch (playerId) {
+    case "player1":
+      return "player2";
+    case "player2":
+      return "player3";
+    case "player3":
+      return "player4";
+    case "player4":
+      return "player1";
+    default:
+      throw new Error("unknown playerId " + playerId);
+  }
+}
+
+function otherTeam(teamId) {
+  switch (teamId) {
+    case "team1":
+      return "team2";
+    case "team2":
+      return "team1";
+    default:
+      throw new Error("unknown teamId " + teamId);
   }
 }
 
@@ -310,7 +323,7 @@ GameSchema.methods.addPlayer = function (user, sessionId) {
 
   this.players[playerId] = {
     uid   : user.uid,
-    teamId: (this.meta.playersCount % 2) ? 1 : 2,
+    teamId: "team" + ((this.meta.playersCount % 2) ? 1 : 2),
     name  : user.first_name + ' ' + user.last_name
   };
 
@@ -361,26 +374,34 @@ GameSchema.methods.forUser = function (user) {
 
   var currTurnPid = this.round.turn.currentPlayer
     , isTurn = currTurnPid === playerId
-    , players = [];
+    , players = {}
+    , turn = {}
+    , teamId = this.players[playerId].teamId;
 
-  for (var i = 0; i < 4; i++) {
-    var pid = nextPlayer(playerId)
-      , player = this.players[pid];
-    players.push({
-      order     : i + 1,
-      name      : player.name,
-      cardsCount: this.round.cards[pid].length,
-      turnCard  : this.round.turn[pid]
-    });
+  for (var i = 1, pid = nextPlayer(playerId);
+       i <= 4;
+       pid = nextPlayer(pid), i++) {
+    var order = "player" + i;
+    players[order] = this.players[pid].name || "свободно";
+    turn[order] = this.round.turn[pid];
   }
 
   return {
-    meta  : this.meta,
-    player: {
-      cards  : this.round.cards[playerId],
-      isTurn : isTurn,
-      status : isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name,
-      players: players
+    meta   : this.meta,
+    cards  : this.round.cards[playerId],
+    isTurn : isTurn,
+    status : !this.active ? "" : isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name,
+    players: players,
+    turn   : turn,
+
+    gameScore: {
+      team1: this.meta.score[teamId],
+      team2: this.meta.score[otherTeam(teamId)]
+    },
+
+    roundScore: {
+      team1: this.round.score[teamId],
+      team2: this.round.score[otherTeam(teamId)]
     }
   };
 };

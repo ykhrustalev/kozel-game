@@ -50,10 +50,9 @@ define([
 
     getData: function () {
       var data = this.model.toJSON()
-        , cardsOnHands = data.player.cards
-        , cardsAllowed = data.player.cardsAllowed
-        , cards = []
-        , players = data.player.players;
+        , cardsOnHands = data.cards
+        , cardsAllowed = data.cardsAllowed
+        , cards = [];
 
       // on hands cards
       _.each(cardsOnHands, function (id) {
@@ -61,13 +60,13 @@ define([
         card.allowed = _.contains(cardsAllowed, id);
         cards.push(card);
       });
-      data.player.cards = cards;
+      data.cards = cards;
 
       // turn cards
-      _.each(players, function (player) {
-        player.turnCard = getCardData(player.turnCard);
-        console.log(player);
-      });
+      data.turn.player1 = getCardData(data.turn.player1);
+      data.turn.player2 = getCardData(data.turn.player2);
+      data.turn.player3 = getCardData(data.turn.player3);
+      data.turn.player4 = getCardData(data.turn.player4);
 
       return data;
     }
