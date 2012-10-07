@@ -9,6 +9,8 @@ var config = require("./config")
 
 function handleAuth(io, sessionStore){
 
+  var vkRegExp = new RegExp("vk.com", "i");
+
   io.configure(function () {
 
     io.set("authorization", function (data, accept) {
@@ -56,7 +58,16 @@ function handleAuth(io, sessionStore){
         }
 
         // Resolve user, could be a locally mocked or from social network
-        var userData = (config.env === "development" ? utils.mockUser : vk.parseUrl)(data.headers.referer);
+        var handler;
+        if (vkRegExp.test(data.headers.referer)) {
+          handler = vk.parseUrl;
+        } else if (config.env === "development") {
+          handler = utils.mockUser;
+        } else {
+          accept("unauthorized", false);
+        }
+
+        var userData = handler(data.headers.referer);
 
         if (userData.isAuthenticated) {
           // User authorized, session restored
