@@ -10,7 +10,12 @@ var Deck = function () {
   _.each(self.Suites, function (suite) {
     _.each(self.Types, function (type) {
       var id = self.cardIdFor(suite, type);
-      self._initialDeck[id] = {id: id, suite: suite, type: type};
+      self._initialDeck[id] = {
+        id   : id,
+        suite: suite,
+        type : type,
+        score: type.score
+      };
     });
   });
 };
@@ -21,8 +26,12 @@ Deck.prototype = {
     return _.clone(this._initialDeck);
   },
 
+  getScore: function (cardId) {
+    return this._initialDeck[cardId].score;
+  },
+
   // TODO: do we need to keep names of the types
-  Suites: {
+  Suites        : {
     Spades  : {id: 's', name: 'Пики'},
     Hearts  : {id: 'h', name: 'Черви'},
     Diamonds: {id: 'd', name: 'Бубни'},

@@ -253,6 +253,19 @@ GameSchema.methods.newTurn = function (firstPlayer) {
 
   var turn = this.round.turn;
 
+  // TODO: make clear way for calculation trigger
+  if (!firstPlayer) {
+    // TODO: Most significant card function
+    var winnerPlayer = "player1";
+    var winnerTeam = this.players[winnerPlayer].teamId;
+    var score = deck.getScore(turn.player1)
+      + deck.getScore(turn.player2)
+      + deck.getScore(turn.player3)
+      + deck.getScore(turn.player4);
+    this.round.score[winnerTeam] += score;
+    firstPlayer = winnerPlayer;
+  }
+
   turn.created = new Date();
   turn.currentPlayer = firstPlayer;
   turn.player1 = "";
@@ -390,7 +403,7 @@ GameSchema.methods.forUser = function (user) {
     meta   : this.meta,
     cards  : this.round.cards[playerId],
     isTurn : isTurn,
-    status : !this.active ? null : isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name,
+    status : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name),
     players: players,
     turn   : turn,
 
@@ -502,8 +515,12 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
     value = parts[1];
 
     turn[playerId] = cardId;
-    // TODO: correct next player
-//    turn.currentPlayer = prevPlayer(playerId);
+    round.cards[playerId] = _.without(round.cards[playerId], cardId);
+    turn.currentPlayer = nextPlayer(playerId);
+
+    if (turn.player1 && turn.player2 && turn.player3 && turn.player4) {
+      game.newTurn();
+    }
 
     game.save(function () {
       successCallback(game, "current"); // TODO: use callback names as io messages
