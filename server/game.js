@@ -390,7 +390,7 @@ GameSchema.methods.forUser = function (user) {
     meta   : this.meta,
     cards  : this.round.cards[playerId],
     isTurn : isTurn,
-    status : !this.active ? "" : isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name,
+    status : !this.active ? null : isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name,
     players: players,
     turn   : turn,
 

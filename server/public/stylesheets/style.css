@@ -1,7 +1,12 @@
 body {
     font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 600px;
+    height: 500px;
+    background: #ffffff;
+    border: 1px dotted #cccccc;
 }
-
 
 a {
     color: #00B7FF;
@@ -12,46 +17,117 @@ h2 {
 }
 
 #container {
-    padding: 20px;
+    padding: 10px;
 }
 
-
-.desk-player-wrapper {
-    /*margin: 0 20px 20px 60px;*/
-    height: 240px;
+.desk-meta-wrapper {
+    height: 40px;
+    background: #F3F5F7;
 }
-.desk-player-list {
-    float: none;
-    margin: 0;
-    padding: 0;
+
+.desk-meta-container {
+    padding: 10px;
+}
+
+.desk-board-wrapper {
     position: relative;
+    height: 240px;
+    clear: both;
 }
 
-.desk-player-element {
-    list-style: none;
-    margin: 10px;
-    padding: 0;
+.desk-board-container {
+    position: relative;
+    height: 100%;
+    padding: 10px;
+}
+
+.desk-player-1-name {
     position: absolute;
-}
-
-.desk-player-1 {
-    top: 60px;
+    top: 50%;
     left: 0;
+    width: 150px;
 }
 
-.desk-player-2 {
-    top: 0;
-    left: 80px;
+.desk-player-1-name .helper {
+    position: relative;
+    top: -50%;
 }
 
-.desk-player-3 {
-    top: 60px;
-    left: 160px;
+.desk-player-2-name {
+    position: absolute;
+    left: 50%;
+    text-align: center;
 }
 
-.desk-player-4 {
-    left: 80px;
-    top: 120px;
+.desk-player-2-name .helper {
+    position: relative;
+    left: -50%;
+}
+
+.desk-player-3-name {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 150px;
+    text-align: right;
+}
+
+.desk-player-3-name .helper {
+    position: relative;
+    top: -50%;
+}
+
+/*onb board cards*/
+.desk-card-1 {
+    position: absolute;
+    top: 50%;
+    left: 30%
+}
+
+.desk-card-1 .helper {
+    position: relative;
+    top: -50%;
+}
+
+.desk-card-1 .desk-card-element {
+    margin-top: -50%;
+}
+
+.desk-card-2 {
+    position: absolute;
+    top: 30px;
+    left: 50%
+}
+
+.desk-card-2 .helper {
+    position: relative;
+    left: -50%
+}
+
+.desk-card-3 {
+    position: absolute;
+    top: 50%;
+    right: 30%
+}
+
+.desk-card-3 .helper {
+    position: relative;
+    top: -50%;
+}
+
+.desk-card-3 .desk-card-element {
+    margin-top: -50%;
+}
+
+.desk-card-4 {
+    position: absolute;
+    bottom: 0;
+    left: 50%
+}
+
+.desk-card-4 .helper {
+    position: relative;
+    left: -50%
 }
 
 .desk-cards-wrapper {
@@ -68,18 +144,20 @@ h2 {
     padding: 0;
 }
 
-.desk-card-element {
+.deck-cards-list li {
     float: left;
     list-style: none;
     margin: 10px;
     padding: 0;
+    cursor: pointer;
+}
+
+.desk-card-element {
     border: 1px dotted #cccccc;
     height: 60px;
     width: 40px;
     border-radius: 4px;
     background: #ffffff;
-
-    cursor: pointer;
 }
 
 .desk-card-element.suite-s,

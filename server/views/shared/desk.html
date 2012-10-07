@@ -1,46 +1,62 @@
-<div>
-    <dl>
-        <dt>Общий счет: </dt>
-        <dd>{{gameScore.team1}} : {{gameScore.team2}}</dd>
-    </dl>
-    <dl>
-        <dt>Текущий кон: </dt>
-        <dd>{{roundScore.team1}} : {{roundScore.team2}}</dd>
-    </dl>
-    <h2>Счет: {{meta.score.team1}} : {{meta.score.team2}}</h2>
+<div class="desk-meta-wrapper">
+    <div class="desk-meta-container">
+        {{#meta.active}}
+        Партия: <strong>{{gameScore.team1}}</strong> - <strong>{{gameScore.team2}}</strong>
+        | Кон: <strong>{{roundScore.team1}}</strong> - <strong>{{roundScore.team2}}</strong>
+        {{#status}}
+        | @{{status}}
+        {{/status}}
+        {{/meta.active}}
+    </div>
 </div>
 
-<div>
-    <h2>Статус: {{status}}</h2>
-</div>
+<div class="desk-board-wrapper">
+    <div class="desk-board-container">
 
-<div class="desk-player-wrapper">
+        <div class="desk-player-1-name">
+            <div class="helper">{{players.player1}}</div>
+        </div>
 
-    <div class="desk-player-1">
-        <div class="desk-player-name">{{players.player1}}</div>
+        <div class="desk-player-2-name">
+            <div class="helper">{{players.player2}}</div>
+        </div>
+
+        <div class="desk-player-3-name">
+            <div class="helper">{{players.player3}}</div>
+        </div>
+
+        {{#turn.player1}}
+        <div class="desk-card-1">
+            <div class="helper">
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+            </div>
+        </div>
+        {{/turn.player1}}
+
+        {{#turn.player2}}
+        <div class="desk-card-2">
+            <div class="helper">
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+            </div>
+        </div>
+        {{/turn.player2}}
+
+        {{#turn.player3}}
+        <div class="desk-card-3">
+            <div class="helper">
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+            </div>
+        </div>
+        {{/turn.player3}}
+
         {{#turn.player4}}
-        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+        <div class="desk-card-4">
+            <div class="helper">
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+            </div>
+        </div>
         {{/turn.player4}}
-    </div>
 
-    <div class="desk-player-2">
-        <div class="desk-player-name">{{players.player2}}</div>
-        {{#turn.player4}}
-        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
-        {{/turn.player4}}
-    </div>
-
-    <div class="desk-player-3">
-        <div class="desk-player-name">{{players.player3}}</div>
-        {{#turn.player4}}
-        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
-        {{/turn.player4}}
-    </div>
-
-    <div class="desk-player-4">
-        {{#turn.player4}}
-        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
-        {{/turn.player4}}
     </div>
 </div>
 
@@ -50,7 +66,8 @@
     <h2>Ваши карты</h2>
     <ul class="deck-cards-list">
         {{#cards}}
-        <li class="desk-card-element suite-{{suite}} {{#allowed}}card-allowed{{/allowed}}" data-id="{{id}}">{{name}}</li>
+        <li class="desk-card-element suite-{{suite}} {{#allowed}}card-allowed{{/allowed}}" data-id="{{id}}">{{name}}
+        </li>
         {{/cards}}
     </ul>
     {{/meta.active}}
