@@ -13,9 +13,7 @@ var express = require("express"),
   utils = require("./utils"),
   db = require("./db").instance();
 
-var cookie = require("cookie")
-  , connect = require("connect")
-  , Session = connect.middleware.session.Session
+var connect = require("connect")
   , MemoryStore = connect.middleware.session.MemoryStore;
 //TODO check the express.session.MemoryStore
 // TODO: remove explicit dependency on the `connect` and `session`
