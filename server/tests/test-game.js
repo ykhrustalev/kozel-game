@@ -31,18 +31,18 @@ module.exports = {
   },
 
   testPrevPlayer: function (test) {
-    test.equals(Game.prevPlayer("player1"), "player4");
-    test.equals(Game.prevPlayer("player2"), "player1");
-    test.equals(Game.prevPlayer("player3"), "player2");
-    test.equals(Game.prevPlayer("player4"), "player3");
+    test.equals(g.utils.prevPid("player1"), "player4");
+    test.equals(g.utils.prevPid("player2"), "player1");
+    test.equals(g.utils.prevPid("player3"), "player2");
+    test.equals(g.utils.prevPid("player4"), "player3");
     test.done();
   },
 
   testNextPlayer: function (test) {
-    test.equals(Game.nextPlayer("player1"), "player2");
-    test.equals(Game.nextPlayer("player2"), "player3");
-    test.equals(Game.nextPlayer("player3"), "player4");
-    test.equals(Game.nextPlayer("player4"), "player1");
+    test.equals(g.utils.nextPid("player1"), "player2");
+    test.equals(g.utils.nextPid("player2"), "player3");
+    test.equals(g.utils.nextPid("player3"), "player4");
+    test.equals(g.utils.nextPid("player4"), "player1");
     test.done();
   },
 

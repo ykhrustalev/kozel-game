@@ -88,7 +88,7 @@ var ERRORS = {
  * @param playerId - current player
  * @return {String} "player{1|2|3|4}"
  */
-function prevPlayer(playerId) {
+function prevPid(playerId) {
   switch (playerId) {
     case "player1":
       return "player4";
@@ -111,7 +111,7 @@ function prevPlayer(playerId) {
  * @return {String} "player{1|2|3|4}"
  */
 // TODO: rename nextplayerId
-function nextPlayer(playerId) {
+function nextPid(playerId) {
   switch (playerId) {
     case "player1":
       return "player2";
@@ -229,6 +229,8 @@ GameSchema.methods.newRound = function (rate) {
   round.score.team2 = 0;
   round.rate = rate || 1;
 
+  //TODO: check shuffle validity
+
   cards.player1 = split.shift();
   cards.player2 = split.shift();
   cards.player3 = split.shift();
@@ -239,10 +241,10 @@ GameSchema.methods.newRound = function (rate) {
       deck.Suites.Diamonds,
       deck.Types.Ace
     );
-    round.shuffledPlayer = prevPlayer(firstHand);
+    round.shuffledPlayer = prevPid(firstHand);
   } else {
-    round.shuffledPlayer = nextPlayer(round.shuffledPlayer);
-    firstHand = nextPlayer(round.shuffledPlayer);
+    round.shuffledPlayer = nextPid(round.shuffledPlayer);
+    firstHand = nextPid(round.shuffledPlayer);
   }
 
   this.newTurn(firstHand);
@@ -365,7 +367,7 @@ GameSchema.methods.getArrangedPlayersForPlayer = function (playerId) {
     , player
     , i;
   for (i = 0; i < 4; i += 1) {
-    playerId = nextPlayer(playerId);
+    playerId = nextPid(playerId);
     player = source[playerId];
     result.push({
       name  : player.name,
@@ -391,9 +393,9 @@ GameSchema.methods.forUser = function (user) {
     , turn = {}
     , teamId = this.players[playerId].teamId;
 
-  for (var i = 1, pid = nextPlayer(playerId);
+  for (var i = 1, pid = nextPid(playerId);
        i <= 4;
-       pid = nextPlayer(pid), i++) {
+       pid = nextPid(pid), i++) {
     var order = "player" + i;
     players[order] = this.players[pid].name || "свободно";
     turn[order] = this.round.turn[pid];
@@ -516,7 +518,7 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
 
     turn[playerId] = cardId;
     round.cards[playerId] = _.without(round.cards[playerId], cardId);
-    turn.currentPlayer = nextPlayer(playerId);
+    turn.currentPlayer = nextPid(playerId);
 
     if (turn.player1 && turn.player2 && turn.player3 && turn.player4) {
       game.newTurn();
@@ -528,9 +530,6 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
   });
 };
 
-// keep exposed for testing purpose
-GameSchema.statics.prevPlayer = prevPlayer;
-GameSchema.statics.nextPlayer = nextPlayer;
 
 module.exports = {
 
@@ -538,6 +537,8 @@ module.exports = {
     return db.model("Game", GameSchema);
   },
 
-  // TODO: is it required info to expose?
-  ERRORS: ERRORS
+  utils: {
+    prevPid: prevPid,
+    nextPid: nextPid
+  }
 };
