@@ -31,18 +31,42 @@ module.exports = {
   },
 
   testPrevPlayer: function (test) {
+    test.expect(5);
     test.equals(g.utils.prevPid("player1"), "player4");
     test.equals(g.utils.prevPid("player2"), "player1");
     test.equals(g.utils.prevPid("player3"), "player2");
     test.equals(g.utils.prevPid("player4"), "player3");
+    try{
+      g.utils.prevPid("abc");
+    } catch (e) {
+      test.ok(1);
+    }
     test.done();
   },
 
   testNextPlayer: function (test) {
+    test.expect(5);
     test.equals(g.utils.nextPid("player1"), "player2");
     test.equals(g.utils.nextPid("player2"), "player3");
     test.equals(g.utils.nextPid("player3"), "player4");
     test.equals(g.utils.nextPid("player4"), "player1");
+    try{
+      g.utils.nextPid("abc");
+    } catch (e) {
+      test.ok(1);
+    }
+    test.done();
+  },
+
+  testOtherTeam: function (test) {
+    test.expect(3);
+    test.equals(g.utils.otherTeam("team1"), "team2");
+    test.equals(g.utils.otherTeam("team2"), "team1");
+    try{
+      g.utils.otherTeam("team");
+    } catch (e) {
+      test.ok(1);
+    }
     test.done();
   },
 
@@ -173,10 +197,10 @@ module.exports = {
       , user3 = createUser()
       , user4 = createUser();
 
-    game.addPlayer(user1, "1");
-    game.addPlayer(user2, "2");
-    game.addPlayer(user3, "3");
-    game.addPlayer(user4, "4");
+    game.addPlayer(user1);
+    game.addPlayer(user2);
+    game.addPlayer(user3);
+    game.addPlayer(user4);
 
     function assertArrangement(arranged, expected) {
       var item,

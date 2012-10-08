@@ -145,7 +145,7 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:join", function (data) {
-    Game.join(data.id, user, socket.id,
+    Game.join(data.id, user,
       function (game, started) {
         joinGame(socket, game);
         notifyGameRoom(game, "current");
