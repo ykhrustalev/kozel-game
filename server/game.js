@@ -344,9 +344,7 @@ GameSchema.methods._start = function () {
   this.meta.started = new Date();
 
   this._newRound();
-  console.warn(this.round);
   this._newTurn();
-  console.warn(this.round);
 
   return true;
 };

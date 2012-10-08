@@ -271,6 +271,45 @@ module.exports = {
 
   },
 
+  _newTurn: function (test) {
+
+    test.expect(8);
+
+    Game.create(createUser(), function (game) {
+      game._addPlayer(createUser());
+      game._addPlayer(createUser());
+      game._addPlayer(createUser());
+
+      game.save(function () {
+        game._newRound();
+        game._newTurn();
+        game.save(function () {
+
+          var firstPid = game._firstRoundTurnPid()
+            , turn = game.round.turn;
+
+          test.ok(turn.created);
+          test.equals(turn.number, 1);
+          test.equals(turn.firstPid, firstPid);
+          test.equals(turn.currentPid, firstPid);
+          test.ok(!turn.player1);
+          test.ok(!turn.player2);
+          test.ok(!turn.player3);
+          test.ok(!turn.player4);
+
+          test.done();
+
+        }, function () {
+          test.done();
+        });
+
+      }, function () {
+        test.done();
+      });
+    });
+
+  },
+
   findByUser: function (test) {
     var user = createUser();
     test.expect(4);
