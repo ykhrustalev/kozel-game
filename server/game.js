@@ -155,26 +155,26 @@ GameSchema.statics.listAvailable = function (callback, limit) {
  * Creates game from scratch
  *
  * @param user            - starter game
- * @param successCallback - succed action
- * @param errorCallback   - error action
+ * @param success - succed action
+ * @param fail   - error action
  */
-GameSchema.statics.create = function (user, successCallback, errorCallback) {
+GameSchema.statics.create = function (user, success, fail) {
   var Game = this;
   Game.currentForUser(user, function (game) {
 
     if (game) {
-      errorCallback(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
+      fail(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
       return;
     }
 
     game = new Game();
     if (!game.addPlayer(user)) {
-      errorCallback(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
+      fail(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
       return;
     }
 
     game.save(function () {
-      successCallback(game);
+      success(game);
     });
 
   });
@@ -188,35 +188,35 @@ GameSchema.statics.currentForUser = function (user, callback) {
 };
 
 // TODO: test
-GameSchema.statics.join = function (gameId, user, successCallback, errorCallback) {
+GameSchema.statics.join = function (gameId, user, success, fail) {
   var Game = this;
 
   this.currentForUser(user, function (game) {
 
     if (game) {
-      errorCallback(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
+      fail(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
       return;
     }
 
     //TODO error to constants
     Game.findOne({"_id": gameId}, function (error, game) {
       if (error || !game) {
-        errorCallback(ERRORS.GAME_NOT_FOUND);
+        fail(ERRORS.GAME_NOT_FOUND);
       } else if (game.isUserJoined(user)) {
-        errorCallback(ERRORS.USER_ALREADY_JOINED_THE_GAME);
+        fail(ERRORS.USER_ALREADY_JOINED_THE_GAME);
       } else if (!game.addPlayer(user)) {
-        errorCallback(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
+        fail(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
       } else if (game.canBeStarted()) {
         if (game.start()) {
           game.save(function () {
-            successCallback(game, true);
+            success(game, true);
           });
         } else {
-          errorCallback("failed to start game");
+          fail("failed to start game");
         }
       } else {
         game.save(function () {
-          successCallback(game, false);
+          success(game, false);
         });
       }
     });
@@ -224,10 +224,10 @@ GameSchema.statics.join = function (gameId, user, successCallback, errorCallback
   });
 };
 
-GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback) {
+GameSchema.statics.turn = function (user, cardId, success, fail) {
   this.currentForUser(user, function (game) {
     if (!game) {
-      errorCallback(ERRORS.USER_NOT_IN_GAME);
+      fail(ERRORS.USER_NOT_IN_GAME);
       return;
     }
 
@@ -237,22 +237,22 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
       , pid = game._getPidForUser(user);
 
     if (!pid) {
-      errorCallback("user is not in game");
+      fail("user is not in game");
       return;
     }
 
     if (turn.currentPlayer !== pid) {
-      errorCallback("user is not allowed to turn");
+      fail("user is not allowed to turn");
       return;
     }
 
     if (turn[pid]) {
-      errorCallback("user already made turn");
+      fail("user already made turn");
       return;
     }
 
     if (cards[pid].indexOf(cardId)<0) {
-      errorCallback("user is trying to use not his cards, probably cheating");
+      fail("user is trying to use not his cards, probably cheating");
       return;
     }
 
@@ -269,7 +269,7 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
     }
 
     game.save(function () {
-      successCallback(game, "current"); // TODO: use callback names as io messages
+      success(game, "current"); // TODO: use callback names as io messages
     });
   });
 };
