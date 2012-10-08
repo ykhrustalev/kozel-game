@@ -44,7 +44,7 @@ define([
     doTurn: function (e) {
       e.preventDefault();
       var id = $(e.currentTarget).data("id");
-      socket.emit("game:turn", {cardId: id});
+      socket.emit("game:turn", {cid: id});
       return false;
     },
 

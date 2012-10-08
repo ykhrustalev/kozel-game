@@ -63,25 +63,28 @@ var authHandler = require("./authHandler");
 
 authHandler(io, store);
 
-function notifyAvailable() {
-  Game.listAvailable(function (games) {
-    io.sockets.in("available").emit("game:list:available", games);
-  });
-}
+var SocketHelpers = {
+  emitAvailableGames: function () {
+    Game.listAvailable(function (games) {
+      io.sockets.in("available").emit("game:list:available", games);
+    });
+  },
 
-function joinGame(socket, game) {
-  var room = "game:" + game._id;
-  socket.leave("available");
-  socket.join(room);
-}
+  joinUserToGame: function (socket, game) {
+    var room = "game:" + game._id;
+    socket.leave("available");
+    socket.join(room);
+  },
 
-function notifyGameRoom(game, state) {
-  var room = "game:" + game._id;
-  state = state || "current";
-  io.sockets.clients(room).forEach(function (socket) {
-    socket.emit("game:" + state, game.forUser(socket.handshake.user));
-  });
-}
+  emitGameRoom: function (game, state) {
+    var room = "game:" + game._id;
+    state = state || "current";
+    io.sockets.clients(room).forEach(function (socket) {
+      socket.emit(state, game.forUser(socket.handshake.user));
+    });
+  }
+};
+
 
 io.sockets.on('connection', function (socket) {
 
@@ -129,37 +132,37 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:create", function () {
-    Game.create(
-      user,
-      function (game) {
-        joinGame(socket, game);
-        socket.emit("game:created", game.forUser(user));
-        notifyAvailable();
-      },
-      function (error) {
+    Game.create(user, function (error, game) {
+
+      if (error) {
         socket.emit("game:createfailed", error);
+        return;
       }
-    );
+
+      SocketHelpers.joinUserToGame(socket, game);
+      SocketHelpers.emitGameRoom(game, "game:created");
+      SocketHelpers.emitAvailableGames();
+    });
   });
 
   socket.on("game:join", function (data) {
-    Game.join(data.id, user,
-      function (game, started) {
-        joinGame(socket, game);
-        notifyGameRoom(game, "current");
-        notifyAvailable();
-      },
-      function (error) {
-        //TODO: emit players
-        console.warn(error);
+    Game.join(data.gid, user, function (error, game, state) {
+
+      if (error) {
         socket.emit("game:joinfailed", error);
-      });
+        return;
+      }
+
+      SocketHelpers.joinUserToGame(socket, game);
+      SocketHelpers.emitGameRoom(game, "game:" + state);
+      SocketHelpers.emitAvailableGames();
+    });
   });
 
   socket.on("game:current", function () {
     Game.currentForUser(user, function (game) {
       if (game) {
-        joinGame(socket, game);
+        SocketHelpers.joinUserToGame(socket, game);
         socket.emit("game:current", game.forUser(user));
       } else {
         Game.listAvailable(function (games) {
@@ -170,14 +173,13 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:turn", function (data) {
-    Game.turn(user, data.cardId,
-      function (game, state) {
-        notifyGameRoom(game, state);
-      },
-      function (error) {
+    Game.turn(user, data.cid, function (error, game, state) {
+      if (error) {
         socket.emit("game:turnfailed", error);
+        return;
       }
-    );
+      SocketHelpers.emitGameRoom(game, "game:"+state);
+    });
   });
 
   socket.on('disconnect', function () {
@@ -186,8 +188,5 @@ io.sockets.on('connection', function (socket) {
     io.sockets.emit('user disconnected', user);
   });
 
-//  socket.on("session", function () {
-//    socket.emit("session", {id: socket.id, handshake: socket.handshake});
-//  });
 
 });

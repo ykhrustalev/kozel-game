@@ -68,6 +68,7 @@ Deck.prototype = {
    * @param {String} type
    * @return {String}
    */
+    //TODO: rename to cidFor
   cardIdFor: function (suite, type) {
     return suite.id + '-' + type.id;
   },

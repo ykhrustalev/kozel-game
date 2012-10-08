@@ -125,12 +125,12 @@ module.exports = {
     });
   },
 
-  isUserJoined: function (test) {
+  _isUserJoined: function (test) {
     var game = new Game(),
       user = createUser();
     game._addPlayer(user);
-    test.ok(game.isUserJoined(user), "already joined user treated as new");
-    test.ok(!game.isUserJoined(createUser()), "new user treated as joined");
+    test.ok(game._isUserJoined(user), "already joined user treated as new");
+    test.ok(!game._isUserJoined(createUser()), "new user treated as joined");
     test.done();
   },
 

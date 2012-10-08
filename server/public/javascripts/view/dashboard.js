@@ -32,7 +32,7 @@ define([
     joinGame: function (e) {
       e.preventDefault();
       var id = $(e.currentTarget).data("id");
-      socket.emit("game:join", {id: id});
+      socket.emit("game:join", {gid: id});
       return false;
     }
 

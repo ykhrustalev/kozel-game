@@ -54,7 +54,19 @@ define([
         router.showDesk(data);
       });
 
-      socket.on("game:start", function (game) {
+      socket.on("game:joined", function (data) {
+        router.showDesk(data);
+      });
+
+      socket.on("game:started", function (game) {
+        router.showDesk(game);
+      });
+
+      socket.on("game:newTurn", function (data) {
+        router.showDesk(data);
+      });
+
+      socket.on("game:newRound", function (game) {
         router.showDesk(game);
       });
 

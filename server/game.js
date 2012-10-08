@@ -69,6 +69,12 @@ var GameSchema = new Schema({
 
 });
 
+
+function error(message, callback) {
+  console.warn("error: " + message);
+  callback(message);
+}
+
 var ERRORS = {
   USER_ALREADY_JOINED_THE_GAME  : "user already joined the game",
   USER_FAILED_TO_JOIN_THE_GAME  : "user failed to join the game",
@@ -160,23 +166,23 @@ GameSchema.statics.listAvailable = function (callback, limit) {
  * @param success - succed action
  * @param fail   - error action
  */
-GameSchema.statics.create = function (user, success, fail) {
+GameSchema.statics.create = function (user, callback) {
   var Game = this;
   Game.currentForUser(user, function (game) {
 
     if (game) {
-      fail(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
+      callback("user already joined other game");
       return;
     }
 
     game = new Game();
     if (!game._addPlayer(user)) {
-      fail(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
+      callback("user failed to joined the game");
       return;
     }
 
     game.save(function () {
-      success(game);
+      callback(null, game);
     });
 
   });
@@ -190,37 +196,34 @@ GameSchema.statics.currentForUser = function (user, callback) {
 };
 
 // TODO: test
-GameSchema.statics.join = function (gameId, user, success, fail) {
+GameSchema.statics.join = function (gameId, user, callback) {
   var Game = this;
 
   this.currentForUser(user, function (game) {
 
     if (game) {
-      fail(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
+      callback("user already joined other game");
       return;
     }
 
     Game.findOne({"_id": gameId}, function (error, game) {
       if (error || !game) {
-        fail(ERRORS.GAME_NOT_FOUND);
-
-      } else if (game.isUserJoined(user)) {
-        fail(ERRORS.USER_ALREADY_JOINED_THE_GAME);
+        callback("game not found");
 
       } else if (!game._addPlayer(user)) {
-        fail(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
+        callback("user already joined the game");
 
-      } else if (game.meta.playersCount === 4) {
+      } else if (game._isReadyToStart()) {
         if (game._start()) {
           game.save(function () {
-            success(game, true);
+            callback(null, game, "started");
           });
         } else {
-          fail("failed to start game");
+          callback("failed to start game");
         }
       } else {
         game.save(function () {
-          success(game, false);
+          callback(null, game, "joined");
         });
       }
     });
@@ -228,57 +231,55 @@ GameSchema.statics.join = function (gameId, user, success, fail) {
   });
 };
 
-GameSchema.statics.turn = function (user, cardId, success, fail) {
+function Chain(obj, handlers, callback) {
+  var doChain = function () {
+    var handler = handlers.shift();
+    if (handler) {
+      handler(obj, doChain, callback);
+    }
+  };
+  doChain();
+}
+
+GameSchema.statics.turn = function (user, cid, callback) {
   this.currentForUser(user, function (game) {
     if (!game) {
-      fail(ERRORS.USER_NOT_IN_GAME);
+      callback("game not found");
       return;
     }
 
-    //TODO: check game conditions
-    var cards = game.round.cards
-      , turn = game.round.turn
-      , pid = game._getPidForUser(user);
-
-    if (!pid) {
-      fail("user is not in game");
-      return;
-    }
-
-    if (turn.currentPid !== pid) {
-      fail("user is not allowed to turn");
-      return;
-    }
-
-    if (turn[pid]) {
-      fail("user already made turn");
-      return;
-    }
-
-    if (cards[pid].indexOf(cardId) < 0) {
-      fail("user is trying to use not his cards, probably cheating");
-      return;
-    }
-
-
-    // TODO: check card is suitable
-
-
-    turn[pid] = cardId;
-    cards[pid] = _.without(cards[pid], cardId);
-    turn.currentPid = nextPid(pid);
-
-    if (turn.player1 && turn.player2 && turn.player3 && turn.player4) {
-      game._completeTurn();
-      if (cards.player1.length === 0) {
-        game._completeRound();
-      } else {
-        game._newTurn();
+    game._doTurn(user, cid, function (error) {
+      if (error) {
+        callback(error);
+        return;
       }
-    }
 
-    game.save(function () {
-      success(game, "current"); // TODO: use callback names as io messages
+      var state;
+
+
+//      new Chain(game, [handleQueenCaught], function () {
+//        game.save(function () {
+//          callback(null, game, state);
+//        });
+//      });
+
+      if (game._isRoundEnd()) {
+        state = "newRound";
+        game._completeTurn();
+        game._completeRound();
+        game._newRound();
+        game._newTurn();
+      } else if (game._isTurnEnd()) {
+        state = "newTurn";
+        game._completeTurn();
+        game._newTurn();
+      } else {
+        state = "current";
+      }
+
+      game.save(function () {
+        callback(null, game, state);
+      });
     });
   });
 };
@@ -326,6 +327,10 @@ GameSchema.methods.forUser = function (user) {
       team2: this.round.score[otherTid(tid)]
     }
   };
+};
+
+GameSchema.methods._isReadyToStart = function () {
+  return this.meta.playersCount === 4;
 };
 
 /**
@@ -387,6 +392,110 @@ GameSchema.methods._newTurn = function () {
   turn.player3 = "";
   turn.player4 = "";
   turn.firstPid = turn.currentPid = nextPid(this.round.shuffledPlayer);
+};
+
+
+GameSchema.methods._doTurn = function (user, cid, callback) {
+
+  var pid = this._getPidForUser(user)
+    , cards = this.round.cards
+    , turn = this.round.turn
+    , cardsAllowed
+    , error;
+
+  if (!pid)
+    error = "user is not in game";
+  else if (turn.currentPid !== pid)
+    error = "user is not allowed to turn";
+  else if (turn[pid])
+    error = "user already made turn";
+  else if (!_.contains(cards[pid], cid))
+    error = "user is trying to use not his cards, probably cheating";
+  else {
+    cardsAllowed = this._getCardsAllowed(pid);
+    if (!_.contains(cardsAllowed, cid))
+      error = "card is not allowed";
+  }
+
+  if (error) {
+    callback(error);
+    return;
+  }
+
+  // TODO: check 7+ / Q+
+
+  turn[pid] = cid;
+  cards[pid] = _.without(cards[pid], cardId);
+  turn.currentPid = nextPid(pid);
+  callback(null);
+};
+
+// TODO: unit test
+ function handleQueenCaught (game, chain, callback) {
+  var turn = game.round.turn
+    , queen = deck.cardIdFor(deck.Suite.Clubs, deck.Types.Queen)
+    , seven = deck.cardIdFor(deck.Suite.Clubs, deck.Types.T7)
+    , team1Cards = [turn.player1, turn.player3]
+    , team2Cards = [turn.player2, turn.player4]
+    , looserTid;
+
+  if (_.contains(team1Cards, seven) && _.contains(team2Cards, queen)) {
+    looserTid = "team2";
+  } else if (_.contains(team1Cards, queen) && _.contains(team2Cards, seven)) {
+    looserTid = "team1";
+  }
+
+  if (looserTid) {
+    if (game.round.number === 1) {
+
+      game.meta.score[looserTid] = 12;
+      callback(null, "caughtQueen", game, looserTid);
+
+      game._completeGame();
+      callback(null, "gameEnd", game);
+
+    } else {
+      game.meta.score[looserTid] += 4 * round.rate;
+      callback(null, "caughtQueen", game, looserTid);
+
+      game._newRound();
+      game._newTurn();
+      callback(null, "newTurn", game);
+
+    }
+  }
+
+  chain();
+}
+
+
+// TODO: unit test
+GameSchema.methods._isTurnEnd = function () {
+  var turn = this.round.turn;
+  return turn.player1 && turn.player2 && turn.player3 && turn.player4;
+};
+
+// TODO: unit test
+GameSchema.methods._isRoundEnd = function () {
+  var cards = this.round.cards;
+  return cards.player1.length === 0
+    && cards.player2.length === 0
+    && cards.player3.length === 0
+    && cards.player4.length === 0;
+};
+
+// TODO: unit test
+GameSchema.methods._isGameEnd = function () {
+  //TODO: complete me
+  return false;
+};
+
+
+// TODO: unit test
+GameSchema.methods._completeGame = function () {
+  // TODO: complete me
+  this.meta.active = false;
+  this.meta.finished = true;
 };
 
 // TODO: unit test
@@ -454,7 +563,7 @@ GameSchema.methods._firstRoundTurnPid = function () {
  * @param user - user to check
  * @return {Boolean}
  */
-GameSchema.methods.isUserJoined = function (user) {
+GameSchema.methods._isUserJoined = function (user) {
   var p = this.players,
     uid = user.uid;
   return p.player1.uid === uid
@@ -471,7 +580,7 @@ GameSchema.methods.isUserJoined = function (user) {
  */
 GameSchema.methods._addPlayer = function (user) {
 
-  if (this.meta.playersCount >= 4 || this.isUserJoined(user)) {
+  if (this.meta.playersCount >= 4 || this._isUserJoined(user)) {
     return false;
   }
 
