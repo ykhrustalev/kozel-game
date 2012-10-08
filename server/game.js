@@ -20,10 +20,11 @@ var GameSchema = new Schema({
     active      : { type: Boolean, "default": false },
     playersCount: { type: Number, "default": 0 },
     score       : {
-      team1: { type: Number, "default": 0 },
-      team2: { type: Number, "default": 0 }
+      team1: { type: Number, "default": 0 }, //TODO: assign after turn complete
+      team2: { type: Number, "default": 0 }  //TODO: assign after turn complete
     },
-    hasEquals   : Boolean
+    hasEquals   : { type: Boolean, "default": false },
+    hasNoScore  : { type: Boolean, "default": false }
   },
 
   players: {

@@ -30,23 +30,22 @@ Deck.prototype = {
     return this._initialDeck[cardId].score;
   },
 
-  // TODO: do we need to keep names of the types
-  Suites        : {
-    Spades  : {id: 's', name: 'Пики'},
-    Hearts  : {id: 'h', name: 'Черви'},
-    Diamonds: {id: 'd', name: 'Бубни'},
-    Clubs   : {id: 'c', name: 'Трефы'}
+  Suites: {
+    Spades  : {id: 's'},
+    Hearts  : {id: 'h'},
+    Diamonds: {id: 'd'},
+    Clubs   : {id: 'c'}
   },
 
   Types: {
-    Queen: {id: 'Q', score: 3, name: 'Дама'},
-    Jack : {id: 'J', score: 2, name: 'Валет'},
-    King : {id: 'K', score: 4, name: 'Король'},
-    Ace  : {id: 'A', score: 11, name: 'Туз'},
-    T10  : {id: '10', score: 10, name: '10'},
-    T9   : {id: '9', score: 0, name: '9'},
-    T8   : {id: '8', score: 0, name: '8'},
-    T7   : {id: '7', score: 0, name: '7'}
+    Queen: {id: 'Q', score: 3},
+    Jack : {id: 'J', score: 2},
+    King : {id: 'K', score: 4},
+    Ace  : {id: 'A', score: 11},
+    T10  : {id: '10', score: 10},
+    T9   : {id: '9', score: 0},
+    T8   : {id: '8', score: 0},
+    T7   : {id: '7', score: 0}
   },
 
   _randomize: function (deck) {
@@ -78,7 +77,6 @@ Deck.prototype = {
   shuffle: function (count) {
     var deck, groups, parts = [];
 
-    //TODO: clone might be over engineering here
     deck = this._randomize(_.clone(this._initialDeck));
 
     groups = _.groupBy(deck, function (value, index) {
