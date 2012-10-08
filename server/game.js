@@ -33,13 +33,6 @@ var GameSchema = new Schema({
     player4: PlayerSchema
   },
 
-  sessions: {
-    player1: String,
-    player2: String,
-    player3: String,
-    player4: String
-  },
-
   round: {
     created: { type: Date, "default": Date.now },
 
@@ -75,21 +68,22 @@ var GameSchema = new Schema({
 });
 
 var ERRORS = {
-  USER_ALREADY_JOINED           : "USER_ALREADY_JOINED",
-  USER_COULD_NOT_BE_JOINED      : "USER_COULD_NOT_BE_JOINED",
-  USER_IS_ASSIGNED_TO_OTHER_GAME: "USER_IS_ASSIGNED_TO_OTHER_GAME",
-  USER_NOT_IN_GAME              : "USER_NOT_IN_GAME"
+  USER_ALREADY_JOINED_THE_GAME  : "user already joined the game",
+  USER_FAILED_TO_JOIN_THE_GAME  : "user failed to join the game",
+  USER_ALREADY_JOINED_OTHER_GAME: "user already joined other game",
+  USER_NOT_IN_GAME              : "user not in game",
+  GAME_NOT_FOUND                : "game not found"
 };
 
 /**
  * Returns previous player id from provided.
  * Client should take care of exception.
  *
- * @param playerId - current player
- * @return {String} "player{1|2|3|4}"
+ * @param pid - current player
+ * @return {String} "pid{1|2|3|4}"
  */
-function prevPid(playerId) {
-  switch (playerId) {
+function prevPid(pid) {
+  switch (pid) {
     case "player1":
       return "player4";
     case "player2":
@@ -99,7 +93,7 @@ function prevPid(playerId) {
     case "player4":
       return "player3";
     default:
-      throw new Error("unknown playerId " + playerId);
+      throw new Error("unknown pid " + pid);
   }
 }
 
@@ -107,12 +101,11 @@ function prevPid(playerId) {
  * Returns next player id from provided.
  * Client should take care of exception.
  *
- * @param playerId - current player
- * @return {String} "player{1|2|3|4}"
+ * @param pid - current player
+ * @return {String} "pid{1|2|3|4}"
  */
-// TODO: rename nextplayerId
-function nextPid(playerId) {
-  switch (playerId) {
+function nextPid(pid) {
+  switch (pid) {
     case "player1":
       return "player2";
     case "player2":
@@ -122,12 +115,12 @@ function nextPid(playerId) {
     case "player4":
       return "player1";
     default:
-      throw new Error("unknown playerId " + playerId);
+      throw new Error("unknown pid " + pid);
   }
 }
 
 // TODO: comments
-function otherTeam(teamId) {
+function otherTid(teamId) {
   switch (teamId) {
     case "team1":
       return "team2";
@@ -142,7 +135,7 @@ function otherTeam(teamId) {
 /**
  * Lists games available for join, ordered desc by create date.
  *
- * @param callback(games) - succed action,
+ * @param callback(games) - succeed action,
  *                          `games` - collection of available games
  * @param limit           - collection size, default 10
  */
@@ -167,25 +160,25 @@ GameSchema.statics.listAvailable = function (callback, limit) {
  */
 GameSchema.statics.create = function (user, successCallback, errorCallback) {
   var Game = this;
-  Game.findByUser(user, function (games) {
+  Game.currentForUser(user, function (game) {
 
-    if (games && games.length) {
-      errorCallback(ERRORS.USER_ALREADY_JOINED);
+    if (game) {
+      errorCallback(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
       return;
     }
 
-    var game = new Game();
+    game = new Game();
     if (!game.addPlayer(user)) {
-      errorCallback(ERRORS.USER_COULD_NOT_BE_JOINED);
+      errorCallback(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
       return;
     }
+
     game.save(function () {
       successCallback(game);
     });
 
   });
 };
-
 
 
 GameSchema.statics.currentForUser = function (user, callback) {
@@ -201,18 +194,18 @@ GameSchema.statics.join = function (gameId, user, successCallback, errorCallback
   this.currentForUser(user, function (game) {
 
     if (game) {
-      errorCallback(ERRORS.USER_IS_ASSIGNED_TO_OTHER_GAME);
+      errorCallback(ERRORS.USER_ALREADY_JOINED_OTHER_GAME);
       return;
     }
 
     //TODO error to constants
     Game.findOne({"_id": gameId}, function (error, game) {
       if (error || !game) {
-        errorCallback("game not found");
+        errorCallback(ERRORS.GAME_NOT_FOUND);
       } else if (game.isUserJoined(user)) {
-        errorCallback("user already joined that game");
+        errorCallback(ERRORS.USER_ALREADY_JOINED_THE_GAME);
       } else if (!game.addPlayer(user)) {
-        errorCallback("user could not join the game");
+        errorCallback(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
       } else if (game.canBeStarted()) {
         if (game.start()) {
           game.save(function () {
@@ -239,33 +232,37 @@ GameSchema.statics.turn = function (user, cardId, successCallback, errorCallback
     }
 
     //TODO: check game conditions
-    var suite
-      , value
-      , round = game.round
+    var cards = game.round.cards
       , turn = game.round.turn
-      , playerId = game.getPlayerIdForUser(user);
+      , pid = game._getPidForUser(user);
 
-    if (!playerId) {
-      errorCallback("user is not in game"); // TODO: export ERROR code
-      return; //TODO: add trace
+    if (!pid) {
+      errorCallback("user is not in game");
+      return;
     }
 
-    if (turn.currentPlayer !== playerId) {
+    if (turn.currentPlayer !== pid) {
       errorCallback("user is not allowed to turn");
-      return; // TODO: add trace
+      return;
     }
 
-    // TODO: check user made already turn
-    // TODO: check card belongs to user
+    if (turn[pid]) {
+      errorCallback("user already made turn");
+      return;
+    }
+
+    if (cards[pid].indexOf(cardId)<0) {
+      errorCallback("user is trying to use not his cards, probably cheating");
+      return;
+    }
+
+
     // TODO: check card is suitable
 
-    var parts = cardId.split("-");
-    suite = parts[0];
-    value = parts[1];
 
-    turn[playerId] = cardId;
-    round.cards[playerId] = _.without(round.cards[playerId], cardId);
-    turn.currentPlayer = nextPid(playerId);
+    turn[pid] = cardId;
+    cards[pid] = _.without(cards[pid], cardId);
+    turn.currentPlayer = nextPid(pid);
 
     if (turn.player1 && turn.player2 && turn.player3 && turn.player4) {
       game.newTurn();
@@ -298,7 +295,17 @@ GameSchema.methods.start = function () {
   return true;
 };
 
-// TODO
+GameSchema.methods._shuffleCards = function (firstHandPid) {
+
+};
+
+GameSchema.methods._completeRound = function () {
+
+};
+
+// TODO, split into :
+//   - shuffle cards and set first hand
+//   -
 GameSchema.methods.newRound = function (rate) {
 
   var split = deck.shuffle(4),
@@ -307,8 +314,6 @@ GameSchema.methods.newRound = function (rate) {
     isFirstRound = !round.number,
     winner,
     firstHand;
-
-  console.warn(this); //TODO: remove
 
   if (!isFirstRound) {
     winner = "team" + (round.score.team1 > round.score.team2 ? 1 : 2);
@@ -436,8 +441,7 @@ GameSchema.methods.addPlayer = function (user) {
   return true;
 };
 
-//TODO: test, make private
-GameSchema.methods.getPlayerIdForUser = function (user) {
+GameSchema.methods._getPidForUser = function (user) {
   var p = this.players
     , uid = user.uid
     , id;
@@ -450,27 +454,9 @@ GameSchema.methods.getPlayerIdForUser = function (user) {
 };
 
 //TODO: test
-GameSchema.methods.getArrangedPlayersForPlayer = function (playerId) {
-  var source = this.players
-    , result = []
-    , player
-    , i;
-  for (i = 0; i < 4; i += 1) {
-    playerId = nextPid(playerId);
-    player = source[playerId];
-    result.push({
-      name  : player.name,
-      order : i + 1,
-      teamId: player.teamId
-    });
-  }
-  return result;
-};
-
-//TODO: test
 GameSchema.methods.forUser = function (user) {
 
-  var playerId = this.getPlayerIdForUser(user);
+  var playerId = this._getPidForUser(user);
   if (!playerId) {
     console.warn("player is not in game", user, this);
     return null;
@@ -500,12 +486,12 @@ GameSchema.methods.forUser = function (user) {
 
     gameScore: {
       team1: this.meta.score[teamId],
-      team2: this.meta.score[otherTeam(teamId)]
+      team2: this.meta.score[otherTid(teamId)]
     },
 
     roundScore: {
       team1: this.round.score[teamId],
-      team2: this.round.score[otherTeam(teamId)]
+      team2: this.round.score[otherTid(teamId)]
     }
   };
 };
@@ -537,8 +523,8 @@ module.exports = {
   },
 
   utils: {
-    prevPid  : prevPid,
-    nextPid  : nextPid,
-    otherTeam: otherTeam
+    prevPid : prevPid,
+    nextPid : nextPid,
+    otherTid: otherTid
   }
 };

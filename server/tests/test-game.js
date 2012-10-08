@@ -60,10 +60,10 @@ module.exports = {
 
   testOtherTeam: function (test) {
     test.expect(3);
-    test.equals(g.utils.otherTeam("team1"), "team2");
-    test.equals(g.utils.otherTeam("team2"), "team1");
+    test.equals(g.utils.otherTid("team1"), "team2");
+    test.equals(g.utils.otherTid("team2"), "team1");
     try{
-      g.utils.otherTeam("team");
+      g.utils.otherTid("team");
     } catch (e) {
       test.ok(1);
     }
@@ -143,7 +143,6 @@ module.exports = {
     function assertUser(game, playerId, user, teamId) {
       test.equals(game.players[playerId].uid, user.uid, "wrong player's order in game");
       test.equals(game.players[playerId].teamId, teamId, "wrong player's team in game");
-      test.equals(game.sessions[playerId], user.sessionId, "wrong session assigned in game");
     }
 
     test.ok(game.addPlayer(user1));
@@ -190,37 +189,6 @@ module.exports = {
 
   },
 
-  testGetArrangedPlayersForPlayer: function (test) {
-    var game = new Game()
-      , user1 = createUser()
-      , user2 = createUser()
-      , user3 = createUser()
-      , user4 = createUser();
-
-    game.addPlayer(user1);
-    game.addPlayer(user2);
-    game.addPlayer(user3);
-    game.addPlayer(user4);
-
-    function assertArrangement(arranged, expected) {
-      var item,
-        user;
-      test.equals(arranged.length, expected.length);
-      for (item = arranged.shift(); item; item = arranged.shift()) {
-        user = expected.shift();
-        test.equals(item.uid, user.uid);
-      }
-    }
-
-    //TODO: remove, need a whole data test
-    assertArrangement(game.getArrangedPlayersForPlayer("player1"), [user2, user3, user4, user1]);
-    assertArrangement(game.getArrangedPlayersForPlayer("player2"), [user3, user4, user1, user2]);
-    assertArrangement(game.getArrangedPlayersForPlayer("player3"), [user4, user1, user2, user3]);
-    assertArrangement(game.getArrangedPlayersForPlayer("player4"), [user1, user2, user3, user4]);
-
-    test.done();
-  },
-
   testFindByUser: function (test) {
     var user = createUser();
     test.expect(4);
@@ -246,7 +214,7 @@ module.exports = {
     });
   },
 
-  testGetPlayerIdForUser: function (test) {
+  testGetPidForUser: function (test) {
     var p1 = createUser()
       , p2 = createUser()
       , p3 = createUser()
@@ -257,10 +225,10 @@ module.exports = {
       game.addPlayer(p2);
       game.addPlayer(p3);
       game.addPlayer(p4);
-      test.equals("player1", game.getPlayerIdForUser(p1));
-      test.equals("player2", game.getPlayerIdForUser(p2));
-      test.equals("player3", game.getPlayerIdForUser(p3));
-      test.equals("player4", game.getPlayerIdForUser(p4));
+      test.equals("player1", game._getPidForUser(p1));
+      test.equals("player2", game._getPidForUser(p2));
+      test.equals("player3", game._getPidForUser(p3));
+      test.equals("player4", game._getPidForUser(p4));
       test.done();
     });
   },
