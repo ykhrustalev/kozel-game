@@ -6,9 +6,9 @@ var Schema = mongoose.Schema;
 
 // Helper schema for player
 var PlayerSchema = {
-  uid   : Number,
-  teamId: String, // 1|2
-  name  : String
+  uid : Number,
+  tid : String, // team{1|2}
+  name: String
 };
 
 // Game schema, represents data structure in db
@@ -120,14 +120,14 @@ function nextPid(pid) {
 }
 
 // TODO: comments
-function otherTid(teamId) {
-  switch (teamId) {
+function otherTid(tid) {
+  switch (tid) {
     case "team1":
       return "team2";
     case "team2":
       return "team1";
     default:
-      throw new Error("unknown teamId " + teamId);
+      throw new Error("unknown tid " + tid);
   }
 }
 
@@ -168,7 +168,7 @@ GameSchema.statics.create = function (user, success, fail) {
     }
 
     game = new Game();
-    if (!game.addPlayer(user)) {
+    if (!game._addPlayer(user)) {
       fail(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
       return;
     }
@@ -198,16 +198,18 @@ GameSchema.statics.join = function (gameId, user, success, fail) {
       return;
     }
 
-    //TODO error to constants
     Game.findOne({"_id": gameId}, function (error, game) {
       if (error || !game) {
         fail(ERRORS.GAME_NOT_FOUND);
+
       } else if (game.isUserJoined(user)) {
         fail(ERRORS.USER_ALREADY_JOINED_THE_GAME);
-      } else if (!game.addPlayer(user)) {
+
+      } else if (!game._addPlayer(user)) {
         fail(ERRORS.USER_FAILED_TO_JOIN_THE_GAME);
-      } else if (game.canBeStarted()) {
-        if (game.start()) {
+
+      } else if (game.meta.playersCount === 4) {
+        if (game._start()) {
           game.save(function () {
             success(game, true);
           });
@@ -251,7 +253,7 @@ GameSchema.statics.turn = function (user, cardId, success, fail) {
       return;
     }
 
-    if (cards[pid].indexOf(cardId)<0) {
+    if (cards[pid].indexOf(cardId) < 0) {
       fail("user is trying to use not his cards, probably cheating");
       return;
     }
@@ -265,7 +267,12 @@ GameSchema.statics.turn = function (user, cardId, success, fail) {
     turn.currentPlayer = nextPid(pid);
 
     if (turn.player1 && turn.player2 && turn.player3 && turn.player4) {
-      game.newTurn();
+      game._completeTurn();
+      if (cards.player1.length === 0) {
+        game._completeRound();
+      } else {
+        game._newTurn();
+      }
     }
 
     game.save(function () {
@@ -281,7 +288,7 @@ GameSchema.statics.turn = function (user, cardId, success, fail) {
  *
  * @return {Boolean}
  */
-GameSchema.methods.start = function () {
+GameSchema.methods._start = function () {
 
   if (this.meta.active || this.meta.playersCount !== 4) {
     return false;
@@ -290,61 +297,86 @@ GameSchema.methods.start = function () {
   this.meta.active = true;
   this.meta.started = new Date();
 
-  this.newRound();
+  this._shuffleCards();
+  this._newTurn();
 
   return true;
 };
 
-GameSchema.methods._shuffleCards = function (firstHandPid) {
+// TODO: unit test
+GameSchema.methods._shuffleCards = function (rate) {
 
-};
-
-GameSchema.methods._completeRound = function () {
-
-};
-
-// TODO, split into :
-//   - shuffle cards and set first hand
-//   -
-GameSchema.methods.newRound = function (rate) {
-
-  var split = deck.shuffle(4),
-    round = this.round,
-    cards = round.cards,
-    isFirstRound = !round.number,
-    winner,
-    firstHand;
-
-  if (!isFirstRound) {
-    winner = "team" + (round.score.team1 > round.score.team2 ? 1 : 2);
-    this.meta.score[winner] += 2 * round.rate;
-  }
+  var split = deck.shuffle(4)
+    , round = this.round;
 
   round.created = new Date();
-  round.numver += 1;
+  round.number += 1;
   round.score.team1 = 0;
   round.score.team2 = 0;
   round.rate = rate || 1;
 
   //TODO: check shuffle validity
 
-  cards.player1 = split.shift();
-  cards.player2 = split.shift();
-  cards.player3 = split.shift();
-  cards.player4 = split.shift();
+  round.cards.player1 = split.shift();
+  round.cards.player2 = split.shift();
+  round.cards.player3 = split.shift();
+  round.cards.player4 = split.shift();
 
-  if (isFirstRound) {
-    firstHand = this.findPlayerByCard(
+  if (round.shuffledPlayer) {
+    round.shuffledPlayer = nextPid(round.shuffledPlayer);
+  } else {
+    round.shuffledPlayer = prevPid(this._pidForCard(
       deck.Suites.Diamonds,
       deck.Types.Ace
-    );
-    round.shuffledPlayer = prevPid(firstHand);
-  } else {
-    round.shuffledPlayer = nextPid(round.shuffledPlayer);
-    firstHand = nextPid(round.shuffledPlayer);
+    ));
   }
+};
 
-  this.newTurn(firstHand);
+
+// TODO: unit test
+GameSchema.methods._newTurn = function () {
+  var turn = this.round.turn;
+
+  turn.created = new Date();
+  turn.player1 = "";
+  turn.player2 = "";
+  turn.player3 = "";
+  turn.player4 = "";
+  turn.currentPlayer = nextPid(this.round.shuffledPlayer);
+};
+
+// TODO: unit test
+GameSchema.methods._completeRound = function () {
+
+  var round = this.round
+    , score1 = round.score.team1
+    , score2 = round.score.team2;
+
+  if (score1 === score2) {
+    this.round.rate *= 2;
+  } else {
+    var minScore = Math.min(score1, score2)
+      , value = minScore === 0 ? 6 : minScore <= 30 ? 4 : 2;
+    this.meta.score[score1 > score2 ? "team2" : "team1"] += value * round.rate;
+  }
+};
+
+GameSchema.methods._completeTurn = function () {
+  // TODO: Most significant card function
+  var turn = this.round.turn
+    , winnerPid = "player1"
+    , winnerTid = this.players[winnerPid].tid
+    , score;
+
+  // TODO: 7+Q case handle on turn function, not here
+
+  score = deck.getScore(turn.player1)
+    + deck.getScore(turn.player2)
+    + deck.getScore(turn.player3)
+    + deck.getScore(turn.player4);
+
+  this.round.score[winnerTid] += score;
+  turn.currentPlayer = winnerPid;
 };
 
 // TODO
@@ -356,7 +388,7 @@ GameSchema.methods.newTurn = function (firstPlayer) {
   if (!firstPlayer) {
     // TODO: Most significant card function
     var winnerPlayer = "player1";
-    var winnerTeam = this.players[winnerPlayer].teamId;
+    var winnerTeam = this.players[winnerPlayer].tid;
     var score = deck.getScore(turn.player1)
       + deck.getScore(turn.player2)
       + deck.getScore(turn.player3)
@@ -374,31 +406,22 @@ GameSchema.methods.newTurn = function (firstPlayer) {
 
 };
 
-// TODO test
-GameSchema.methods.findPlayerByCard = function (suite, type) {
+// TODO unit test
+GameSchema.methods._pidForCard = function (suite, type) {
 
   var cardId = deck.cardIdFor(suite, type),
     cards = this.round.cards,
-    playerId = cards.player1.indexOf(cardId) >= 0
-      ? 1 : cards.player2.indexOf(cardId) >= 0
-      ? 2 : cards.player3.indexOf(cardId) >= 0
-      ? 3 : cards.player4.indexOf(cardId) >= 0
-      ? 4 : -1;
+    pid = cards.player1.indexOf(cardId) >= 0 ? 1
+      : cards.player2.indexOf(cardId) >= 0 ? 2
+      : cards.player3.indexOf(cardId) >= 0 ? 3
+      : cards.player4.indexOf(cardId) >= 0 ? 4
+      : null;
 
-  if (playerId === -1) {
+  if (pid === null) {
     throw new Error("unknown card " + cardId);
   }
 
-  return "player" + playerId;
-};
-
-/**
- * Checks wether game is ready to start.
- *
- * @return {Boolean}
- */
-GameSchema.methods.canBeStarted = function () {
-  return this.meta.playersCount === 4;
+  return "player" + pid;
 };
 
 /**
@@ -422,7 +445,7 @@ GameSchema.methods.isUserJoined = function (user) {
  * @param user      - user to assing
  * @return {Boolean}
  */
-GameSchema.methods.addPlayer = function (user) {
+GameSchema.methods._addPlayer = function (user) {
 
   if (this.meta.playersCount >= 4 || this.isUserJoined(user)) {
     return false;
@@ -433,9 +456,9 @@ GameSchema.methods.addPlayer = function (user) {
   var playerId = "player" + this.meta.playersCount;
 
   this.players[playerId] = {
-    uid   : user.uid,
-    teamId: "team" + ((this.meta.playersCount % 2) ? 1 : 2),
-    name  : user.first_name + ' ' + user.last_name
+    uid : user.uid,
+    tid : "team" + ((this.meta.playersCount % 2) ? 1 : 2),
+    name: user.first_name + ' ' + user.last_name
   };
 
   return true;
@@ -456,19 +479,20 @@ GameSchema.methods._getPidForUser = function (user) {
 //TODO: test
 GameSchema.methods.forUser = function (user) {
 
-  var playerId = this._getPidForUser(user);
-  if (!playerId) {
+  var pid = this._getPidForUser(user);
+  if (!pid) {
     console.warn("player is not in game", user, this);
     return null;
   }
 
   var currTurnPid = this.round.turn.currentPlayer
-    , isTurn = currTurnPid === playerId
+    , isTurn = currTurnPid === pid
     , players = {}
     , turn = {}
-    , teamId = this.players[playerId].teamId;
+    , tid = this.players[pid].tid;
 
-  for (var i = 1, pid = nextPid(playerId);
+  console.log(pid);
+  for (var i = 1, pid = nextPid(pid);
        i <= 4;
        pid = nextPid(pid), i++) {
     var order = "player" + i;
@@ -476,22 +500,23 @@ GameSchema.methods.forUser = function (user) {
     turn[order] = this.round.turn[pid];
   }
 
+  console.log(this.players);
   return {
     meta   : this.meta,
-    cards  : this.round.cards[playerId],
+    cards  : this.round.cards[pid],
     isTurn : isTurn,
     status : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name),
     players: players,
     turn   : turn,
 
     gameScore: {
-      team1: this.meta.score[teamId],
-      team2: this.meta.score[otherTid(teamId)]
+      team1: this.meta.score[tid],
+      team2: this.meta.score[otherTid(tid)]
     },
 
     roundScore: {
-      team1: this.round.score[teamId],
-      team2: this.round.score[otherTid(teamId)]
+      team1: this.round.score[tid],
+      team2: this.round.score[otherTid(tid)]
     }
   };
 };

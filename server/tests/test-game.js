@@ -36,7 +36,7 @@ module.exports = {
     test.equals(g.utils.prevPid("player2"), "player1");
     test.equals(g.utils.prevPid("player3"), "player2");
     test.equals(g.utils.prevPid("player4"), "player3");
-    try{
+    try {
       g.utils.prevPid("abc");
     } catch (e) {
       test.ok(1);
@@ -116,7 +116,7 @@ module.exports = {
       test.equals(game.meta.playersCount, 1);
       test.equals(player.uid, user.uid);
       test.equals(player.name, user.first_name + " " + user.last_name);
-      test.equals(player.teamId, "team1");
+      test.equals(player.tid, "team1");
 
       test.done();
     }, function () {
@@ -127,7 +127,7 @@ module.exports = {
   testIsUserJoined: function (test) {
     var game = new Game(),
       user = createUser();
-    game.addPlayer(user);
+    game._addPlayer(user);
     test.ok(game.isUserJoined(user), "already joined user treated as new");
     test.ok(!game.isUserJoined(createUser()), "new user treated as joined");
     test.done();
@@ -140,18 +140,18 @@ module.exports = {
       user4 = createUser(),
       game = new Game();
 
-    function assertUser(game, playerId, user, teamId) {
-      test.equals(game.players[playerId].uid, user.uid, "wrong player's order in game");
-      test.equals(game.players[playerId].teamId, teamId, "wrong player's team in game");
+    function assertUser(game, pid, user, tid) {
+      test.equals(game.players[pid].uid, user.uid, "wrong player's order in game");
+      test.equals(game.players[pid].tid, tid, "wrong player's team in game");
     }
 
-    test.ok(game.addPlayer(user1));
-    test.equals(game.players.player1.teamId, "team1");
-    test.ok(!game.addPlayer(user1));
-    test.ok(game.addPlayer(user2));
-    test.ok(game.addPlayer(user3));
-    test.ok(game.addPlayer(user4));
-    test.ok(!game.addPlayer(createUser()), "5th player joined the game");
+    test.ok(game._addPlayer(user1));
+    test.equals(game.players.player1.tid, "team1");
+    test.ok(!game._addPlayer(user1));
+    test.ok(game._addPlayer(user2));
+    test.ok(game._addPlayer(user3));
+    test.ok(game._addPlayer(user4));
+    test.ok(!game._addPlayer(createUser()), "5th player joined the game");
 
     assertUser(game, "player1", user1, "team1");
     assertUser(game, "player2", user2, "team2");
@@ -166,18 +166,18 @@ module.exports = {
     test.expect(3);
 
     Game.create(createUser(), function (game) {
-      game.addPlayer(createUser());
-      game.addPlayer(createUser());
-      game.addPlayer(createUser());
+      game._addPlayer(createUser());
+      game._addPlayer(createUser());
+      game._addPlayer(createUser());
       game.save(function () {
-        test.ok(game.start(), "failed to start game");
-        test.ok(!game.start(), "started already running game");
+        test.ok(game._start(), "failed to start game");
+        test.ok(!game._start(), "started already running game");
 
         Game.create(createUser(), function (game) {
-          game.addPlayer(createUser());
-          game.addPlayer(createUser());
+          game._addPlayer(createUser());
+          game._addPlayer(createUser());
           game.save(function () {
-            test.ok(!game.start(), "started game with incomplete player set");
+            test.ok(!game._start(), "started game with incomplete player set");
             test.done();
           });
 
@@ -222,27 +222,15 @@ module.exports = {
 
     test.expect(4);
     Game.create(p1, function (game) {
-      game.addPlayer(p2);
-      game.addPlayer(p3);
-      game.addPlayer(p4);
+      game._addPlayer(p2);
+      game._addPlayer(p3);
+      game._addPlayer(p4);
       test.equals("player1", game._getPidForUser(p1));
       test.equals("player2", game._getPidForUser(p2));
       test.equals("player3", game._getPidForUser(p3));
       test.equals("player4", game._getPidForUser(p4));
       test.done();
     });
-  },
-
-  //TODO: complete
-  testNewRound          : function (test) {
-    var game = new Game(),
-      cards;
-
-    game.newRound();
-    cards = _.clone(game.cards);
-//    test.done(_.inter)
-
-    test.done();
   }
 
 };
