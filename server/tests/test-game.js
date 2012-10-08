@@ -15,7 +15,6 @@ function createUser() {
 module.exports = {
 
   setUp: function (callback) {
-//    db = mongoose.connection('mongodb://localhost/test_1');
     connection = mongoose.createConnection('mongodb://localhost/test_1');
     connection.once('open', function () {
       Game = g.model(connection);
@@ -30,7 +29,7 @@ module.exports = {
     });
   },
 
-  testPrevPlayer: function (test) {
+  prevPid: function (test) {
     test.expect(5);
     test.equals(g.utils.prevPid("player1"), "player4");
     test.equals(g.utils.prevPid("player2"), "player1");
@@ -44,13 +43,13 @@ module.exports = {
     test.done();
   },
 
-  testNextPlayer: function (test) {
+  nextPid: function (test) {
     test.expect(5);
     test.equals(g.utils.nextPid("player1"), "player2");
     test.equals(g.utils.nextPid("player2"), "player3");
     test.equals(g.utils.nextPid("player3"), "player4");
     test.equals(g.utils.nextPid("player4"), "player1");
-    try{
+    try {
       g.utils.nextPid("abc");
     } catch (e) {
       test.ok(1);
@@ -58,11 +57,11 @@ module.exports = {
     test.done();
   },
 
-  testOtherTeam: function (test) {
+  otherTid: function (test) {
     test.expect(3);
     test.equals(g.utils.otherTid("team1"), "team2");
     test.equals(g.utils.otherTid("team2"), "team1");
-    try{
+    try {
       g.utils.otherTid("team");
     } catch (e) {
       test.ok(1);
@@ -70,7 +69,7 @@ module.exports = {
     test.done();
   },
 
-  testListAvailable: function (test) {
+  listAvailable: function (test) {
     var game;
 
     test.expect(5);
@@ -105,7 +104,7 @@ module.exports = {
 
   },
 
-  testCreate: function (test) {
+  create: function (test) {
     var user = createUser();
 
     test.expect(4);
@@ -124,7 +123,7 @@ module.exports = {
     });
   },
 
-  testIsUserJoined: function (test) {
+  isUserJoined: function (test) {
     var game = new Game(),
       user = createUser();
     game._addPlayer(user);
@@ -133,7 +132,7 @@ module.exports = {
     test.done();
   },
 
-  testAddPlayer: function (test) {
+  _addPlayer: function (test) {
     var user1 = createUser(),
       user2 = createUser(),
       user3 = createUser(),
@@ -161,7 +160,7 @@ module.exports = {
     test.done();
   },
 
-  testStart: function (test) {
+  _start: function (test) {
 
     test.expect(3);
 
@@ -189,7 +188,7 @@ module.exports = {
 
   },
 
-  testFindByUser: function (test) {
+  findByUser: function (test) {
     var user = createUser();
     test.expect(4);
     Game.create(user, function (game) {
@@ -203,7 +202,7 @@ module.exports = {
     });
   },
 
-  testCurrentForUser: function (test) {
+  currentForUser: function (test) {
     var user = createUser();
     test.expect(1);
     Game.create(user, function (created) {
@@ -214,7 +213,7 @@ module.exports = {
     });
   },
 
-  testGetPidForUser: function (test) {
+  _getPidForUser: function (test) {
     var p1 = createUser()
       , p2 = createUser()
       , p3 = createUser()

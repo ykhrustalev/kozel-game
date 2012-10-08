@@ -22,9 +22,14 @@ var Deck = function () {
 
 Deck.prototype = {
 
-  //TODO: unit test
+  //TODO: remove
   getScore: function (cardId) {
     return this._initialDeck[cardId].score;
+  },
+
+  // TODO: unit test
+  getCard : function (cardId) {
+    return _.clone(this._initialDeck[cardId]);
   },
 
   Suites: {
@@ -34,7 +39,7 @@ Deck.prototype = {
     Clubs   : {id: 'c'}
   },
 
-  Types: {
+  Types     : {
     Queen: {id: 'Q', score: 3},
     Jack : {id: 'J', score: 2},
     King : {id: 'K', score: 4},
@@ -65,6 +70,37 @@ Deck.prototype = {
    */
   cardIdFor: function (suite, type) {
     return suite.id + '-' + type.id;
+  },
+
+  isTrump    : function (cardId) {
+    var parts = cardId.split("-");
+    return parts[0] === this.Suites.Clubs.id
+      || parts[1] === this.Types.Queen.id
+      || parts[1] === this.Types.Jack.id;
+  },
+
+  // TODO: unit test, move to derived class
+  sortedCards: function (cards, startCardId) {
+    var self = this,
+      startCard = self.getCard(startCardId)
+      , sorted = {
+        suite    : [],
+        trumps   : [],
+        nonTrumps: []
+      };
+
+    _.each(cards, function (cardId) {
+      if (self.isTrump(cardId)) {
+        sorted.trumps.push(cardId);
+      } else {
+        sorted.nonTrumps.push(cardId);
+        if (self.getCard(cardId).suite === startCard.suite) {
+          sorted.suite.push(cardId);
+        }
+      }
+    });
+
+    return sorted;
   },
 
   /**

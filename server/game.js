@@ -49,12 +49,14 @@ var GameSchema = new Schema({
     },
 
     turn: {
-      created      : { type: Date, "default": Date.now },
-      currentPlayer: String, // player{1,2,3,4}
-      player1      : String,
-      player2      : String,
-      player3      : String,
-      player4      : String
+      created   : { type: Date, "default": Date.now },
+      number    : { type: Number, "default": 0 },
+      firstPid  : String,
+      currentPid: String, // player{1,2,3,4}
+      player1   : String,
+      player2   : String,
+      player3   : String,
+      player4   : String
     },
 
     cards: {
@@ -244,7 +246,7 @@ GameSchema.statics.turn = function (user, cardId, success, fail) {
       return;
     }
 
-    if (turn.currentPlayer !== pid) {
+    if (turn.currentPid !== pid) {
       fail("user is not allowed to turn");
       return;
     }
@@ -265,7 +267,7 @@ GameSchema.statics.turn = function (user, cardId, success, fail) {
 
     turn[pid] = cardId;
     cards[pid] = _.without(cards[pid], cardId);
-    turn.currentPlayer = nextPid(pid);
+    turn.currentPid = nextPid(pid);
 
     if (turn.player1 && turn.player2 && turn.player3 && turn.player4) {
       game._completeTurn();
@@ -283,6 +285,50 @@ GameSchema.statics.turn = function (user, cardId, success, fail) {
 };
 
 
+//TODO: test
+GameSchema.methods.forUser = function (user) {
+
+  var pid = this._getPidForUser(user);
+  if (!pid) {
+    console.warn("player is not in game", user, this);
+    return null;
+  }
+
+  var currTurnPid = this.round.turn.currentPid
+    , isTurn = currTurnPid === pid
+    , players = {}
+    , turn = {}
+    , tid = this.players[pid].tid;
+
+  for (var i = 1, pid = nextPid(pid);
+       i <= 4;
+       pid = nextPid(pid), i++) {
+    var order = "player" + i;
+    players[order] = this.players[pid].name || "свободно";
+    turn[order] = this.round.turn[pid];
+  }
+
+  return {
+    meta        : this.meta,
+    cards       : this.round.cards[pid],
+    cardsAllowed: this.meta.active ? this._getCardsAllowed(pid) : [],
+    isTurn      : isTurn,
+    status      : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name),
+    players     : players,
+    turn        : turn,
+
+    gameScore: {
+      team1: this.meta.score[tid],
+      team2: this.meta.score[otherTid(tid)]
+    },
+
+    roundScore: {
+      team1: this.round.score[tid],
+      team2: this.round.score[otherTid(tid)]
+    }
+  };
+};
+
 /**
  * Starts game, shuffles cards ands prepares to the first round, does not
  * saves game.
@@ -298,14 +344,16 @@ GameSchema.methods._start = function () {
   this.meta.active = true;
   this.meta.started = new Date();
 
-  this._shuffleCards();
+  this._newRound();
+  console.warn(this.round);
   this._newTurn();
+  console.warn(this.round);
 
   return true;
 };
 
 // TODO: unit test
-GameSchema.methods._shuffleCards = function (rate) {
+GameSchema.methods._newRound = function (rate) {
 
   var split = deck.shuffle(4)
     , round = this.round;
@@ -339,11 +387,12 @@ GameSchema.methods._newTurn = function () {
   var turn = this.round.turn;
 
   turn.created = new Date();
+  turn.number += 1;
   turn.player1 = "";
   turn.player2 = "";
   turn.player3 = "";
   turn.player4 = "";
-  turn.currentPlayer = nextPid(this.round.shuffledPlayer);
+  turn.firstPid = turn.currentPid = nextPid(this.round.shuffledPlayer);
 };
 
 // TODO: unit test
@@ -377,34 +426,7 @@ GameSchema.methods._completeTurn = function () {
     + deck.getScore(turn.player4);
 
   this.round.score[winnerTid] += score;
-  turn.currentPlayer = winnerPid;
-};
-
-// TODO
-GameSchema.methods.newTurn = function (firstPlayer) {
-
-  var turn = this.round.turn;
-
-  // TODO: make clear way for calculation trigger
-  if (!firstPlayer) {
-    // TODO: Most significant card function
-    var winnerPlayer = "player1";
-    var winnerTeam = this.players[winnerPlayer].tid;
-    var score = deck.getScore(turn.player1)
-      + deck.getScore(turn.player2)
-      + deck.getScore(turn.player3)
-      + deck.getScore(turn.player4);
-    this.round.score[winnerTeam] += score;
-    firstPlayer = winnerPlayer;
-  }
-
-  turn.created = new Date();
-  turn.currentPlayer = firstPlayer;
-  turn.player1 = "";
-  turn.player2 = "";
-  turn.player3 = "";
-  turn.player4 = "";
-
+  turn.firstPid = turn.currentPid = winnerPid;
 };
 
 // TODO unit test
@@ -477,50 +499,30 @@ GameSchema.methods._getPidForUser = function (user) {
   return id ? "player" + id : id;
 };
 
-//TODO: test
-GameSchema.methods.forUser = function (user) {
+GameSchema.methods._getCardsAllowed = function (pid) {
+  var cards = this.round.cards[pid]
+    , turn = this.round.turn
+    , shuffledTid = this.players[this.round.shuffledPlayer].tid
+    , playerTid = this.players[pid].tid
+    , sortedCards;
 
-  var pid = this._getPidForUser(user);
-  if (!pid) {
-    console.warn("player is not in game", user, this);
-    return null;
+  if (turn.currentPid !== pid) {
+    return [];
   }
 
-  var currTurnPid = this.round.turn.currentPlayer
-    , isTurn = currTurnPid === pid
-    , players = {}
-    , turn = {}
-    , tid = this.players[pid].tid;
-
-  console.log(pid);
-  for (var i = 1, pid = nextPid(pid);
-       i <= 4;
-       pid = nextPid(pid), i++) {
-    var order = "player" + i;
-    players[order] = this.players[pid].name || "свободно";
-    turn[order] = this.round.turn[pid];
-  }
-
-  console.log(this.players);
-  return {
-    meta   : this.meta,
-    cards  : this.round.cards[pid],
-    isTurn : isTurn,
-    status : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name),
-    players: players,
-    turn   : turn,
-
-    gameScore: {
-      team1: this.meta.score[tid],
-      team2: this.meta.score[otherTid(tid)]
-    },
-
-    roundScore: {
-      team1: this.round.score[tid],
-      team2: this.round.score[otherTid(tid)]
+  sortedCards = deck.sortedCards(cards, turn[turn.firstPid]);
+  if (this.round.number === 1) {
+    if (this.turn.number === 1) {
+      return deck.cardIdFor(deck.Suite.Diamonds, deck.Types.Ace);
     }
-  };
+    return sortedCards.nonTrumps.length ? sortedCards.nonTrumps : sortedCards.trumps;
+  } else {
+    return playerTid === shuffledTid
+      ? (sortedCards.nonTrumps.length ? sortedCards.nonTrumps : sortedCards.trumps)
+      : cards;
+  }
 };
+
 
 //TODO: test findActiveGame
 GameSchema.statics.findByUser = function (user, callback, limit, active) {
