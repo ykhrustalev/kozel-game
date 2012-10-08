@@ -22,10 +22,7 @@ var Deck = function () {
 
 Deck.prototype = {
 
-  getInitialDeck: function () {
-    return _.clone(this._initialDeck);
-  },
-
+  //TODO: unit test
   getScore: function (cardId) {
     return this._initialDeck[cardId].score;
   },
@@ -48,6 +45,7 @@ Deck.prototype = {
     T7   : {id: '7', score: 0}
   },
 
+  // TODO: unit test
   _randomize: function (deck) {
     var i;
     deck = _.values(deck);
