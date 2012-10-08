@@ -1,8 +1,7 @@
-var _ = require("underscore")._,
-  deck = require("./deck"),
-  mongoose = require("mongoose");
-
-var Schema = mongoose.Schema;
+var _ = require("underscore")._
+  , deck = require("./deck")
+  , mongoose = require("mongoose")
+  , Schema = mongoose.Schema;
 
 // Helper schema for player
 var PlayerSchema = {
@@ -104,7 +103,7 @@ function prevPid(pid) {
  * Returns next player id from provided.
  * Client should take care of exception.
  *
- * @param pid - current player
+ * @param {String} pid - current player
  * @return {String} "pid{1|2|3|4}"
  */
 function nextPid(pid) {
@@ -374,10 +373,7 @@ GameSchema.methods._newRound = function (rate) {
   if (round.shuffledPlayer) {
     round.shuffledPlayer = nextPid(round.shuffledPlayer);
   } else {
-    round.shuffledPlayer = prevPid(this._pidForCard(
-      deck.Suites.Diamonds,
-      deck.Types.Ace
-    ));
+    round.shuffledPlayer = prevPid(this._firstRoundTurnPid());
   }
 };
 
@@ -430,21 +426,28 @@ GameSchema.methods._completeTurn = function () {
 };
 
 // TODO unit test
-GameSchema.methods._pidForCard = function (suite, type) {
+GameSchema.methods._pidForCid = function (cid) {
 
-  var cardId = deck.cardIdFor(suite, type),
-    cards = this.round.cards,
-    pid = cards.player1.indexOf(cardId) >= 0 ? 1
-      : cards.player2.indexOf(cardId) >= 0 ? 2
-      : cards.player3.indexOf(cardId) >= 0 ? 3
-      : cards.player4.indexOf(cardId) >= 0 ? 4
+  var cards = this.round.cards
+    , pid = cards.player1.indexOf(cid) >= 0 ? 1
+      : cards.player2.indexOf(cid) >= 0 ? 2
+      : cards.player3.indexOf(cid) >= 0 ? 3
+      : cards.player4.indexOf(cid) >= 0 ? 4
       : null;
 
   if (pid === null) {
-    throw new Error("unknown card " + cardId);
+    throw new Error("unknown card " + cid);
   }
 
   return "player" + pid;
+};
+
+// TODO: unit test
+GameSchema.methods._firstRoundTurnPid = function () {
+  return this._pidForCid(deck.cardIdFor(
+    deck.Suites.Diamonds,
+    deck.Types.Ace
+  ));
 };
 
 /**

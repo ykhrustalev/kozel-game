@@ -2,7 +2,9 @@ var _ = require('underscore')._
   , mongoose = require("mongoose")
   , g = require("../game")
   , connection
-  , Game;
+  , Game
+  , prevPid = g.utils.prevPid
+  , nextPid = g.utils.nextPid;
 
 function createUser() {
   return {
@@ -188,6 +190,87 @@ module.exports = {
 
   },
 
+  _pidForCid: function (test) {
+    var game = new Game()
+      , mock = {
+        round: {
+          cards: {
+            player1: ["a"],
+            player2: ["b"],
+            player3: ["c"],
+            player4: ["d"]
+          }
+        }
+      };
+
+    test.equals(game._pidForCid.call(mock, "a"), "player1");
+    test.equals(game._pidForCid.call(mock, "b"), "player2");
+    test.equals(game._pidForCid.call(mock, "c"), "player3");
+    test.equals(game._pidForCid.call(mock, "d"), "player4");
+    test.done();
+  },
+
+  _firstRoundTurnPid: function (test) {
+    var game = new Game()
+      , mock = {
+        round     : {
+          cards: {
+            player1: ["a"],
+            player2: ["b"],
+            player3: ["c"],
+            player4: ["d-A"]
+          }
+        },
+        _pidForCid: game._pidForCid
+      };
+
+    test.equals(game._firstRoundTurnPid.call(mock), "player4");
+    test.done();
+  },
+
+  _newRound: function (test) {
+
+    test.expect(11);
+
+    Game.create(createUser(), function (game) {
+      game._addPlayer(createUser());
+      game._addPlayer(createUser());
+      game._addPlayer(createUser());
+
+      game.save(function () {
+
+        game._newRound();
+        game.save(function () {
+
+          var firstPid = game._firstRoundTurnPid()
+            , round = game.round
+            , cards = round.cards;
+
+          test.ok(round.created);
+          test.equals(round.number, 1);
+          test.equals(round.shuffledPlayer, prevPid(firstPid));
+          test.equals(round.rate, 1);
+          test.equals(round.score.team1, 0);
+          test.equals(round.score.team2, 0);
+          test.equals(cards.player1.length, 8);
+          test.equals(cards.player2.length, 8);
+          test.equals(cards.player3.length, 8);
+          test.equals(cards.player4.length, 8);
+          test.equals(_.intersection(cards.player1, cards.player2, cards.player3, cards.player4).length, 0);
+
+          test.done();
+
+        }, function () {
+          test.done();
+        });
+
+      }, function () {
+        test.done();
+      });
+    });
+
+  },
+
   findByUser: function (test) {
     var user = createUser();
     test.expect(4);
@@ -231,5 +314,4 @@ module.exports = {
       test.done();
     });
   }
-
 };
