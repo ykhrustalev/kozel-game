@@ -111,7 +111,7 @@ module.exports = {
 
     test.expect(4);
 
-    Game.create(user, function (game) {
+    Game.create(user, function (error, game) {
       var player = game.players.player1;
 
       test.equals(game.meta.playersCount, 1);
@@ -166,7 +166,7 @@ module.exports = {
 
     test.expect(3);
 
-    Game.create(createUser(), function (game) {
+    Game.create(createUser(), function (error, game) {
       game._addPlayer(createUser());
       game._addPlayer(createUser());
       game._addPlayer(createUser());
@@ -174,7 +174,7 @@ module.exports = {
         test.ok(game._start(), "failed to start game");
         test.ok(!game._start(), "started already running game");
 
-        Game.create(createUser(), function (game) {
+        Game.create(createUser(), function (error, game) {
           game._addPlayer(createUser());
           game._addPlayer(createUser());
           game.save(function () {
@@ -232,7 +232,7 @@ module.exports = {
 
     test.expect(11);
 
-    Game.create(createUser(), function (game) {
+    Game.create(createUser(), function (error, game) {
       game._addPlayer(createUser());
       game._addPlayer(createUser());
       game._addPlayer(createUser());
@@ -275,7 +275,7 @@ module.exports = {
 
     test.expect(8);
 
-    Game.create(createUser(), function (game) {
+    Game.create(createUser(), function (error, game) {
       game._addPlayer(createUser());
       game._addPlayer(createUser());
       game._addPlayer(createUser());
@@ -313,8 +313,8 @@ module.exports = {
   findByUser: function (test) {
     var user = createUser();
     test.expect(4);
-    Game.create(user, function (game) {
-      Game.findByUser(user, function (games) {
+    Game.create(user, function (error, game) {
+      Game.findByUser(user, function (error, games) {
         test.ok(games);
         test.ok(games.length === 1);
         test.ok(game.id);
@@ -327,8 +327,8 @@ module.exports = {
   currentForUser: function (test) {
     var user = createUser();
     test.expect(1);
-    Game.create(user, function (created) {
-      Game.currentForUser(user, function (found) {
+    Game.create(user, function (error, created) {
+      Game.currentForUser(user, function (error, found) {
         test.equals(created.id, found.id);
         test.done();
       });
@@ -342,7 +342,7 @@ module.exports = {
       , p4 = createUser();
 
     test.expect(4);
-    Game.create(p1, function (game) {
+    Game.create(p1, function (error, game) {
       game._addPlayer(p2);
       game._addPlayer(p3);
       game._addPlayer(p4);
