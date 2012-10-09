@@ -160,7 +160,14 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on("game:current", function () {
-    Game.currentForUser(user, function (game) {
+    Game.currentForUser(user, function (error, game) {
+
+      if (error) {
+        console.warn("error: ", error);
+        socket.emit("game:error", "internal error");
+        return;
+      }
+
       if (game) {
         SocketHelpers.joinUserToGame(socket, game);
         socket.emit("game:current", game.forUser(user));

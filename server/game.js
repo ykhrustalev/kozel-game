@@ -168,7 +168,12 @@ GameSchema.statics.listAvailable = function (callback, limit) {
  */
 GameSchema.statics.create = function (user, callback) {
   var Game = this;
-  Game.currentForUser(user, function (game) {
+  Game.currentForUser(user, function (error, game) {
+
+    if (error) {
+      callback("internal error: " + error);
+      return;
+    }
 
     if (game) {
       callback("user already joined other game");
@@ -190,8 +195,8 @@ GameSchema.statics.create = function (user, callback) {
 
 
 GameSchema.statics.currentForUser = function (user, callback) {
-  this.findByUser(user, function (games) {
-    callback(games && games.length ? games[0] : null);
+  this.findByUser(user, function (error, games) {
+    callback(error, games && games.length ? games[0] : null);
   });
 };
 
@@ -199,7 +204,12 @@ GameSchema.statics.currentForUser = function (user, callback) {
 GameSchema.statics.join = function (gameId, user, callback) {
   var Game = this;
 
-  this.currentForUser(user, function (game) {
+  this.currentForUser(user, function (error, game) {
+
+    if (error) {
+      callback("internal error: " + error);
+      return;
+    }
 
     if (game) {
       callback("user already joined other game");
@@ -231,18 +241,13 @@ GameSchema.statics.join = function (gameId, user, callback) {
   });
 };
 
-function Chain(obj, handlers, callback) {
-  var doChain = function () {
-    var handler = handlers.shift();
-    if (handler) {
-      handler(obj, doChain, callback);
-    }
-  };
-  doChain();
-}
-
 GameSchema.statics.turn = function (user, cid, callback) {
-  this.currentForUser(user, function (game) {
+  this.currentForUser(user, function (error, game) {
+    if (error) {
+      callback("internal error: " + error);
+      return;
+    }
+
     if (!game) {
       callback("game not found");
       return;
@@ -254,14 +259,9 @@ GameSchema.statics.turn = function (user, cid, callback) {
         return;
       }
 
-      var state;
-
-
-//      new Chain(game, [handleQueenCaught], function () {
-//        game.save(function () {
-//          callback(null, game, state);
-//        });
-//      });
+      game._handleQueenCaught(callback, function (handled) {
+        // handle round end
+      });
 
       if (game._isRoundEnd()) {
         state = "newRound";
@@ -430,11 +430,17 @@ GameSchema.methods._doTurn = function (user, cid, callback) {
   callback(null);
 };
 
+var aceDiamonds =deck.cardIdFor(deck.Suites.Diamonds, deck.Types.Ace)
+  , queen = deck.cardIdFor(deck.Suites.Clubs, deck.Types.Queen)
+  , seven = deck.cardIdFor(deck.Suites.Clubs, deck.Types.T7);
+
 // TODO: unit test
- function handleQueenCaught (game, chain, callback) {
-  var turn = game.round.turn
-    , queen = deck.cardIdFor(deck.Suite.Clubs, deck.Types.Queen)
-    , seven = deck.cardIdFor(deck.Suite.Clubs, deck.Types.T7)
+// TODO: save last action for the client side
+GameSchema.methods._handleQueenCaught = function (callback, chain) {
+  var game = this //TODO: remove game refference
+    , turn = game.round.turn
+    , queen = this.queen
+    , seven = this.seven
     , team1Cards = [turn.player1, turn.player3]
     , team2Cards = [turn.player2, turn.player4]
     , looserTid;
@@ -449,25 +455,25 @@ GameSchema.methods._doTurn = function (user, cid, callback) {
     if (game.round.number === 1) {
 
       game.meta.score[looserTid] = 12;
-      callback(null, "caughtQueen", game, looserTid);
+      callback(null, "caughtQueen", game);
 
       game._completeGame();
       callback(null, "gameEnd", game);
 
     } else {
       game.meta.score[looserTid] += 4 * round.rate;
-      callback(null, "caughtQueen", game, looserTid);
+      callback(null, "caughtQueen", game);
 
       game._newRound();
       game._newTurn();
       callback(null, "newTurn", game);
-
     }
+
+    game.save()
   }
 
-  chain();
-}
-
+  chain(game);
+};
 
 // TODO: unit test
 GameSchema.methods._isTurnEnd = function () {
@@ -486,7 +492,6 @@ GameSchema.methods._isRoundEnd = function () {
 
 // TODO: unit test
 GameSchema.methods._isGameEnd = function () {
-  //TODO: complete me
   return false;
 };
 
@@ -622,8 +627,8 @@ GameSchema.methods._getCardsAllowed = function (pid) {
 
   sortedCards = deck.sortedCards(cards, turn[turn.firstPid]);
   if (this.round.number === 1) {
-    if (this.turn.number === 1) {
-      return deck.cardIdFor(deck.Suite.Diamonds, deck.Types.Ace);
+    if (this.round.turn.number === 1) {
+      return [aceDiamonds];
     }
     return sortedCards.nonTrumps.length ? sortedCards.nonTrumps : sortedCards.trumps;
   } else {
@@ -635,23 +640,17 @@ GameSchema.methods._getCardsAllowed = function (pid) {
 
 
 //TODO: test findActiveGame
-GameSchema.statics.findByUser = function (user, callback, limit, active) {
-  var uid = user.uid
-    , uidCondition = [
-      { "players.player1.uid": uid },
-      { "players.player2.uid": uid },
-      { "players.player3.uid": uid },
-      { "players.player4.uid": uid }
-    ];
-  this.find()
-    //TODO: define flag usage
-//    .where("meta.active").equals(!!active)
-    .or(uidCondition)
+GameSchema.statics.findByUser = function (user, callback, limit) {
+  var uid = user.uid;
+  this.find().or([
+    { "players.player1.uid": uid },
+    { "players.player2.uid": uid },
+    { "players.player3.uid": uid },
+    { "players.player4.uid": uid }
+  ])
     .limit(limit || 10)
     .sort("+meta.created")
-    .exec(function (error, games) {
-      callback(games);
-    });
+    .exec(callback);
 };
 
 module.exports = {

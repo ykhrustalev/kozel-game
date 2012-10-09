@@ -83,7 +83,7 @@ Deck.prototype = {
   // TODO: unit test, move to derived class
   sortedCards: function (cards, startCardId) {
     var self = this,
-      startCard = self.getCard(startCardId)
+      startCard = startCardId ? self.getCard(startCardId): null
       , sorted = {
         suite    : [],
         trumps   : [],
@@ -95,7 +95,7 @@ Deck.prototype = {
         sorted.trumps.push(cardId);
       } else {
         sorted.nonTrumps.push(cardId);
-        if (self.getCard(cardId).suite === startCard.suite) {
+        if (startCardId && self.getCard(cardId).suite === startCard.suite) {
           sorted.suite.push(cardId);
         }
       }
