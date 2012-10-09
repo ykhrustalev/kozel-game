@@ -451,6 +451,7 @@ GameSchema.methods._handleQueenCaught = function (callback, chain) {
     looserTid = "team1";
   }
 
+  // TODO: save each stage
   if (looserTid) {
     if (game.round.number === 1) {
 
