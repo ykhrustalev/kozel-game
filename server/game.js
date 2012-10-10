@@ -294,26 +294,24 @@ GameSchema.methods.forUser = function (user) {
     return null;
   }
 
-  var currTurnPid = this.round.turn.currentPid
-    , isTurn = currTurnPid === pid
+  var turnCurrentPid = this.round.turn.currentPid
+    , isTurn = turnCurrentPid === pid
     , players = {}
     , turn = {}
     , tid = this.players[pid].tid;
 
-  for (var i = 1, pid = nextPid(pid);
-       i <= 4;
-       pid = nextPid(pid), i++) {
+  for (var i = 1, j = nextPid(pid); i <= 4; j = nextPid(j), i++) {
     var order = "player" + i;
-    players[order] = this.players[pid].name || "свободно";
-    turn[order] = this.round.turn[pid];
+    players[order] = this.players[j].name || "свободно";
+    turn[order] = this.round.turn[j];
   }
 
   return {
     meta        : this.meta,
     cards       : this.round.cards[pid],
-    cardsAllowed: this.meta.active ? this._getCardsAllowed(pid) : [],
+    cardsAllowed: this.meta.active ? this._getCardsAllowed(pid) : null,
     isTurn      : isTurn,
-    status      : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[currTurnPid].name),
+    status      : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
     players     : players,
     turn        : turn,
 
@@ -425,7 +423,7 @@ GameSchema.methods._doTurn = function (user, cid, callback) {
   // TODO: check 7+ / Q+
 
   turn[pid] = cid;
-  cards[pid] = _.without(cards[pid], cardId);
+  cards[pid] = _.without(cards[pid], cid);
   turn.currentPid = nextPid(pid);
   callback(null);
 };
@@ -557,10 +555,7 @@ GameSchema.methods._pidForCid = function (cid) {
 
 // TODO: unit test
 GameSchema.methods._firstRoundTurnPid = function () {
-  return this._pidForCid(deck.cardIdFor(
-    deck.Suites.Diamonds,
-    deck.Types.Ace
-  ));
+  return this._pidForCid(aceDiamonds);
 };
 
 /**

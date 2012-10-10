@@ -16,15 +16,15 @@ define([
     'c': '♣'
   };
 
-  function getCardData(cardId) {
-    if (!cardId) {
+  function getCardData(cid) {
+    if (!cid) {
       return null;
     }
-    var parts = cardId.split("-")
+    var parts = cid.split("-")
       , suite = parts[0]
       , value = parts[1];
     return {
-      id     : cardId,
+      id     : cid,
       name   : value + ' ' + suites[suite],
       suite  : suite
     };
@@ -54,19 +54,22 @@ define([
         , cardsAllowed = data.cardsAllowed
         , cards = [];
 
-      // on hands cards
-      _.each(cardsOnHands, function (id) {
-        var card = getCardData(id);
-        card.allowed = _.contains(cardsAllowed, id);
-        cards.push(card);
-      });
-      data.cards = cards;
+      if (cardsOnHands){
 
-      // turn cards
-      data.turn.player1 = getCardData(data.turn.player1);
-      data.turn.player2 = getCardData(data.turn.player2);
-      data.turn.player3 = getCardData(data.turn.player3);
-      data.turn.player4 = getCardData(data.turn.player4);
+        // on hands cards
+        _.each(cardsOnHands, function (id) {
+          var card = getCardData(id);
+          card.allowed = _.contains(cardsAllowed, id);
+          cards.push(card);
+        });
+        data.cards = cards;
+
+        // turn cards
+        data.turn.player1 = getCardData(data.turn.player1);
+        data.turn.player2 = getCardData(data.turn.player2);
+        data.turn.player3 = getCardData(data.turn.player3);
+        data.turn.player4 = getCardData(data.turn.player4);
+      }
 
       return data;
     }
