@@ -589,26 +589,27 @@ GameSchema.methods._getPidForUser = function (user) {
 };
 
 GameSchema.methods._getCardsAllowed = function (pid) {
-  var cards = this.round.cards[pid]
-    , turn = this.round.turn
-    , shuffledTid = this.players[this.round.shuffledPlayer].tid
+  var round = this.round
+    , cards = round.cards[pid]
+    , turn = round.turn
+    , shuffledTid = this.players[round.shuffledPlayer].tid
     , playerTid = this.players[pid].tid
-    , sortedCards;
+    , sorted;
 
   if (turn.currentPid !== pid) {
     return [];
   }
 
-  sortedCards = deck.sortedCards(cards, turn[turn.firstPid]);
-  if (this.round.number === 1) {
-    if (this.round.turn.number === 1) {
+  sorted = deck.sortedCards(cards, turn[turn.firstPid]);
+  if (pid !== turn.firstPid)
+    return sorted.suite.length ? sorted.suite : cards;
+  else {
+    if (turn.number === 1)
       return [aceDiamonds];
-    }
-    return sortedCards.nonTrumps.length ? sortedCards.nonTrumps : sortedCards.trumps;
-  } else {
-    return playerTid === shuffledTid
-      ? (sortedCards.nonTrumps.length ? sortedCards.nonTrumps : sortedCards.trumps)
-      : cards;
+    else if (round.number === 1 || playerTid === shuffledTid)
+      return sorted.nonTrumps.length ? sorted.nonTrumps : sorted.trumps;
+    else
+      return cards;
   }
 };
 
