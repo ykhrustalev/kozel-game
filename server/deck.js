@@ -158,28 +158,29 @@ module.exports = {
     }
   },
 
-  isTrump    : function (cardId) {
-    var parts = cardId.split("-");
+  isTrump: function (cid) {
+    var parts = cid.split("-");
     return isTrump2(parts[0], parts[1]);
   },
 
-  // TODO: unit test, move to derived class
-  sortedCards: function (cards, startCardId) {
-    var self = this,
-      startCard = startCardId ? self.getCard(startCardId) : null
+  sortedCards: function (cids, firstCid) {
+    // TODO: unit test, move to derived class
+    var self = this
+      , firstCard = firstCid ? self.getCard(firstCid) : null
       , sorted = {
         suite    : [],
         trumps   : [],
         nonTrumps: []
       };
 
-    _.each(cards, function (cardId) {
-      if (self.isTrump(cardId)) {
-        sorted.trumps.push(cardId);
+    _.each(cids, function (cid) {
+      var card = self.getCard(cid);
+      if (card.isTrump) {
+        sorted.trumps.push(cid);
       } else {
-        sorted.nonTrumps.push(cardId);
-        if (startCardId && self.getCard(cardId).suite === startCard.suite) {
-          sorted.suite.push(cardId);
+        sorted.nonTrumps.push(cid);
+        if (firstCid && card.suite.id === firstCard.suite.id) {
+          sorted.suite.push(cid);
         }
       }
     });
@@ -212,4 +213,3 @@ module.exports = {
   }
 
 };
-
