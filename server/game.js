@@ -10,6 +10,12 @@ var PlayerSchema = {
   name: String
 };
 
+var FlagsSchema = {
+  equals     : Boolean,
+  noScore    : Boolean,
+  queenCaught: Boolean
+};
+
 // Game schema, represents data structure in db
 var GameSchema = new Schema({
 
@@ -22,8 +28,10 @@ var GameSchema = new Schema({
       team1: { type: Number, "default": 0 }, //TODO: assign after turn complete
       team2: { type: Number, "default": 0 }  //TODO: assign after turn complete
     },
-    hasEquals   : { type: Boolean, "default": false },
-    hasNoScore  : { type: Boolean, "default": false }
+    flags       : {
+      team1: FlagsSchema,
+      team2: FlagsSchema
+    }
   },
 
   players: {
@@ -75,13 +83,9 @@ function error(message, callback) {
   callback(message);
 }
 
-var ERRORS = {
-  USER_ALREADY_JOINED_THE_GAME  : "user already joined the game",
-  USER_FAILED_TO_JOIN_THE_GAME  : "user failed to join the game",
-  USER_ALREADY_JOINED_OTHER_GAME: "user already joined other game",
-  USER_NOT_IN_GAME              : "user not in game",
-  GAME_NOT_FOUND                : "game not found"
-};
+var aceDiamonds = deck.cidFor(deck.Suites.Diamonds, deck.Types.Ace)
+  , queen = deck.cidFor(deck.Suites.Clubs, deck.Types.Queen)
+  , seven = deck.cidFor(deck.Suites.Clubs, deck.Types.T7);
 
 /**
  * Returns previous player id from provided.
@@ -143,7 +147,7 @@ function otherTid(tid) {
 /**
  * Lists games available for join, ordered desc by create date.
  *
- * @param callback(games) - succeed action,
+ * @param callback(error, games) - succeed action,
  *                          `games` - collection of available games
  * @param limit           - collection size, default 10
  */
@@ -154,9 +158,7 @@ GameSchema.statics.listAvailable = function (callback, limit) {
     .limit(limit || 10)
     .sort("+meta.created")
     .select("_id meta players")
-    .exec(function (error, data) {
-      callback(data);
-    });
+    .exec(callback);
 };
 
 /**
@@ -253,34 +255,7 @@ GameSchema.statics.turn = function (user, cid, callback) {
       return;
     }
 
-    game._doTurn(user, cid, function (error) {
-      if (error) {
-        callback(error);
-        return;
-      }
-
-      game._handleQueenCaught(callback, function (handled) {
-        // handle round end
-      });
-
-      if (game._isRoundEnd()) {
-        state = "newRound";
-        game._completeTurn();
-        game._completeRound();
-        game._newRound();
-        game._newTurn();
-      } else if (game._isTurnEnd()) {
-        state = "newTurn";
-        game._completeTurn();
-        game._newTurn();
-      } else {
-        state = "current";
-      }
-
-      game.save(function () {
-        callback(null, game, state);
-      });
-    });
+    game._turn(user, cid, callback);
   });
 };
 
@@ -393,9 +368,41 @@ GameSchema.methods._newTurn = function () {
 };
 
 
-GameSchema.methods._doTurn = function (user, cid, callback) {
+// TODO: unit test
+GameSchema.methods._getTurnWinnerPid = function () {
+  var turn = this.round.turn
+    , pid = turn.firstPid
+    , map = {}
+    , cids = []
+    , winnerCid;
+
+  do {
+    cids.push(turn[pid]);
+    map[turn[pid]] = pid;
+    pid = nextPid(pid);
+  } while (pid !== turn.firstPid);
+
+  winnerCid = cids[0];
+  cids.forEach(function (cid) {
+    if (deck.beats(cid, winnerCid)) {
+      winnerCid = cids;
+    }
+  });
+
+  return map[winnerCid];
+
+};
+
+GameSchema.method._finish = function () {
+  // TODO: clean game, update user history
+  this.find({id: this.id}).remove();
+};
+
+GameSchema.methods._turn = function (user, cid, callback) {
 
   var pid = this._getPidForUser(user)
+    , meta = this.meta
+    , round = this.round
     , cards = this.round.cards
     , turn = this.round.turn
     , cardsAllowed
@@ -420,120 +427,91 @@ GameSchema.methods._doTurn = function (user, cid, callback) {
     return;
   }
 
-  // TODO: check 7+ / Q+
-
+  // card is valid, accept it
   turn[pid] = cid;
   cards[pid] = _.without(cards[pid], cid);
   turn.currentPid = nextPid(pid);
-  callback(null);
-};
 
-var aceDiamonds =deck.cardIdFor(deck.Suites.Diamonds, deck.Types.Ace)
-  , queen = deck.cardIdFor(deck.Suites.Clubs, deck.Types.Queen)
-  , seven = deck.cardIdFor(deck.Suites.Clubs, deck.Types.T7);
+  // notify players about opponent card
+  callback(null, this, "current");
 
-// TODO: unit test
-// TODO: save last action for the client side
-GameSchema.methods._handleQueenCaught = function (callback, chain) {
-  var game = this //TODO: remove game refference
-    , turn = game.round.turn
-    , queen = this.queen
-    , seven = this.seven
-    , team1Cards = [turn.player1, turn.player3]
+  // check if queen caught
+  var team1Cards = [turn.player1, turn.player3]
     , team2Cards = [turn.player2, turn.player4]
     , looserTid;
 
-  if (_.contains(team1Cards, seven) && _.contains(team2Cards, queen)) {
+  if (team1Cards.indexOf(seven) >= 0 && team2Cards.indexOf(queen) >= 0) {
     looserTid = "team2";
-  } else if (_.contains(team1Cards, queen) && _.contains(team2Cards, seven)) {
+  } else if (team1Cards.indexOf(queen) >= 0 && team2Cards.indexOf(seven) >= 0) {
     looserTid = "team1";
   }
 
-  // TODO: save each stage
+  // handle queen is caught
   if (looserTid) {
-    if (game.round.number === 1) {
-
-      game.meta.score[looserTid] = 12;
-      callback(null, "caughtQueen", game);
-
-      game._completeGame();
-      callback(null, "gameEnd", game);
-
+    if (round.number === 1) {
+      meta.score[looserTid] = 12;
+      meta.flags[looserTid].queenCaught = true;
+      callback(null, "gameEnd", this);
+      this._finish();
     } else {
-      game.meta.score[looserTid] += 4 * round.rate;
-      callback(null, "caughtQueen", game);
-
-      game._newRound();
-      game._newTurn();
-      callback(null, "newTurn", game);
+      meta.score[looserTid] += 4 * round.rate;
+      meta.flags[looserTid].queenCaught = true;
+      callback(null, "queenCaught", this);
+      this._newRound();
+      this._newTurn();
+      callback(null, "newRound", this);
+      this.save();
     }
-
-    game.save()
+    return;
   }
 
-  chain(game);
-};
+  // handle turn complete
+  var isTurnComplete = turn.player1 && turn.player2 && turn.player3 && turn.player4;
 
-// TODO: unit test
-GameSchema.methods._isTurnEnd = function () {
-  var turn = this.round.turn;
-  return turn.player1 && turn.player2 && turn.player3 && turn.player4;
-};
+  if (isTurnComplete) {
+    var winnerPid = this._getTurnWinnerPid()
+      , winnerTid = this.players[winnerPid].tid;
 
-// TODO: unit test
-GameSchema.methods._isRoundEnd = function () {
-  var cards = this.round.cards;
-  return cards.player1.length === 0
-    && cards.player2.length === 0
-    && cards.player3.length === 0
-    && cards.player4.length === 0;
-};
+    this.round.score[winnerTid] += deck.getScore(turn.player1, turn.player2, turn.player3, turn.player4);
+    turn.firstPid = turn.currentPid = winnerPid;
+  }
 
-// TODO: unit test
-GameSchema.methods._isGameEnd = function () {
-  return false;
-};
+  // handle round complete
+  var isRoundComplete = !cards.player1.length
+    && !cards.player2.length
+    && !cards.player3.length
+    && !cards.player4.length;
 
+  if (isRoundComplete) {
+    var score1 = round.score.team1
+      , score2 = round.score.team2;
 
-// TODO: unit test
-GameSchema.methods._completeGame = function () {
-  // TODO: complete me
-  this.meta.active = false;
-  this.meta.finished = true;
-};
+    if (score1 === score2) {
+      round.rate *= 2;
+    } else {
+      var minScore = Math.min(score1, score2)
+        , value = minScore === 0 ? 6 : minScore <= 30 ? 4 : 2;
+      meta.score[score1 > score2 ? "team2" : "team1"] += value * round.rate;
+    }
+  }
 
-// TODO: unit test
-GameSchema.methods._completeRound = function () {
-
-  var round = this.round
-    , score1 = round.score.team1
-    , score2 = round.score.team2;
-
-  if (score1 === score2) {
-    this.round.rate *= 2;
+  // handle game complete
+  if (meta.score.team1 >= 12 || team.score.team2 >= 12) {
+    callback(null, this, "gameEnd");
+    this._finish();
   } else {
-    var minScore = Math.min(score1, score2)
-      , value = minScore === 0 ? 6 : minScore <= 30 ? 4 : 2;
-    this.meta.score[score1 > score2 ? "team2" : "team1"] += value * round.rate;
+    if (isRoundComplete) {
+      this._newRound();
+      this._newTurn();
+      callback(null, this, "newRound");
+    } else if (isTurnComplete) {
+      this._newTurn();
+      callback(null, this, "newTurn");
+    } else {
+      callback(null, this, "current");
+    }
+    this.save();
   }
-};
-
-GameSchema.methods._completeTurn = function () {
-  // TODO: Most significant card function
-  var turn = this.round.turn
-    , winnerPid = "player1"
-    , winnerTid = this.players[winnerPid].tid
-    , score;
-
-  // TODO: 7+Q case handle on turn function, not here
-
-  score = deck.getScore(turn.player1)
-    + deck.getScore(turn.player2)
-    + deck.getScore(turn.player3)
-    + deck.getScore(turn.player4);
-
-  this.round.score[winnerTid] += score;
-  turn.firstPid = turn.currentPid = winnerPid;
 };
 
 // TODO unit test

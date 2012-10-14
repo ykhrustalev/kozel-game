@@ -45,6 +45,7 @@ app.configure('development', function () {
 });
 
 app.get('/', routes.index);
+app.get('/about', routes.about);
 
 // templates
 require('./templates').api(app);
@@ -65,7 +66,14 @@ authHandler(io, store);
 
 var SocketHelpers = {
   emitAvailableGames: function () {
-    Game.listAvailable(function (games) {
+    Game.listAvailable(function (error, games) {
+
+      if (error) {
+        console.warn("error: ", error);
+        // socket.emit("game:error", "internal error");
+        return;
+      }
+
       io.sockets.in("available").emit("game:list:available", games);
     });
   },
@@ -126,7 +134,13 @@ io.sockets.on('connection', function (socket) {
 
   socket.on("game:list:available:", function () {
     // TODO: check that user is in game?
-    Game.listAvailable(function (games) {
+    Game.listAvailable(function (error, games) {
+      if (error) {
+        console.warn("error: ", error);
+        socket.emit("game:error", "internal error");
+        return;
+      }
+
       socket.emit("game:list:available", games);
     });
   });
@@ -172,7 +186,14 @@ io.sockets.on('connection', function (socket) {
         SocketHelpers.joinUserToGame(socket, game);
         socket.emit("game:current", game.forUser(user));
       } else {
-        Game.listAvailable(function (games) {
+        Game.listAvailable(function (error, games) {
+
+          if (error) {
+            console.warn("error: ", error);
+            socket.emit("game:error", "internal error");
+            return;
+          }
+
           socket.emit("game:list:available", games);
         });
       }
@@ -185,7 +206,7 @@ io.sockets.on('connection', function (socket) {
         socket.emit("game:turnfailed", error);
         return;
       }
-      SocketHelpers.emitGameRoom(game, "game:"+state);
+      SocketHelpers.emitGameRoom(game, "game:" + state);
     });
   });
 

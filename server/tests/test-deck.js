@@ -17,7 +17,7 @@ module.exports = {
   },
 
   testCardIdFor: function (test) {
-    test.equals(deck.cardIdFor(deck.Suites.Diamonds, deck.Types.Ace), "d-A");
+    test.equals(deck.cidFor(deck.Suites.Diamonds, deck.Types.Ace), "d-A");
     test.done();
   },
 

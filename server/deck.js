@@ -59,7 +59,7 @@ var Deck = function () {
   // create initial deck
   _.each(suites, function (suite) {
     _.each(types, function (type) {
-      var id = self.cardIdFor(suite, type);
+      var id = self.cidFor(suite, type);
       self._initialDeck[id] = {
         id     : id,
         suite  : suite,
@@ -111,10 +111,6 @@ Deck.prototype = {
    * @param {String} type
    * @return {String}
    */
-  //TODO: rename to cidFor
-  cardIdFor: function (suite, type) {
-    return suite.id + '-' + type.id;
-  },
   cidFor: function (suite, type) {
     return suite.id + '-' + type.id;
   },

@@ -89,9 +89,9 @@ module.exports = {
           game = new Game();
           game.meta.active = true;
           game.save(function () {
-            Game.listAvailable(function (games) {
+            Game.listAvailable(function (error, games) {
               test.equals(games.length, 2);
-              Game.listAvailable(function (games) {
+              Game.listAvailable(function (error, games) {
                 test.equals(games.length, 1);
                 test.ok(games[0]._id);
                 test.ok(games[0].meta);
