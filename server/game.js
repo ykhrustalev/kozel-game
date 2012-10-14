@@ -496,7 +496,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
   }
 
   // handle game complete
-  if (meta.score.team1 >= 12 || team.score.team2 >= 12) {
+  if (meta.score.team1 >= 12 || meta.score.team2 >= 12) {
     callback(null, this, "gameEnd");
     this._finish();
   } else {
