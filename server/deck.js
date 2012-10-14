@@ -1,6 +1,9 @@
 var _ = require('underscore')._;
 
-var suites , types, orderTable;
+var suites
+  , types
+  , orderTable
+  , initialDeck = {};
 
 suites = {
   Spades  : {id: 's'},
@@ -50,58 +53,61 @@ orderTable = {
   ]
 };
 
-var Deck = function () {
+function cidFor(suite, type) {
+  return suite.id + '-' + type.id;
+}
 
-  var self = this;
+// TODO: unit test
+function randomize(deck) {
+  var i;
+  deck = _.values(deck);
+  for (i = Math.floor(Math.random() * 400 + 3); i > 0; i = -1) {
+    deck = _.shuffle(deck);
+  }
+  return deck;
+}
 
-  self._initialDeck = {};
+function isTrump2(suite, type) {
+  return suite.id === suites.Clubs.id
+    || type.id === types.Queen.id
+    || type.id === types.Jack.id;
+}
 
-  // create initial deck
-  _.each(suites, function (suite) {
-    _.each(types, function (type) {
-      var id = self.cidFor(suite, type);
-      self._initialDeck[id] = {
-        id     : id,
-        suite  : suite,
-        type   : type,
-        score  : type.score,
-        isTrump: suite.id === suites.Clubs.id
-          || type.id === types.Queen.id
-          || type.id === types.Jack.id
-      };
-    });
+
+// create initial deck
+_.each(suites, function (suite) {
+  _.each(types, function (type) {
+    var id = cidFor(suite, type);
+    initialDeck[id] = {
+      id     : id,
+      suite  : suite,
+      type   : type,
+      score  : type.score,
+      isTrump: isTrump2(suite, type)
+    };
   });
-};
+});
 
-Deck.prototype = {
+
+module.exports = {
 
   getScore: function () {
-    var score = 0
-      , deck = this._initialDeck;
+    var score = 0;
     for (var i = 0, len = arguments.length; i < len; i++) {
-      score += deck[arguments[i]].score
+      score += initialDeck[arguments[i]].score
     }
     return score;
   },
 
   // TODO: unit test
   getCard : function (cardId) {
-    return _.clone(this._initialDeck[cardId]);
+    return _.clone(initialDeck[cardId]);
   },
 
   Suites: suites,
 
-  Types     : types,
+  Types: types,
 
-  // TODO: unit test
-  _randomize: function (deck) {
-    var i;
-    deck = _.values(deck);
-    for (i = Math.floor(Math.random() * 400 + 3); i > 0; i = -1) {
-      deck = _.shuffle(deck);
-    }
-    return deck;
-  },
 
   /**
    * Creates id for card by its suite and type.
@@ -154,9 +160,7 @@ Deck.prototype = {
 
   isTrump    : function (cardId) {
     var parts = cardId.split("-");
-    return parts[0] === this.Suites.Clubs.id
-      || parts[1] === this.Types.Queen.id
-      || parts[1] === this.Types.Jack.id;
+    return isTrump2(parts[0], parts[1]);
   },
 
   // TODO: unit test, move to derived class
@@ -191,7 +195,7 @@ Deck.prototype = {
   shuffle: function (count) {
     var deck, groups, parts = [];
 
-    deck = this._randomize(_.clone(this._initialDeck));
+    deck = randomize(_.clone(initialDeck));
 
     groups = _.groupBy(deck, function (value, index) {
       return index % count;
@@ -209,4 +213,3 @@ Deck.prototype = {
 
 };
 
-module.exports = new Deck();
