@@ -385,7 +385,7 @@ GameSchema.methods._getTurnWinnerPid = function () {
   winnerCid = cids[0];
   cids.forEach(function (cid) {
     if (deck.beats(cid, winnerCid)) {
-      winnerCid = cids;
+      winnerCid = cid;
     }
   });
 
