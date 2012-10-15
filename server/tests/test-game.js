@@ -82,6 +82,7 @@ module.exports = {
     game.save(function () {
       game = new Game();
       game.meta.active = false;
+      game.meta.playersCount = 3;
       game.save(function () {
         game = new Game();
         game.meta.active = false;

@@ -57,22 +57,20 @@ function cidFor(suite, type) {
   return suite.id + '-' + type.id;
 }
 
-// TODO: unit test
 function randomize(deck) {
   var i;
   deck = _.values(deck);
-  for (i = Math.floor(Math.random() * 400 + 3); i > 0; i = -1) {
+  for (i = Math.floor(Math.random() * 400 + 10); i > 0; i = -1) {
     deck = _.shuffle(deck);
   }
   return deck;
 }
 
-function isTrump2(suite, type) {
+function isTrump(suite, type) {
   return suite.id === suites.Clubs.id
     || type.id === types.Queen.id
     || type.id === types.Jack.id;
 }
-
 
 // create initial deck
 _.each(suites, function (suite) {
@@ -83,7 +81,7 @@ _.each(suites, function (suite) {
       suite  : suite,
       type   : type,
       score  : type.score,
-      isTrump: isTrump2(suite, type)
+      isTrump: isTrump(suite, type)
     };
   });
 });
@@ -91,40 +89,45 @@ _.each(suites, function (suite) {
 
 module.exports = {
 
-  getScore: function () {
-    var score = 0;
-    for (var i = 0, len = arguments.length; i < len; i++) {
-      score += initialDeck[arguments[i]].score
-    }
-    return score;
-  },
+  suites: suites,
 
-  // TODO: unit test
-  getCard : function (cardId) {
-    return _.clone(initialDeck[cardId]);
-  },
-
-  Suites: suites,
-
-  Types: types,
-
+  types: types,
 
   /**
-   * Creates id for card by its suite and type.
-   *
-   * @see type, suites
-   * @param {String} suite
-   * @param {String} type
-   * @return {String}
+   * Shuffle deck for specified number of parts.
+   * @param {Number} count
+   * @return {Array}
    */
+  shuffle: function (count) {
+    var deck, groups, parts = [];
+
+    deck = randomize(_.clone(initialDeck));
+
+    groups = _.groupBy(deck, function (value, index) {
+      return index % count;
+    });
+
+    _.each(_.values(groups), function (group) {
+      var split = _.map(group, function (value) {
+        return value.id;
+      });
+      parts.push(split);
+    });
+
+    return parts;
+  },
+
+  getScore: function (cid) {
+    return initialDeck[cid].score;
+  },
+
   cidFor: function (suite, type) {
     return suite.id + '-' + type.id;
   },
 
-
   beats: function (attackCid, defendCid) {
-    var a = this.getCard(attackCid)
-      , d = this.getCard(defendCid)
+    var a = initialDeck[attackCid]
+      , d = initialDeck[defendCid]
       , nt = orderTable.nonTrumpsTypes
       , tt = orderTable.trumpTypes
       , ts = orderTable.trumpSuites
@@ -158,15 +161,8 @@ module.exports = {
     }
   },
 
-  isTrump: function (cid) {
-    var parts = cid.split("-");
-    return isTrump2(parts[0], parts[1]);
-  },
-
   sortedCards: function (cids, firstCid) {
-    // TODO: unit test, move to derived class
-    var self = this
-      , firstCard = firstCid ? self.getCard(firstCid) : null
+    var firstCard = firstCid ? initialDeck[firstCid] : null
       , sorted = {
         suite    : [],
         trumps   : [],
@@ -174,42 +170,18 @@ module.exports = {
       };
 
     _.each(cids, function (cid) {
-      var card = self.getCard(cid);
+      var card = initialDeck[cid];
       if (card.isTrump) {
         sorted.trumps.push(cid);
       } else {
         sorted.nonTrumps.push(cid);
-        if (firstCid && card.suite.id === firstCard.suite.id) {
+        if (firstCard && card.suite.id === firstCard.suite.id) {
           sorted.suite.push(cid);
         }
       }
     });
 
     return sorted;
-  },
-
-  /**
-   * Shuffle deck for specified number of parts.
-   * @param {Number} count
-   * @return {Array}
-   */
-  shuffle: function (count) {
-    var deck, groups, parts = [];
-
-    deck = randomize(_.clone(initialDeck));
-
-    groups = _.groupBy(deck, function (value, index) {
-      return index % count;
-    });
-
-    _.each(_.values(groups), function (group) {
-      var split = _.map(group, function (value) {
-        return value.id;
-      });
-      parts.push(split);
-    });
-
-    return parts;
   }
 
 };

@@ -83,9 +83,9 @@ function error(message, callback) {
   callback(message);
 }
 
-var aceDiamonds = deck.cidFor(deck.Suites.Diamonds, deck.Types.Ace)
-  , queen = deck.cidFor(deck.Suites.Clubs, deck.Types.Queen)
-  , seven = deck.cidFor(deck.Suites.Clubs, deck.Types.T7);
+var aceDiamonds = deck.cidFor(deck.suites.Diamonds, deck.types.Ace)
+  , queen = deck.cidFor(deck.suites.Clubs, deck.types.Queen)
+  , seven = deck.cidFor(deck.suites.Clubs, deck.types.T7);
 
 /**
  * Returns previous player id from provided.
@@ -472,7 +472,10 @@ GameSchema.methods._turn = function (user, cid, callback) {
     var winnerPid = this._getTurnWinnerPid()
       , winnerTid = this.players[winnerPid].tid;
 
-    this.round.score[winnerTid] += deck.getScore(turn.player1, turn.player2, turn.player3, turn.player4);
+    this.round.score[winnerTid] += deck.getScore(turn.player1)
+      + deck.getScore(turn.player2)
+      + deck.getScore(turn.player3)
+      + deck.getScore(turn.player4);
     turn.firstPid = turn.currentPid = winnerPid;
   }
 
