@@ -67,7 +67,15 @@ function handleAuth(io, sessionStore){
           accept("unauthorized", false);
         }
 
-        var userData = handler(data.headers.referer);
+        var userData;
+
+        try{
+          userData = handler(data.headers.referer);
+        } catch (e){
+          accept("error, parsing referer", false);
+          console.warn("handler failed to parse referer: "+ e);
+          return;
+        }
 
         if (userData.isAuthenticated) {
           // User authorized, session restored
