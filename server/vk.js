@@ -5,8 +5,7 @@ function parseUrl(request, callback, appId, appSecret) {
 
   var urlSchema = url.parse(request.headers.referer, true)
     , params = urlSchema.query
-    , md5 = crypto.createHash('md5')
-    , error;
+    , md5 = crypto.createHash('md5');
 
   if (!params.api_id || !params.auth_key || !params.viewer_id || !params.api_result) {
     callback("missing required parameters in request");
