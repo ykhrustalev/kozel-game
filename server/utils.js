@@ -6,17 +6,14 @@ module.exports = {
     console.warn("TRACE: " + message);
   },
 
-  mockUser: function (queryString) {
-    var queryParams = url.parse(queryString, true).query
+  mockUser: function (request, callback) {
+    var queryParams = url.parse(request.headers.referer, true).query
       , uid = parseInt(queryParams.uid) || _.uniqueId();
-    return {
-      isAuthenticated: true,
-      profile        : {
-        uid       : uid,
-        first_name: "user " + uid,
-        last_name : ""
-      }
-    };
+    callback(null, true, {
+      uid       : uid,
+      first_name: "user " + uid,
+      last_name : ""
+    });
   }
 
 };

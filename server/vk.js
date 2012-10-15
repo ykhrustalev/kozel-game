@@ -1,50 +1,32 @@
-var config = require("./config")
-  , url = require('url')
+var url = require('url')
   , crypto = require('crypto');
 
-function getAuthKey(params) {
-  var appId = params.api_id
-    , viewerId = params.viewer_id
-    , apiSecret = config.vk.appSecret
-    , md5 = crypto.createHash('md5');
-  md5.update(appId + '_' + viewerId + '_' + apiSecret);
-  return md5.digest('hex');
+function parseUrl(request, callback, appId, appSecret) {
+
+  var urlSchema = url.parse(request.headers.referer, true)
+    , params = urlSchema.query
+    , md5 = crypto.createHash('md5')
+    , error;
+
+  if (!params.api_id || !params.auth_key || !params.viewer_id || !params.api_result) {
+    callback("missing required parameters in request");
+  } else if (params.api_id !== appId) {
+    callback("app_id from different application");
+  } else {
+    md5.update(params.api_id + '_' + params.viewer_id + '_' + appSecret);
+    if (params.auth_key !== md5.digest('hex')) {
+      callback("auth key mismatched");
+    } else {
+      callback(null, true, JSON.parse(params.api_result).response[0]);
+    }
+  }
 }
 
-var Vk = {
-  parseUrl: function (urlString) {
-
-    var urlSchema = url.parse(urlString, true)
-      , urlParams = urlSchema.query
-      , apiId = urlParams.api_id
-      , authKey = urlParams.auth_key
-      , apiResult = urlParams.api_result
-      , isAuthenticated = true
-      , profile = {};
-
-    if (apiId && apiId !== config.vk.appId) {
-      console.log("app_id from different application");
-      isAuthenticated = false;
-    }
-
-    if (authKey && authKey.toLocaleLowerCase()
-      !== getAuthKey(urlParams).toLocaleLowerCase()) {
-      console.log("wrong key");
-      isAuthenticated = false;
-    }
-
-    if (apiResult) {
-      profile = JSON.parse(apiResult).response[0];
-    } else {
-      isAuthenticated = false;
-    }
-
-    return {
-      profile        : profile,
-      isAuthenticated: isAuthenticated
+//TODO: unit tests
+module.exports = {
+  authHandler: function (appId, appSecret) {
+    return function (url, callback) {
+      return parseUrl(url, callback, appId, appSecret);
     };
   }
-
 };
-
-module.exports = Vk;
