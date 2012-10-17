@@ -496,8 +496,6 @@ GameSchema.methods._turn = function (user, cid, callback) {
     } else if (isTurnComplete) {
       this._newTurn(winnerPid);
       callback(null, this, "newTurn");
-    } else {
-      callback(null, this, "current");
     }
     this.save();
   }
