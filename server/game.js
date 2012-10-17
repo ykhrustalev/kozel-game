@@ -221,7 +221,7 @@ GameSchema.statics.join = function (gid, user, callback) {
       return callback(error);
     }
     if (game) {// TODO: notify user
-      return callback("user already joined other game");
+      return callback(errors.USER_ALREADY_JOINED_OTHER_GAME);
     }
 
     Game.findOne({"_id": gid}, function (error, game) {
@@ -232,7 +232,14 @@ GameSchema.statics.join = function (gid, user, callback) {
         return callback("game not found");
       }
 
-      game._join(user, callback);
+      game._join(user, function (error, started) {
+        if (error) {
+          return callback(error);
+        }
+        game.save(function (error) {
+          callback(error, game, started ? "started" : "joined");
+        })
+      });
     });
   });
 };
@@ -321,7 +328,7 @@ GameSchema.methods._newRound = function (rate) {
 
 
 // TODO: unit test
-GameSchema.methods._newTurn = function () {
+GameSchema.methods._newTurn = function (firstPid) {
   var turn = this.round.turn;
 
   turn.created = new Date();
@@ -330,7 +337,7 @@ GameSchema.methods._newTurn = function () {
   turn.player2 = "";
   turn.player3 = "";
   turn.player4 = "";
-  turn.firstPid = turn.currentPid = nextPid(this.round.shuffledPlayer);
+  turn.firstPid = turn.currentPid = firstPid || nextPid(this.round.shuffledPlayer);
 };
 
 
@@ -373,7 +380,8 @@ GameSchema.methods._turn = function (user, cid, callback) {
     , turn = this.round.turn
     , error
     , isTurnComplete
-    , isRoundComplete;
+    , isRoundComplete
+    , winnerPid;
 
   if (!pid)
     error = "user is not in game";
@@ -471,7 +479,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
       this._newTurn();
       callback(null, this, "newRound");
     } else if (isTurnComplete) {
-      this._newTurn();
+      this._newTurn(winnerPid);
       callback(null, this, "newTurn");
     } else {
       callback(null, this, "current");
