@@ -438,15 +438,15 @@ GameSchema.methods._turn = function (user, cid, callback) {
     if (round.number === 1) {
       meta.score[looserTid] = 12;
       meta.flags[looserTid].queenCaught = true;
-      callback(null, "gameEnd", this);
+      callback(null, this, "gameEnd");
       this.finish(); // TODO: add finish callback
     } else {
       meta.score[looserTid] += 4 * round.rate;
       meta.flags[looserTid].queenCaught = true;
-      callback(null, "queenCaught", this);
+      callback(null, this, "queenCaught");
       this._newRound();
       this._newTurn();
-      callback(null, "newRound", this);
+      callback(null, this, "newRound");
       this.save();
     }
     return;
