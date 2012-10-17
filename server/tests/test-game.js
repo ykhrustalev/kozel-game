@@ -205,6 +205,28 @@ module.exports = {
     });
   },
 
+  _requiresReshuffle: function (test) {
+    var game = new Game()
+      , cQ = deck.cidFor(deck.suites.Clubs, deck.types.Queen)
+      , sQ = deck.cidFor(deck.suites.Spades, deck.types.Queen)
+      , hQ = deck.cidFor(deck.suites.Hearts, deck.types.Queen)
+      , dQ = deck.cidFor(deck.suites.Diamonds, deck.types.Queen);
+
+    function assertReShuffle(game, cids1, cids2, cids3, cids4, reShuffle) {
+      game.round.cards.player1 = cids1;
+      game.round.cards.player2 = cids2;
+      game.round.cards.player3 = cids3;
+      game.round.cards.player4 = cids4;
+      test.equals(game._requiresReshuffle(), reShuffle, "game should be shuffled correctly");
+    }
+
+    assertReShuffle(game, [cQ, sQ, hQ, dQ], [], [], [], true);
+    assertReShuffle(game, [cQ, sQ], [], [hQ, dQ], [], true);
+    assertReShuffle(game, [cQ, sQ], [hQ, dQ], [], [], false);
+
+    test.done();
+  },
+
   _getTurnWinnerPid: function (test) {
     var game = new Game()
       , turn = game.round.turn

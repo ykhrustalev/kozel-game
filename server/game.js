@@ -257,7 +257,6 @@ GameSchema.statics.turn = function (user, cid, callback) {
   });
 };
 
-
 //TODO: test
 GameSchema.methods.forUser = function (user) {
 
@@ -312,7 +311,9 @@ GameSchema.methods._newRound = function (rate) {
   round.score.team2 = 0;
   round.rate = rate || 1;
 
-  //TODO: check shuffle validity
+  do {
+    this._shuffle();
+  } while(this._requiresReshuffle());
 
   round.cards.player1 = split.shift();
   round.cards.player2 = split.shift();
@@ -326,6 +327,26 @@ GameSchema.methods._newRound = function (rate) {
   }
 };
 
+GameSchema.methods._shuffle = function () {
+  var cards = this.round.cards
+    , split = deck.shuffle(4);
+  cards.player1 = split.shift();
+  cards.player2 = split.shift();
+  cards.player3 = split.shift();
+  cards.player4 = split.shift();
+};
+
+GameSchema.methods._requiresReshuffle = function () {
+  var cards = this.round.cards
+    , t1 = [].concat(cards.player1, cards.player3)
+    , t2 = [].concat(cards.player2, cards.player4)
+    , cQ = deck.cidFor(deck.suites.Clubs, deck.types.Queen)
+    , sQ = deck.cidFor(deck.suites.Spades, deck.types.Queen)
+    , hQ = deck.cidFor(deck.suites.Hearts, deck.types.Queen)
+    , dQ = deck.cidFor(deck.suites.Diamonds, deck.types.Queen);
+  return _.intersection(t1, [cQ, sQ, hQ, dQ]).length === 4
+    || _.intersection(t2, [cQ, sQ, hQ, dQ]).length === 4;
+};
 
 // TODO: unit test
 GameSchema.methods._newTurn = function (firstPid) {
