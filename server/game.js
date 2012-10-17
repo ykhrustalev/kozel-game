@@ -356,6 +356,7 @@ GameSchema.methods._newTurn = function () {
 
 
 // TODO: unit test
+// TODO: fix me
 GameSchema.methods._getTurnWinnerPid = function () {
   var turn = this.round.turn
     , pid = turn.firstPid

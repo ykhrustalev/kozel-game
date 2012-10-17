@@ -54,8 +54,8 @@ module.exports = {
     test.done();
   },
 
+  // TODO: add more testing
   beats: function (test) {
-    //TODO: complete me
 
     var spades = deck.suites.Spades
       , hearts = deck.suites.Hearts
@@ -125,6 +125,7 @@ module.exports = {
     test.done();
   },
 
+  // TODO: add more testing
   sort: function (test) {
 
     var s = deck.suites
