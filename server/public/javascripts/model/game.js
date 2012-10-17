@@ -9,11 +9,9 @@ define([
     idAttribute: "_id",
 
     defaults: {
-      genders_allowed: 0
     },
 
     initialize: function () {
-//      this.id = null;
       this.title = '';
       this.owner = '';
     },

@@ -7,6 +7,9 @@
         | @{{status}}
         {{/status}}
         {{/meta.active}}
+        {{^meta.active}}
+        Ожидание других игроков
+        {{/meta.active}}
     </div>
 </div>
 
@@ -28,7 +31,7 @@
         {{#turn.player1}}
         <div class="desk-card-1">
             <div class="helper">
-                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}"></div>
             </div>
         </div>
         {{/turn.player1}}
@@ -36,7 +39,7 @@
         {{#turn.player2}}
         <div class="desk-card-2">
             <div class="helper">
-                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}"></div>
             </div>
         </div>
         {{/turn.player2}}
@@ -44,7 +47,7 @@
         {{#turn.player3}}
         <div class="desk-card-3">
             <div class="helper">
-                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}"></div>
             </div>
         </div>
         {{/turn.player3}}
@@ -52,7 +55,7 @@
         {{#turn.player4}}
         <div class="desk-card-4">
             <div class="helper">
-                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}">{{name}}</div>
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}"></div>
             </div>
         </div>
         {{/turn.player4}}
@@ -66,8 +69,8 @@
     <h2>Ваши карты</h2>
     <ul class="deck-cards-list">
         {{#cards}}
-        <li class="desk-card-element suite-{{suite}} {{#allowed}}card-allowed{{/allowed}} desk-card-{{id}}"
-            data-id="{{id}}">
+        <li class="desk-card-element-wrapper {{#allowed}}card-allowed{{/allowed}}">
+            <div class="desk-card-element suite-{{suite}} desk-card-{{id}}" data-id="{{id}}"></div>
         </li>
         {{/cards}}
     </ul>

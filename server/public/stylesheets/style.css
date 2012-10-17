@@ -151,8 +151,8 @@ h2 {
     float: left;
     list-style: none;
     margin: 1px;
-    padding: 0;
-    cursor: pointer;
+    height: 100px;
+    padding: 10px 0 10px 0;
 }
 
 .desk-card-element {
@@ -161,6 +161,18 @@ h2 {
     width: 67px;
     border-radius: 4px;
     background: #ffffff;
+}
+
+.desk-card-list .desk-card-element{
+    cursor: pointer;
+}
+
+.desk-card-element.selected{
+    margin-top:-10px;
+}
+
+.desk-card-element-wrapper.card-allowed{
+    border-bottom: solid 10px #00d6b2;
 }
 
 .desk-card-element.suite-s,

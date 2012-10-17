@@ -24,9 +24,9 @@ define([
       , suite = parts[0]
       , value = parts[1];
     return {
-      id     : cid,
-      name   : value + ' ' + suites[suite],
-      suite  : suite
+      id   : cid,
+      name : value + ' ' + suites[suite],
+      suite: suite
     };
   }
 
@@ -43,9 +43,24 @@ define([
 
     doTurn: function (e) {
       e.preventDefault();
-      var id = $(e.currentTarget).data("id");
-      socket.emit("game:turn", {cid: id});
+      var target = $(e.currentTarget);
+      var cid = target.data("id");
+      if (this.isCardAllowed(cid)) {
+        if (this.model.get("selected") === cid) {
+          socket.emit("game:turn", {cid: cid});
+        } else {
+          this.model.set("selected", cid);
+          this.$el.find(".selected").removeClass("selected");
+          target.addClass("selected");
+        }
+      } else {
+        this.$el.find(".note").html("Карта не разрешена");//TODO: need text?
+      }
       return false;
+    },
+
+    isCardAllowed: function (cid) {
+      return _.contains(this.model.get("cardsAllowed"), cid);
     },
 
     getData: function () {
@@ -54,7 +69,7 @@ define([
         , cardsAllowed = data.cardsAllowed
         , cards = [];
 
-      if (cardsOnHands){
+      if (cardsOnHands) {
 
         // on hands cards
         _.each(cardsOnHands, function (id) {
