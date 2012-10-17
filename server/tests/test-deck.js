@@ -54,13 +54,12 @@ module.exports = {
     test.done();
   },
 
-  // TODO: add more testing
-  beats: function (test) {
+  beats : function (test) {
 
-    var spades = deck.suites.Spades
-      , hearts = deck.suites.Hearts
-      , diamonds = deck.suites.Diamonds
-      , clubs = deck.suites.Clubs
+    var s = deck.suites.Spades
+      , h = deck.suites.Hearts
+      , d = deck.suites.Diamonds
+      , c = deck.suites.Clubs
       , Q = deck.types.Queen
       , J = deck.types.Jack
       , K = deck.types.King
@@ -83,49 +82,52 @@ module.exports = {
       _beats(s1, t1, s2, t2, false);
     }
 
-    beatsNot(diamonds, A, diamonds, Q);
-    beatsNot(diamonds, A, diamonds, J);
-    beats(diamonds, A, diamonds, T10);
-    beats(diamonds, A, diamonds, K);
-    beats(diamonds, A, diamonds, T9);
-    beats(diamonds, A, diamonds, T8);
-    beats(diamonds, A, diamonds, T7);
+    beatsNot(d, A, d, Q);
+    beatsNot(d, A, d, J);
+    beats(d, A, d, T10);
+    beats(d, A, d, K);
+    beats(d, A, d, T9);
+    beats(d, A, d, T8);
+    beats(d, A, d, T7);
 
-    beatsNot(diamonds, A, clubs, T7);
-    beatsNot(diamonds, A, hearts, T10);
-    beatsNot(diamonds, A, spades, T10);
+    beatsNot(d, A, c, T7);
+    beatsNot(d, A, h, T10);
+    beatsNot(d, A, s, A);
 
-    beatsNot(diamonds, T7, diamonds, A);
-    beatsNot(diamonds, T7, diamonds, T10);
-    beatsNot(diamonds, T7, diamonds, K);
-    beatsNot(diamonds, T7, diamonds, T9);
-    beatsNot(diamonds, T7, diamonds, T8);
-    beatsNot(diamonds, T7, clubs, T7);
+    beatsNot(d, T7, d, A);
+    beatsNot(d, T7, d, T10);
+    beatsNot(d, T7, d, K);
+    beatsNot(d, T7, d, T9);
+    beatsNot(d, T7, d, T8);
+    beatsNot(d, T7, c, T7);
 
-    beats(diamonds, J, diamonds, A);
-    beats(diamonds, J, spades, A);
-    beats(diamonds, J, hearts, A);
-    beats(diamonds, J, clubs, A);
-    beats(diamonds, J, clubs, T10);
-    beats(diamonds, J, clubs, K);
-    beats(diamonds, J, clubs, T9);
-    beats(diamonds, J, clubs, T8);
-    beatsNot(diamonds, J, clubs, T7);
-    beatsNot(diamonds, J, clubs, Q);
+    beats(d, J, d, A);
+    beats(d, J, s, A);
+    beats(d, J, h, A);
+    beats(d, J, c, A);
+    beats(d, J, c, T10);
+    beats(d, J, c, K);
+    beats(d, J, c, T9);
+    beats(d, J, c, T8);
+    beatsNot(d, J, c, T7);
+    beatsNot(d, J, c, Q);
+    beatsNot(d, J, s, J);
 
-    beats(clubs, Q, spades, Q);
-    beats(clubs, Q, hearts, Q);
-    beats(clubs, Q, diamonds, Q);
+    beats(c, Q, s, Q);
+    beats(c, Q, h, Q);
+    beats(c, Q, d, Q);
+    beats(c, Q, c, J);
+    beats(c, Q, c, T8);
+    beatsNot(c, Q, c, T7);
 
-    beatsNot(spades, Q, clubs, Q);
-    beats(spades, Q, hearts, Q);
-    beats(spades, Q, diamonds, Q);
-    beats(clubs, Q, clubs, J);
+    beatsNot(s, Q, c, Q);
+    beats(s, Q, h, Q);
+    beats(s, Q, d, Q);
+    beats(c, Q, c, J);
 
     test.done();
   },
 
-  // TODO: add more testing
   sort: function (test) {
 
     var s = deck.suites
@@ -135,21 +137,23 @@ module.exports = {
       , dJ = cid(s.Diamonds, t.Jack)
       , sJ = cid(s.Spades, t.Jack)
       , d10 = cid(s.Diamonds, t.T10)
+      , dK = cid(s.Diamonds, t.King)
       , d9 = cid(s.Diamonds, t.T9)
       , h10 = cid(s.Hearts, t.T10)
       , h9 = cid(s.Hearts, t.T9)
       , s10 = cid(s.Spades, t.T10)
+      , sK = cid(s.Spades, t.King)
       , s9 = cid(s.Spades, t.T9);
 
-    var src = [d10, d9, dJ, c7, h9, h10, s9, s10, sJ]
-      , expected = [c7, sJ, dJ, s10, s9, h10, h9, d10, d9];
-    var sorted = deck.sort(src);
+    var src = [d10, d9, dJ, sK, c7, h9, h10, s9, s10, sJ, dK]
+      , expected = [c7, sJ, dJ, s10, sK, s9, h10, h9, d10, dK, d9]
+      , sorted = deck.sort(src);
 
     test.equals(src.length, sorted.length);
     console.log(src);
     console.log(sorted);
     console.log(expected);
-    for (var i = 0, len = src.length; i< len; i++){
+    for (var i = 0, len = src.length; i < len; i++) {
       test.equals(sorted.shift(), expected.shift());
     }
     test.done()
