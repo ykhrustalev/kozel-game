@@ -113,6 +113,8 @@ module.exports = {
     test.expect(4);
 
     Game.create(user, function (error, game) {
+      test.ok(!error);
+
       var player = game.players.player1;
 
       test.equals(game.meta.playersCount, 1);
@@ -120,9 +122,10 @@ module.exports = {
       test.equals(player.name, user.first_name + " " + user.last_name);
       test.equals(player.tid, "team1");
 
-      test.done();
-    }, function () {
-      test.done();
+      Game.create(user, function (error, game) {
+        test.ok(error);
+        test.done();
+      });
     });
   },
 

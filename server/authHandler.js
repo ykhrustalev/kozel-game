@@ -3,6 +3,7 @@ var config = require("./config")
   , cookie = require("cookie")
   , connect = require("connect")
   , Session = connect.middleware.session.Session
+// TODO: remove config dependency?
   , vkHandler = require("./vk").authHandler(config.vk.appId, config.vk.appSecret);
 // TODO: check the express.session.MemoryStore
 // TODO: remove explicit dependency on the `connect` and `session`

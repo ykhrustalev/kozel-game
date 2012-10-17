@@ -3,6 +3,8 @@ var _ = require("underscore")._
   , mongoose = require("mongoose")
   , Schema = mongoose.Schema;
 
+"use strict";
+
 // Helper schema for player
 var PlayerSchema = {
   uid : Number,
@@ -76,12 +78,6 @@ var GameSchema = new Schema({
   }
 
 });
-
-
-function error(message, callback) {
-  console.warn("error: " + message);
-  callback(message);
-}
 
 var aceDiamonds = deck.cidFor(deck.suites.Diamonds, deck.types.Ace)
   , queen = deck.cidFor(deck.suites.Clubs, deck.types.Queen)
@@ -164,34 +160,30 @@ GameSchema.statics.listAvailable = function (callback, limit) {
 /**
  * Creates game from scratch
  *
- * @param user            - starter game
- * @param success - succed action
- * @param fail   - error action
+ * @param {Object} user       - starter game
+ * @param {Function} callback - standard callback
+ * @return {Mixed}
  */
 GameSchema.statics.create = function (user, callback) {
-  var Game = this;
-  Game.currentForUser(user, function (error, game) {
-
+  var self = this;
+  self.currentForUser(user, function (error, game) {
     if (error) {
-      callback("internal error: " + error);
-      return;
+      return callback(error);
+    }
+    if (game) {// TODO: notify user
+      return callback("user already joined other game");
     }
 
-    if (game) {
-      callback("user already joined other game");
-      return;
-    }
+    game = new self();
+    game._addPlayer(user, function (error) {
+      if (error) {
+        return callback(error);
+      }
 
-    game = new Game();
-    if (!game._addPlayer(user)) {
-      callback("user failed to joined the game");
-      return;
-    }
-
-    game.save(function () {
-      callback(null, game);
+      game.save(function () {
+        callback(null, game);
+      });
     });
-
   });
 };
 
@@ -202,57 +194,53 @@ GameSchema.statics.currentForUser = function (user, callback) {
   });
 };
 
+
+//TODO: test findActiveGame
+GameSchema.statics.findByUser = function (user, callback, limit) {
+  var uid = user.uid;
+  this.find().or([
+    { "players.player1.uid": uid },
+    { "players.player2.uid": uid },
+    { "players.player3.uid": uid },
+    { "players.player4.uid": uid }
+  ])
+    .limit(limit || 10)
+    .sort("+meta.created")
+    .exec(callback);
+};
+
 // TODO: test
-GameSchema.statics.join = function (gameId, user, callback) {
+GameSchema.statics.join = function (gid, user, callback) {
   var Game = this;
 
   this.currentForUser(user, function (error, game) {
-
     if (error) {
-      callback("internal error: " + error);
-      return;
+      return callback(error);
+    }
+    if (game) {// TODO: notify user
+      return callback("user already joined other game");
     }
 
-    if (game) {
-      callback("user already joined other game");
-      return;
-    }
-
-    Game.findOne({"_id": gameId}, function (error, game) {
-      if (error || !game) {
-        callback("game not found");
-
-      } else if (!game._addPlayer(user)) {
-        callback("user already joined the game");
-
-      } else if (game._isReadyToStart()) {
-        if (game._start()) {
-          game.save(function () {
-            callback(null, game, "started");
-          });
-        } else {
-          callback("failed to start game");
-        }
-      } else {
-        game.save(function () {
-          callback(null, game, "joined");
-        });
+    Game.findOne({"_id": gid}, function (error, game) {
+      if (error) {
+        return callback(error);
       }
-    });
+      if (!game) {
+        return callback("game not found");
+      }
 
+      game._join(user, callback);
+    });
   });
 };
 
 GameSchema.statics.turn = function (user, cid, callback) {
   this.currentForUser(user, function (error, game) {
     if (error) {
-      callback("internal error: " + error);
-      return;
+      return callback(error);
     }
-
     if (!game) {
-      callback("game not found");
-      return;
+      return callback("game not found");
     }
 
     game._turn(user, cid, callback);
@@ -265,8 +253,8 @@ GameSchema.methods.forUser = function (user) {
 
   var pid = this._getPidForUser(user);
   if (!pid) {
-    console.warn("player is not in game", user, this);
-    return null;
+    console.trace("player is not in game", user, this);
+    throw new Error("player not found");
   }
 
   var turnCurrentPid = this.round.turn.currentPid
@@ -302,29 +290,28 @@ GameSchema.methods.forUser = function (user) {
   };
 };
 
-GameSchema.methods._isReadyToStart = function () {
-  return this.meta.playersCount === 4;
-};
 
 /**
  * Starts game, shuffles cards ands prepares to the first round, does not
  * saves game.
  *
- * @return {Boolean}
  */
-GameSchema.methods._start = function () {
-
-  if (this.meta.active || this.meta.playersCount !== 4) {
-    return false;
+GameSchema.methods._start = function (callback) {
+  if (this.meta.active) {
+    return callback("game already started");
   }
 
-  this.meta.active = true;
-  this.meta.started = new Date();
+  var started = false;
 
-  this._newRound();
-  this._newTurn();
+  if (this.meta.playersCount === 4) {
+    this.meta.active = true;
+    this.meta.started = new Date();
+    this._newRound();
+    this._newTurn();
+    started = true;
+  }
 
-  return true;
+  callback(null, started);
 };
 
 // TODO: unit test
@@ -349,7 +336,7 @@ GameSchema.methods._newRound = function (rate) {
   if (round.shuffledPlayer) {
     round.shuffledPlayer = nextPid(round.shuffledPlayer);
   } else {
-    round.shuffledPlayer = prevPid(this._firstRoundTurnPid());
+    round.shuffledPlayer = prevPid(this._pidForCid(aceDiamonds));
   }
 };
 
@@ -390,7 +377,6 @@ GameSchema.methods._getTurnWinnerPid = function () {
   });
 
   return map[winnerCid];
-
 };
 
 GameSchema.method._finish = function () {
@@ -405,8 +391,9 @@ GameSchema.methods._turn = function (user, cid, callback) {
     , round = this.round
     , cards = this.round.cards
     , turn = this.round.turn
-    , cardsAllowed
-    , error;
+    , error
+    , isTurnComplete
+    , isRoundComplete;
 
   if (!pid)
     error = "user is not in game";
@@ -416,15 +403,11 @@ GameSchema.methods._turn = function (user, cid, callback) {
     error = "user already made turn";
   else if (!_.contains(cards[pid], cid))
     error = "user is trying to use not his cards, probably cheating";
-  else {
-    cardsAllowed = this._getCardsAllowed(pid);
-    if (!_.contains(cardsAllowed, cid))
-      error = "card is not allowed";
-  }
+  else if (!_.contains(this._getCardsAllowed(pid), cid))
+    error = "card is not allowed";
 
   if (error) {
-    callback(error);
-    return;
+    return callback(error);
   }
 
   // card is valid, accept it
@@ -466,7 +449,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
   }
 
   // handle turn complete
-  var isTurnComplete = turn.player1 && turn.player2 && turn.player3 && turn.player4;
+  isTurnComplete = turn.player1 && turn.player2 && turn.player3 && turn.player4;
 
   if (isTurnComplete) {
     var winnerPid = this._getTurnWinnerPid()
@@ -480,7 +463,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
   }
 
   // handle round complete
-  var isRoundComplete = !cards.player1.length
+  isRoundComplete = !cards.player1.length
     && !cards.player2.length
     && !cards.player3.length
     && !cards.player4.length;
@@ -517,6 +500,67 @@ GameSchema.methods._turn = function (user, cid, callback) {
   }
 };
 
+
+GameSchema.methods._join = function (user, callback) {
+  var self = this;
+  this._addPlayer(user, function (error) {
+    if (error) {
+      return callback(error);
+    }
+
+    self._start(function (error, started) {
+      if (error) {
+        return callback(error);
+      }
+
+      self.save(function () {
+        callback(null, self, started ? "started" : "joined");
+      });
+    });
+  });
+};
+
+GameSchema.methods._addPlayer = function (user, callback) {
+  var uid = user.uid
+    , p = this.players;
+
+  if (this.meta.playersCount >= 4) {
+    return callback("no place to add player");
+  }
+
+  if (p.player1.uid === uid
+    || p.player2.uid === uid
+    || p.player3.uid === uid
+    || p.player4.uid === uid) {
+    callback("already joined");
+    return;
+  }
+
+  this.meta.playersCount += 1;
+
+  var playerId = "player" + this.meta.playersCount;
+
+  this.players[playerId] = {
+    uid : user.uid,
+    tid : "team" + ((this.meta.playersCount % 2) ? 1 : 2),
+    name: user.first_name + ' ' + user.last_name
+  };
+
+  callback(null);
+};
+
+GameSchema.methods._getPidForUser = function (user) {
+  var p = this.players
+    , uid = user.uid
+    , id;
+  id = p.player1.uid === uid ? 1
+    : p.player2.uid === uid ? 2
+    : p.player3.uid === uid ? 3
+    : p.player4.uid === uid ? 4
+    : null;
+  return id ? "player" + id : id;
+};
+
 // TODO unit test
 GameSchema.methods._pidForCid = function (cid) {
 
@@ -532,63 +576,6 @@ GameSchema.methods._pidForCid = function (cid) {
   }
 
   return "player" + pid;
-};
-
-// TODO: unit test
-GameSchema.methods._firstRoundTurnPid = function () {
-  return this._pidForCid(aceDiamonds);
-};
-
-/**
- * Checks whether user is already joined the game
- *
- * @param user - user to check
- * @return {Boolean}
- */
-GameSchema.methods._isUserJoined = function (user) {
-  var p = this.players,
-    uid = user.uid;
-  return p.player1.uid === uid
-    || p.player2.uid === uid
-    || p.player3.uid === uid
-    || p.player4.uid === uid;
-};
-
-/**
- * Assigns user to game with his session
- *
- * @param user      - user to assing
- * @return {Boolean}
- */
-GameSchema.methods._addPlayer = function (user) {
-
-  if (this.meta.playersCount >= 4 || this._isUserJoined(user)) {
-    return false;
-  }
-
-  this.meta.playersCount += 1;
-
-  var playerId = "player" + this.meta.playersCount;
-
-  this.players[playerId] = {
-    uid : user.uid,
-    tid : "team" + ((this.meta.playersCount % 2) ? 1 : 2),
-    name: user.first_name + ' ' + user.last_name
-  };
-
-  return true;
-};
-
-GameSchema.methods._getPidForUser = function (user) {
-  var p = this.players
-    , uid = user.uid
-    , id;
-  id = p.player1.uid === uid ? 1
-    : p.player2.uid === uid ? 2
-    : p.player3.uid === uid ? 3
-    : p.player4.uid === uid ? 4
-    : null;
-  return id ? "player" + id : id;
 };
 
 GameSchema.methods._getCardsAllowed = function (pid) {
@@ -614,21 +601,6 @@ GameSchema.methods._getCardsAllowed = function (pid) {
     else
       return cards;
   }
-};
-
-
-//TODO: test findActiveGame
-GameSchema.statics.findByUser = function (user, callback, limit) {
-  var uid = user.uid;
-  this.find().or([
-    { "players.player1.uid": uid },
-    { "players.player2.uid": uid },
-    { "players.player3.uid": uid },
-    { "players.player4.uid": uid }
-  ])
-    .limit(limit || 10)
-    .sort("+meta.created")
-    .exec(callback);
 };
 
 module.exports = {

@@ -45,8 +45,9 @@ module.exports = {
       });
     });
 
-    while (count !== referers.valid.length + referers.invalid.length) {
+    while (count !== referers.valid.length + referers.invalid.length){
     }
+
     test.done();
   }
 };
