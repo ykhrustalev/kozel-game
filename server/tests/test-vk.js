@@ -16,7 +16,6 @@ var referers = {
   ]
 };
 
-// TODO: complete me
 module.exports = {
 
   handleAuth: function (test) {
@@ -45,7 +44,11 @@ module.exports = {
       });
     });
 
-    while (count !== referers.valid.length + referers.invalid.length){
+
+    // async guard
+    var requiredCount = referers.valid.length + referers.invalid.length;
+    while (count !== requiredCount){
+      continue;
     }
 
     test.done();
