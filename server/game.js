@@ -313,7 +313,7 @@ GameSchema.methods._newRound = function (rate) {
 
   do {
     this._shuffle();
-  } while(this._requiresReshuffle());
+  } while (this._requiresReshuffle());
 
   round.cards.player1 = split.shift();
   round.cards.player2 = split.shift();
@@ -402,7 +402,8 @@ GameSchema.methods._turn = function (user, cid, callback) {
     , error
     , isTurnComplete
     , isRoundComplete
-    , winnerPid;
+    , winnerPid
+    , winnerTid;
 
   if (!pid)
     error = "user is not in game";
@@ -461,9 +462,8 @@ GameSchema.methods._turn = function (user, cid, callback) {
   isTurnComplete = turn.player1 && turn.player2 && turn.player3 && turn.player4;
 
   if (isTurnComplete) {
-    var winnerPid = this._getTurnWinnerPid()
-      , winnerTid = this.players[winnerPid].tid;
-
+    winnerPid = this._getTurnWinnerPid();
+    winnerTid = this.players[winnerPid].tid;
     this.round.score[winnerTid] += deck.getScore(turn.player1)
       + deck.getScore(turn.player2)
       + deck.getScore(turn.player3)
