@@ -47,12 +47,12 @@ module.exports = {
 
   nextPid: function (test) {
     test.expect(5);
-    test.equals(g.utils.nextPid("player1"), "player2");
-    test.equals(g.utils.nextPid("player2"), "player3");
-    test.equals(g.utils.nextPid("player3"), "player4");
-    test.equals(g.utils.nextPid("player4"), "player1");
+    test.equals(nextPid("player1"), "player2");
+    test.equals(nextPid("player2"), "player3");
+    test.equals(nextPid("player3"), "player4");
+    test.equals(nextPid("player4"), "player1");
     try {
-      g.utils.nextPid("abc");
+      nextPid("abc");
     } catch (e) {
       test.ok(1);
     }
@@ -157,63 +157,51 @@ module.exports = {
     });
   },
 
-  _addPlayer: function (test) {
-    var user1 = createUser(),
-      user2 = createUser(),
-      user3 = createUser(),
-      user4 = createUser(),
-      game = new Game();
+  _join: function (test) {
+    var user1 = createUser()
+      , user2 = createUser()
+      , user3 = createUser()
+      , user4 = createUser()
+      , game = new Game();
 
-    function assertUser(game, pid, user, tid) {
-      test.equals(game.players[pid].uid, user.uid, "wrong player's order in game");
-      test.equals(game.players[pid].tid, tid, "wrong player's team in game");
+    function assertUser(game, user, pid, tid) {
+      test.equals(game.players[pid].uid, user.uid, "user should be on correct place");
+      test.equals(game.players[pid].tid, tid, "user should be in correct team");
     }
 
-    game._addPlayer(user1, function (error) {
+    game._join(user1, function (error, started) {
+      test.ok(!error, "user should join without errors");
+      test.ok(!started, "first joined user should not start the game");
+      assertUser(game, user1, "player1", "team1");
 
-    });
-    test.ok();
-    test.equals(game.players.player1.tid, "team1");
-    test.ok(!game._addPlayer(user1));
-    test.ok(game._addPlayer(user2));
-    test.ok(game._addPlayer(user3));
-    test.ok(game._addPlayer(user4));
-    test.ok(!game._addPlayer(createUser()), "5th player joined the game");
+      game._join(user1, function (error, started) {
+        test.equals(error, g.errors.USER_ALREADY_IN_GAME, "second time join the game should raise error");
 
-    assertUser(game, "player1", user1, "team1");
-    assertUser(game, "player2", user2, "team2");
-    assertUser(game, "player3", user3, "team1");
-    assertUser(game, "player4", user4, "team2");
+        game._join(user2, function (error, started) {
+          test.ok(!error, "user should join without errors");
+          test.ok(!started, "second joined user should not start the game");
+          assertUser(game, user2, "player2", "team2");
 
-    test.done();
-  },
+          game._join(user3, function (error, started) {
+            test.ok(!error, "user should join without errors");
+            test.ok(!started, "third joined user should not start the game");
+            assertUser(game, user3, "player3", "team1");
 
-  _start: function (test) {
+            game._join(user4, function (error, started) {
+              test.ok(!error, "user should join without errors");
+              test.ok(started, "fours joined user should start the game");
+              assertUser(game, user4, "player4", "team2");
 
-    test.expect(3);
+              game._join(user4, function (error, started) {
+                test.equals(error, g.errors.GAME_HAS_NO_VACANT_PLACE, "adding extra users should raise error");
 
-    Game.create(createUser(), function (error, game) {
-      game._addPlayer(createUser());
-      game._addPlayer(createUser());
-      game._addPlayer(createUser());
-      game.save(function () {
-        test.ok(game._start(), "failed to start game");
-        test.ok(!game._start(), "started already running game");
-
-        Game.create(createUser(), function (error, game) {
-          game._addPlayer(createUser());
-          game._addPlayer(createUser());
-          game.save(function () {
-            test.ok(!game._start(), "started game with incomplete player set");
-            test.done();
+                test.done();
+              });
+            });
           });
-
         });
-      }, function () {
-        test.done();
       });
     });
-
   },
 
   _pidForCid: function (test) {
@@ -236,21 +224,15 @@ module.exports = {
     test.done();
   },
 
-  _firstRoundTurnPid: function (test) {
-    var game = new Game()
-      , mock = {
-        round     : {
-          cards: {
-            player1: ["a"],
-            player2: ["b"],
-            player3: ["c"],
-            player4: ["d-A"]
-          }
-        },
-        _pidForCid: game._pidForCid
-      };
+  _turn: function (test) {
+    var game = new Game();
 
-    test.equals(game._firstRoundTurnPid.call(mock), "player4");
+    game.round.cards.player1=["a"];
+    game.round.cards.player2=["b"];
+    game.round.cards.player3=["c"];
+    game.round.cards.player4=["d-A"];
+
+    test.equals(game._firstRoundTurnPid(), "player4");
     test.done();
   },
 

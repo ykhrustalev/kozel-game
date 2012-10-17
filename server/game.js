@@ -83,8 +83,10 @@ var aceDiamonds = deck.cidFor(deck.suites.Diamonds, deck.types.Ace)
   , queen = deck.cidFor(deck.suites.Clubs, deck.types.Queen)
   , seven = deck.cidFor(deck.suites.Clubs, deck.types.T7);
 
-var errors ={
-  USER_ALREADY_JOINED_OTHER_GAME:"user already joined other game"
+var errors = {
+  USER_ALREADY_JOINED_OTHER_GAME: "user already joined other game",
+  GAME_HAS_NO_VACANT_PLACE      : "no place to add player",
+  USER_ALREADY_IN_GAME          : "already joined"
 };
 
 /**
@@ -484,14 +486,14 @@ GameSchema.methods._join = function (user, callback) {
     , meta = this.meta;
 
   if (meta.playersCount >= 4) {
-    return callback("no place to add player");
+    return callback(errors.GAME_HAS_NO_VACANT_PLACE);
   }
 
   if (ps.player1.uid === uid
     || ps.player2.uid === uid
     || ps.player3.uid === uid
     || ps.player4.uid === uid) {
-    return callback("already joined");
+    return callback(errors.USER_ALREADY_IN_GAME);
   }
 
   meta.playersCount += 1;
