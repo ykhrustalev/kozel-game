@@ -91,12 +91,12 @@ module.exports = {
           game.meta.active = true;
           game.save(function () {
             Game.listAvailable(function (error, games) {
-              test.equals(games.length, 2);
+              test.equals(games.length, 2, "found list of games should be correct");
               Game.listAvailable(function (error, games) {
-                test.equals(games.length, 1);
-                test.ok(games[0]._id);
-                test.ok(games[0].meta);
-                test.ok(games[0].players);
+                test.equals(games.length, 1, "found list should satisfy the limit");
+                test.ok(games[0].id, "listed game should have id");
+                test.ok(games[0].meta, "listed game should have meta");
+                test.ok(games[0].players, "listed game should have meta");
                 test.done();
               }, 1);
             });
@@ -110,32 +110,51 @@ module.exports = {
   create: function (test) {
     var user = createUser();
 
-    test.expect(4);
+    test.expect(7);
 
     Game.create(user, function (error, game) {
-      test.ok(!error);
+      test.ok(!error, "game should be created without errors");
 
       var player = game.players.player1;
+      test.equals(game.meta.playersCount, 1, "user should be added to game");
+      test.equals(player.uid, user.uid, "user should have correct id");
+      test.equals(player.name, user.first_name + " " + user.last_name, "user should have correct name in game");
+      test.equals(player.tid, "team1", "user should be assigned to correct team");
 
-      test.equals(game.meta.playersCount, 1);
-      test.equals(player.uid, user.uid);
-      test.equals(player.name, user.first_name + " " + user.last_name);
-      test.equals(player.tid, "team1");
-
-      Game.create(user, function (error, game) {
-        test.ok(error);
-        test.done();
+      Game.create(user, function (error) {
+        test.equals(error, g.errors.USER_ALREADY_JOINED_OTHER_GAME, "error: user is in game should be raised");
+        game.finish(function (error) {
+          Game.create(user, function (error, game) {
+            test.ok(!error, "second user gaem should be created correctly");
+            test.done();
+          });
+        });
       });
     });
   },
 
-  _isUserJoined: function (test) {
-    var game = new Game(),
-      user = createUser();
-    game._addPlayer(user);
-    test.ok(game._isUserJoined(user), "already joined user treated as new");
-    test.ok(!game._isUserJoined(createUser()), "new user treated as joined");
-    test.done();
+  finish: function (test) {
+    test.expect(6);
+
+    var game = new Game();
+    game.save(function (error) {
+      test.ok(!error, "game should save without errors");
+
+      Game.findOne({_id: game.id}, function (error, found) {
+        test.ok(!error, "game search should complete without errors");
+        test.ok(found.id, "found game should be have id");
+        test.equals(found.id, game.id, "found game should be the same as saved");
+
+        found.finish(function (error) {
+          test.ok(!error, "finish should complete without errors");
+
+          Game.findOne({_id: game.id}, function (error, found) {
+            test.ok(!found, "deleted game should not be found");
+            test.done();
+          });
+        })
+      });
+    });
   },
 
   _addPlayer: function (test) {
@@ -150,7 +169,10 @@ module.exports = {
       test.equals(game.players[pid].tid, tid, "wrong player's team in game");
     }
 
-    test.ok(game._addPlayer(user1));
+    game._addPlayer(user1, function (error) {
+
+    });
+    test.ok();
     test.equals(game.players.player1.tid, "team1");
     test.ok(!game._addPlayer(user1));
     test.ok(game._addPlayer(user2));

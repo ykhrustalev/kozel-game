@@ -83,6 +83,10 @@ var aceDiamonds = deck.cidFor(deck.suites.Diamonds, deck.types.Ace)
   , queen = deck.cidFor(deck.suites.Clubs, deck.types.Queen)
   , seven = deck.cidFor(deck.suites.Clubs, deck.types.T7);
 
+var errors ={
+  USER_ALREADY_JOINED_OTHER_GAME:"user already joined other game"
+};
+
 /**
  * Returns previous player id from provided.
  * Client should take care of exception.
@@ -127,7 +131,6 @@ function nextPid(pid) {
   }
 }
 
-// TODO: comments
 function otherTid(tid) {
   switch (tid) {
     case "team1":
@@ -171,11 +174,11 @@ GameSchema.statics.create = function (user, callback) {
       return callback(error);
     }
     if (game) {// TODO: notify user
-      return callback("user already joined other game");
+      return callback(errors.USER_ALREADY_JOINED_OTHER_GAME);
     }
 
     game = new self();
-    game._addPlayer(user, function (error) {
+    game._join(user, function (error) {
       if (error) {
         return callback(error);
       }
@@ -187,13 +190,11 @@ GameSchema.statics.create = function (user, callback) {
   });
 };
 
-
 GameSchema.statics.currentForUser = function (user, callback) {
   this.findByUser(user, function (error, games) {
     callback(error, games && games.length ? games[0] : null);
   });
 };
-
 
 //TODO: test findActiveGame
 GameSchema.statics.findByUser = function (user, callback, limit) {
@@ -290,30 +291,6 @@ GameSchema.methods.forUser = function (user) {
   };
 };
 
-
-/**
- * Starts game, shuffles cards ands prepares to the first round, does not
- * saves game.
- *
- */
-GameSchema.methods._start = function (callback) {
-  if (this.meta.active) {
-    return callback("game already started");
-  }
-
-  var started = false;
-
-  if (this.meta.playersCount === 4) {
-    this.meta.active = true;
-    this.meta.started = new Date();
-    this._newRound();
-    this._newTurn();
-    started = true;
-  }
-
-  callback(null, started);
-};
-
 // TODO: unit test
 GameSchema.methods._newRound = function (rate) {
 
@@ -380,9 +357,9 @@ GameSchema.methods._getTurnWinnerPid = function () {
   return map[winnerCid];
 };
 
-GameSchema.method._finish = function () {
+GameSchema.methods.finish = function (callback) {
   // TODO: clean game, update user history
-  this.find({id: this.id}).remove();
+  this.remove(callback);
 };
 
 GameSchema.methods._turn = function (user, cid, callback) {
@@ -436,7 +413,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
       meta.score[looserTid] = 12;
       meta.flags[looserTid].queenCaught = true;
       callback(null, "gameEnd", this);
-      this._finish();
+      this.finish(); // TODO: add finish callback
     } else {
       meta.score[looserTid] += 4 * round.rate;
       meta.flags[looserTid].queenCaught = true;
@@ -485,7 +462,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
   // handle game complete
   if (meta.score.team1 >= 12 || meta.score.team2 >= 12) {
     callback(null, this, "gameEnd");
-    this._finish();
+    this.finish();
   } else {
     if (isRoundComplete) {
       this._newRound();
@@ -501,82 +478,61 @@ GameSchema.methods._turn = function (user, cid, callback) {
   }
 };
 
-
 GameSchema.methods._join = function (user, callback) {
-  var self = this;
-  this._addPlayer(user, function (error) {
-    if (error) {
-      return callback(error);
-    }
-
-    self._start(function (error, started) {
-      if (error) {
-        return callback(error);
-      }
-
-      self.save(function () {
-        callback(null, self, started ? "started" : "joined");
-      });
-    });
-  });
-};
-
-GameSchema.methods._addPlayer = function (user, callback) {
   var uid = user.uid
-    , p = this.players;
+    , ps = this.players
+    , meta = this.meta;
 
-  if (this.meta.playersCount >= 4) {
+  if (meta.playersCount >= 4) {
     return callback("no place to add player");
   }
 
-  if (p.player1.uid === uid
-    || p.player2.uid === uid
-    || p.player3.uid === uid
-    || p.player4.uid === uid) {
-    callback("already joined");
-    return;
+  if (ps.player1.uid === uid
+    || ps.player2.uid === uid
+    || ps.player3.uid === uid
+    || ps.player4.uid === uid) {
+    return callback("already joined");
   }
 
-  this.meta.playersCount += 1;
+  meta.playersCount += 1;
 
-  var playerId = "player" + this.meta.playersCount;
-
-  this.players[playerId] = {
+  var pid = "player" + meta.playersCount;
+  ps[pid] = {
     uid : user.uid,
-    tid : "team" + ((this.meta.playersCount % 2) ? 1 : 2),
+    tid : "team" + ((meta.playersCount % 2) ? 1 : 2),
     name: user.first_name + ' ' + user.last_name
   };
 
-  callback(null);
+  if (meta.playersCount !== 4) {
+    callback(null, false);
+  } else {
+    meta.active = true;
+    meta.started = new Date();
+    this._newRound();
+    this._newTurn();
+    callback(null, true);
+  }
 };
 
 GameSchema.methods._getPidForUser = function (user) {
-  var p = this.players
+  var ps = this.players
     , uid = user.uid
-    , id;
-  id = p.player1.uid === uid ? 1
-    : p.player2.uid === uid ? 2
-    : p.player3.uid === uid ? 3
-    : p.player4.uid === uid ? 4
-    : null;
-  return id ? "player" + id : id;
+    , pid = ps.player1.uid === uid ? 1
+      : ps.player2.uid === uid ? 2
+      : ps.player3.uid === uid ? 3
+      : ps.player4.uid === uid ? 4
+      : null;
+  return pid ? "player" + pid : pid;
 };
 
-// TODO unit test
 GameSchema.methods._pidForCid = function (cid) {
-
   var cards = this.round.cards
     , pid = cards.player1.indexOf(cid) >= 0 ? 1
       : cards.player2.indexOf(cid) >= 0 ? 2
       : cards.player3.indexOf(cid) >= 0 ? 3
       : cards.player4.indexOf(cid) >= 0 ? 4
       : null;
-
-  if (pid === null) {
-    throw new Error("unknown card " + cid);
-  }
-
-  return "player" + pid;
+  return pid ? "player" + pid : pid;
 };
 
 GameSchema.methods._getCardsAllowed = function (pid) {
@@ -592,15 +548,14 @@ GameSchema.methods._getCardsAllowed = function (pid) {
   }
 
   sorted = deck.group(cards, turn[turn.firstPid]);
-  if (pid !== turn.firstPid)
+  if (pid !== turn.firstPid) {
     return sorted.suite.length ? sorted.suite : cards;
-  else {
-    if (turn.number === 1)
-      return [aceDiamonds];
-    else if (round.number === 1 || playerTid === shuffledTid)
-      return sorted.nonTrumps.length ? sorted.nonTrumps : sorted.trumps;
-    else
-      return cards;
+  } else if (turn.number === 1) {
+    return [aceDiamonds];
+  } else if (round.number === 1 || playerTid === shuffledTid) {
+    return sorted.nonTrumps.length ? sorted.nonTrumps : sorted.trumps;
+  } else {
+    return cards;
   }
 };
 
@@ -614,5 +569,7 @@ module.exports = {
     prevPid : prevPid,
     nextPid : nextPid,
     otherTid: otherTid
-  }
+  },
+
+  errors: errors
 };
