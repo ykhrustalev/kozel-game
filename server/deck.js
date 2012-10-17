@@ -25,24 +25,6 @@ types = {
 
 orderTable = {
 
-  trumpTypes: [
-    types.T7.id,
-    types.Queen.id,
-    types.Jack.id,
-    types.Ace.id,
-    types.T10.id,
-    types.King.id,
-    types.T9.id,
-    types.T8.id
-  ],
-
-  trumpSuites: [
-    suites.Clubs.id,
-    suites.Spades.id,
-    suites.Hearts.id,
-    suites.Diamonds.id
-  ],
-
   nonTrumpsTypes: [
     types.Ace.id,
     types.T10.id,
@@ -50,6 +32,23 @@ orderTable = {
     types.T9.id,
     types.T8.id,
     types.T7.id
+  ],
+
+  trumps: [
+    cidFor(suites.Clubs, types.T7),
+    cidFor(suites.Clubs, types.Queen),
+    cidFor(suites.Spades, types.Queen),
+    cidFor(suites.Hearts, types.Queen),
+    cidFor(suites.Diamonds, types.Queen),
+    cidFor(suites.Clubs, types.Jack),
+    cidFor(suites.Spades, types.Jack),
+    cidFor(suites.Hearts, types.Jack),
+    cidFor(suites.Diamonds, types.Jack),
+    cidFor(suites.Clubs, types.Ace),
+    cidFor(suites.Clubs, types.T10),
+    cidFor(suites.Clubs, types.King),
+    cidFor(suites.Clubs, types.T9),
+    cidFor(suites.Clubs, types.T8)
   ]
 };
 
@@ -129,27 +128,19 @@ module.exports = {
     var a = initialDeck[attackCid]
       , d = initialDeck[defendCid]
       , nt = orderTable.nonTrumpsTypes
-      , tt = orderTable.trumpTypes
-      , ts = orderTable.trumpSuites
-      , ttA = tt.indexOf(a.type.id)
-      , ttD = tt.indexOf(d.type.id)
+      , twA = orderTable.trumps.indexOf(attackCid)
+      , twD = orderTable.trumps.indexOf(defendCid)
       , ntA = nt.indexOf(a.type.id)
-      , ntD = nt.indexOf(d.type.id)
-      , tsA = ts.indexOf(a.suite.id)
-      , tsD = ts.indexOf(d.suite.id);
+      , ntD = nt.indexOf(d.type.id);
 
     if (a.isTrump && d.isTrump) {
-      if (ttA === ttD) {
-        return tsA < tsD;
-      } else {
-        return ttA < ttD;
-      }
+      return twA < twD;
     } else if (a.isTrump && !d.isTrump) {
       return true;
     } else if (!a.isTrump && d.isTrump) {
       return false;
     } else if (!a.isTrump && !d.isTrump) {
-      if (tsA !== tsD) {
+      if (a.suite.id !== d.suite.id) {
         return false;
       } else {
         return ntA < ntD;
@@ -161,9 +152,41 @@ module.exports = {
     }
   },
 
-  sortedCards: function (cids, firstCid) {
+  sort: function (cids) {
+    var groups = { trumps: [] };
+
+    groups[suites.Spades.id] = [];
+    groups[suites.Hearts.id] = [];
+    groups[suites.Diamonds.id] = [];
+
+    _.each(cids, function (cid) {
+      var card = initialDeck[cid];
+      if (card.isTrump) {
+        groups.trumps.push(cid);
+      } else {
+        groups[card.suite.id].push(cid);
+      }
+    });
+
+    return [].concat(
+      _.sortBy(groups.trumps, function (cid) {
+        return orderTable.trumps.indexOf(cid);
+      }),
+      _.sortBy(groups[suites.Spades.id], function (cid) {
+        return orderTable.nonTrumpsTypes.indexOf(initialDeck[cid].type.id);
+      }),
+      _.sortBy(groups[suites.Hearts.id], function (cid) {
+        return orderTable.nonTrumpsTypes.indexOf(initialDeck[cid].type.id);
+      }),
+      _.sortBy(groups[suites.Diamonds.id], function (cid) {
+        return orderTable.nonTrumpsTypes.indexOf(initialDeck[cid].type.id);
+      })
+    );
+  },
+
+  group: function (cids, firstCid) {
     var firstCard = firstCid ? initialDeck[firstCid] : null
-      , sorted = {
+      , groups = {
         suite    : [],
         trumps   : [],
         nonTrumps: []
@@ -172,16 +195,16 @@ module.exports = {
     _.each(cids, function (cid) {
       var card = initialDeck[cid];
       if (card.isTrump) {
-        sorted.trumps.push(cid);
+        groups.trumps.push(cid);
       } else {
-        sorted.nonTrumps.push(cid);
+        groups.nonTrumps.push(cid);
         if (firstCard && card.suite.id === firstCard.suite.id) {
-          sorted.suite.push(cid);
+          groups.suite.push(cid);
         }
       }
     });
 
-    return sorted;
+    return groups;
   }
 
 };

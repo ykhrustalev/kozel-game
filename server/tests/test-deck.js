@@ -125,7 +125,36 @@ module.exports = {
     test.done();
   },
 
-  sortedCards: function (test) {
+  sort: function (test) {
+
+    var s = deck.suites
+      , t = deck.types
+      , cid = deck.cidFor
+      , c7 = cid(s.Clubs, t.T7)
+      , dJ = cid(s.Diamonds, t.Jack)
+      , sJ = cid(s.Spades, t.Jack)
+      , d10 = cid(s.Diamonds, t.T10)
+      , d9 = cid(s.Diamonds, t.T9)
+      , h10 = cid(s.Hearts, t.T10)
+      , h9 = cid(s.Hearts, t.T9)
+      , s10 = cid(s.Spades, t.T10)
+      , s9 = cid(s.Spades, t.T9);
+
+    var src = [d10, d9, dJ, c7, h9, h10, s9, s10, sJ]
+      , expected = [c7, sJ, dJ, s10, s9, h10, h9, d10, d9];
+    var sorted = deck.sort(src);
+
+    test.equals(src.length, sorted.length);
+    console.log(src);
+    console.log(sorted);
+    console.log(expected);
+    for (var i = 0, len = src.length; i< len; i++){
+      test.equals(sorted.shift(), expected.shift());
+    }
+    test.done()
+  },
+
+  group: function (test) {
 
     var s = deck.suites
       , t = deck.types
@@ -136,7 +165,7 @@ module.exports = {
     var dJ = cid(s.Diamonds, t.Jack);
     var c7 = cid(s.Clubs, t.T7);
     var h10 = cid(s.Hearts, t.T10);
-    var sorted = deck.sortedCards([d10, d9, dJ, c7, h10], cid(s.Diamonds, t.Ace));
+    var sorted = deck.group([d10, d9, dJ, c7, h10], cid(s.Diamonds, t.Ace));
 
     test.equals(sorted.suite.length, 2);
     test.ok(_.contains(sorted.suite, d10));

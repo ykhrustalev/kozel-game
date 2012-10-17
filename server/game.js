@@ -271,7 +271,7 @@ GameSchema.methods.forUser = function (user) {
 
   return {
     meta        : this.meta,
-    cards       : this.round.cards[pid],
+    cards       : deck.sort(this.round.cards[pid]),
     cardsAllowed: this.meta.active ? this._getCardsAllowed(pid) : null,
     isTurn      : isTurn,
     status      : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
@@ -590,7 +590,7 @@ GameSchema.methods._getCardsAllowed = function (pid) {
     return [];
   }
 
-  sorted = deck.sortedCards(cards, turn[turn.firstPid]);
+  sorted = deck.group(cards, turn[turn.firstPid]);
   if (pid !== turn.firstPid)
     return sorted.suite.length ? sorted.suite : cards;
   else {
