@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Status page</title>
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+</head>
+<body>
+
+<h2>Platform</h2>
+<pre>
+version: {{version}}
+platform: {{process.platform}} {{process.arch}}
+engine: {{process.versions.node}}
+</pre>
+
+<h2>Deck preview</h2>
+
+<div>
+
+    <div>
+        <ul class="deck-cards-list">
+            <li class="desk-card-element">Q</li>
+            <li class="desk-card-element">J</li>
+            <li class="desk-card-element">K</li>
+            <li class="desk-card-element">A</li>
+            <li class="desk-card-element">10</li>
+            <li class="desk-card-element">9</li>
+            <li class="desk-card-element">8</li>
+            <li class="desk-card-element">7</li>
+        </ul>
+    </div>
+    {{#cards}}
+    <div>
+    <div class="desk-cards-wrapper">
+        <ul class="deck-cards-list">
+            {{#row}}
+            <li class="desk-card-element suite-{{suite}} desk-card-{{id}}"
+                data-id="{{id}}"></li>
+            {{/row}}
+
+            {{#suite}}
+            <li class="desk-card-element suite-{{id}}">{{id}}</li>
+            {{/suite}}
+        </ul>
+    </div>
+    </div>
+    {{/cards}}
+</div>
+
+</body>
+</html>

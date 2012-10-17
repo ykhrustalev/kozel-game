@@ -2,10 +2,7 @@ body {
     font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
-    width: 600px;
-    height: 500px;
     background: #ffffff;
-    border: 1px dotted #cccccc;
 }
 
 a {
@@ -14,6 +11,12 @@ a {
 
 h2 {
     color: #777777;
+}
+
+.viewport{
+    width: 600px;
+    height: 500px;
+    border: 1px dotted #cccccc;
 }
 
 #container {
@@ -139,7 +142,7 @@ h2 {
 }
 
 .deck-cards-list {
-    float: none;
+    clear: both;
     margin: 0;
     padding: 0;
 }
@@ -147,15 +150,15 @@ h2 {
 .deck-cards-list li {
     float: left;
     list-style: none;
-    margin: 10px;
+    margin: 1px;
     padding: 0;
     cursor: pointer;
 }
 
 .desk-card-element {
     border: 1px dotted #cccccc;
-    height: 60px;
-    width: 40px;
+    height: 92px;
+    width: 67px;
     border-radius: 4px;
     background: #ffffff;
 }
@@ -169,3 +172,41 @@ h2 {
 .desk-card-element.suite-d {
     color: #ff0000;
 }
+
+
+
+.desk-card-s-Q { background: url("../images/cards-classic.png")  144px 291px; }
+.desk-card-s-J { background: url("../images/cards-classic.png")  217px 291px; }
+.desk-card-s-K { background: url("../images/cards-classic.png")  71px 291px; }
+.desk-card-s-A { background: url("../images/cards-classic.png")  2847px 291px; }
+.desk-card-s-10 { background: url("../images/cards-classic.png")  290px 291px; }
+.desk-card-s-9 { background: url("../images/cards-classic.png")  363px 291px; }
+.desk-card-s-8 { background: url("../images/cards-classic.png")  436px 291px; }
+.desk-card-s-7 { background: url("../images/cards-classic.png")  509px 291px; }
+
+.desk-card-d-Q { background: url("../images/cards-classic.png")  144px 95px; }
+.desk-card-d-J { background: url("../images/cards-classic.png")  217px 95px; }
+.desk-card-d-K { background: url("../images/cards-classic.png")  71px 95px; }
+.desk-card-d-A { background: url("../images/cards-classic.png")  2847px 95px; }
+.desk-card-d-10 { background: url("../images/cards-classic.png")  290px 95px; }
+.desk-card-d-9 { background: url("../images/cards-classic.png")  363px 95px; }
+.desk-card-d-8 { background: url("../images/cards-classic.png")  436px 95px; }
+.desk-card-d-7 { background: url("../images/cards-classic.png")  509px 95px; }
+
+.desk-card-h-Q { background: url("../images/cards-classic.png")  144px 193px; }
+.desk-card-h-J { background: url("../images/cards-classic.png")  217px 193px; }
+.desk-card-h-K { background: url("../images/cards-classic.png")  71px 193px; }
+.desk-card-h-A { background: url("../images/cards-classic.png")  2847px 193px; }
+.desk-card-h-10 { background: url("../images/cards-classic.png")  290px 193px; }
+.desk-card-h-9 { background: url("../images/cards-classic.png")  363px 193px; }
+.desk-card-h-8 { background: url("../images/cards-classic.png")  436px 193px; }
+.desk-card-h-7 { background: url("../images/cards-classic.png")  509px 193px; }
+
+.desk-card-c-Q { background: url("../images/cards-classic.png")  144px 389px; }
+.desk-card-c-J { background: url("../images/cards-classic.png")  217px 389px; }
+.desk-card-c-K { background: url("../images/cards-classic.png")  71px 389px; }
+.desk-card-c-A { background: url("../images/cards-classic.png")  2847px 389px; }
+.desk-card-c-10 { background: url("../images/cards-classic.png")  290px 389px; }
+.desk-card-c-9 { background: url("../images/cards-classic.png")  363px 389px; }
+.desk-card-c-8 { background: url("../images/cards-classic.png")  436px 389px; }
+.desk-card-c-7 { background: url("../images/cards-classic.png")  509px 389px; }

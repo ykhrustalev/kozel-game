@@ -66,7 +66,8 @@
     <h2>Ваши карты</h2>
     <ul class="deck-cards-list">
         {{#cards}}
-        <li class="desk-card-element suite-{{suite}} {{#allowed}}card-allowed{{/allowed}}" data-id="{{id}}">{{name}}
+        <li class="desk-card-element suite-{{suite}} {{#allowed}}card-allowed{{/allowed}} desk-card-{{id}}"
+            data-id="{{id}}">
         </li>
         {{/cards}}
     </ul>

@@ -1,10 +1,29 @@
-exports.index = function (req, res) {
-  res.render('index', {});
+var deck = require("../deck")
+  , _ =require("underscore")._
+  , cards = [];
+
+_.each(deck.suites, function (suite) {
+  var row = [];
+  _.each(deck.types, function (type) {
+    row.push({
+      id   : deck.cidFor(suite, type),
+      suite: suite.id
+    });
+  });
+  cards.push({
+    row:row,
+    suite: suite
+  });
+});
+
+exports.health = function (req, res) {
+  res.render('health', {
+    version: "0.0.1",
+    process: process,
+    cards  : cards
+  });
 };
 
-exports.about = function (req, res) {
-  res.render('about', {
-    version: "0.0.1",
-    process: process
-  });
+exports.index = function (req, res) {
+  res.render('index', {});
 };

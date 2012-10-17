@@ -45,7 +45,7 @@ app.configure('development', function () {
 });
 
 app.get('/', routes.index);
-app.get('/about', routes.about);
+app.get('/health', routes.health);
 
 // templates
 require('./templates').api(app);
