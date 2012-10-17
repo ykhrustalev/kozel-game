@@ -301,9 +301,7 @@ GameSchema.methods.forUser = function (user) {
 
 // TODO: unit test
 GameSchema.methods._newRound = function (rate) {
-
-  var split = deck.shuffle(4)
-    , round = this.round;
+  var round = this.round;
 
   round.created = new Date();
   round.number += 1;
@@ -314,11 +312,6 @@ GameSchema.methods._newRound = function (rate) {
   do {
     this._shuffle();
   } while (this._requiresReshuffle());
-
-  round.cards.player1 = split.shift();
-  round.cards.player2 = split.shift();
-  round.cards.player3 = split.shift();
-  round.cards.player4 = split.shift();
 
   if (round.shuffledPlayer) {
     round.shuffledPlayer = nextPid(round.shuffledPlayer);
@@ -336,6 +329,7 @@ GameSchema.methods._shuffle = function () {
   cards.player4 = split.shift();
 };
 
+//TODO: limit the cases when low balance, like few trumps, a lot of one suite on hands
 GameSchema.methods._requiresReshuffle = function () {
   var cards = this.round.cards
     , t1 = [].concat(cards.player1, cards.player3)

@@ -15,6 +15,23 @@ function createUser() {
   };
 }
 
+function createGame(u1, u2, u3, u4, callback) {
+  Game.create(u1, function (error, game) {
+    game._join(u2, function () {
+      game._join(u3, function () {
+        game._join(u4, function () {
+          game.save(function (error, game) {
+            if (error) {
+              throw new Error("create game failed: " + error);
+            }
+            callback(game);
+          });
+        });
+      });
+    });
+  });
+}
+
 module.exports = {
 
   setUp: function (callback) {
@@ -175,7 +192,7 @@ module.exports = {
       test.ok(!started, "first joined user should not start the game");
       assertUser(game, user1, "player1", "team1");
 
-      game._join(user1, function (error, started) {
+      game._join(user1, function (error) {
         test.equals(error, g.errors.USER_ALREADY_IN_GAME, "second time join the game should raise error");
 
         game._join(user2, function (error, started) {
@@ -276,17 +293,40 @@ module.exports = {
   },
 
   //TODO: complete
-//  _turn: function (test) {
-//    var game = new Game();
-//
-//    game.round.cards.player1 = ["a"];
-//    game.round.cards.player2 = ["b"];
-//    game.round.cards.player3 = ["c"];
-//    game.round.cards.player4 = ["d-A"];
-//
-//    test.equals(game._firstRoundTurnPid(), "player4");
-//    test.done();
-//  },
+  _turn     : function (test) {
+    var u1 = createUser()
+      , u2 = createUser()
+      , u3 = createUser()
+      , u4 = createUser()
+      , cids1 = ["d-Q", "c-8", "s-A", "s-K", "s-8", "h-K", "d-A", "d-9"]
+      , cids2 = ["d-J", "c-10", "s-10", "h-A", "h-8", "h-7", "d-10", "d-7"]
+      , cids3 = ["c-7", "h-J", "c-9", "s-9", "s-7", "h-10", "h-9", "d-K"]
+      , cids4 = ["c-Q", "s-Q", "h-Q", "c-J", "s-J", "c-A", "c-K", "d-8"];
+
+    test.ok(!_.intersection(cids1, cids2, cids3, cids4).length);
+
+
+    var oldShuffle = deck.shuffle;
+
+    deck.shuffle = function () {
+      return [cids1, cids2, cids3, cids4];
+    };
+
+    createGame(u1, u2, u3, u4, function (game) {
+      var cards = game.round.cards;
+      test.equals(_.intersect(cards.player1, cids1).length, 8);
+      test.equals(_.intersect(cards.player2, cids2).length, 8);
+      test.equals(_.intersect(cards.player3, cids3).length, 8);
+      test.equals(_.intersect(cards.player4, cids4).length, 8);
+
+      test.equals(game.round.shuffledPlayer, "player4", "shuffled player should be correct");
+      test.equals(game.round.turn.firstPid, "player1", "first player in game should be correct");
+      test.equals(game.round.turn.currentPid, "player1", "first turn player in game should be correct");
+
+      deck.shuffle = oldShuffle;
+      test.done();
+    });
+  },
 
   // TODO: complete
 //  _newRound: function (test) {

@@ -21,7 +21,6 @@ function parseUrl(request, callback, appId, appSecret) {
   }
 }
 
-//TODO: unit tests
 module.exports = {
   authHandler: function (appId, appSecret) {
     return function (url, callback) {
