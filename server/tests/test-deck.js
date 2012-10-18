@@ -150,9 +150,6 @@ module.exports = {
       , sorted = deck.sort(src);
 
     test.equals(src.length, sorted.length);
-    console.log(src);
-    console.log(sorted);
-    console.log(expected);
     for (var i = 0, len = src.length; i < len; i++) {
       test.equals(sorted.shift(), expected.shift());
     }
