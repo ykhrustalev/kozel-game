@@ -419,9 +419,6 @@ GameSchema.methods._turn = function (user, cid, callback) {
   cards[pid] = _.without(cards[pid], cid);
   turn.currentPid = nextPid(pid);
 
-  // notify players about opponent card
-  callback(null, this, "current");
-
   // check if queen caught
   var team1Cards = [turn.player1, turn.player3]
     , team2Cards = [turn.player2, turn.player4]
@@ -435,6 +432,10 @@ GameSchema.methods._turn = function (user, cid, callback) {
 
   // handle queen is caught
   if (looserTid) {
+
+    // show card to others
+    callback(null, this, "queenCaught");
+
     if (round.number === 1) {
       meta.score[looserTid] = 12;
       meta.flags[looserTid].queenCaught = true;
@@ -443,7 +444,6 @@ GameSchema.methods._turn = function (user, cid, callback) {
     } else {
       meta.score[looserTid] += 4 * round.rate;
       meta.flags[looserTid].queenCaught = true;
-      callback(null, this, "queenCaught");
       this._newRound();
       this._newTurn();
       callback(null, this, "newRound");
@@ -483,6 +483,9 @@ GameSchema.methods._turn = function (user, cid, callback) {
       meta.score[score1 > score2 ? "team2" : "team1"] += value * round.rate;
     }
   }
+
+  // notify players about opponent card
+  callback(null, this, "current");
 
   // handle game complete
   if (meta.score.team1 >= 12 || meta.score.team2 >= 12) {
