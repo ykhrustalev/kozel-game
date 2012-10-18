@@ -187,9 +187,10 @@ module.exports = {
   group: function (cids, firstCid) {
     var firstCard = firstCid ? initialDeck[firstCid] : null
       , groups = {
-        suite    : [],
-        trumps   : [],
-        nonTrumps: []
+        suite       : [],
+        trumps      : [],
+        nonTrumps   : [],
+        isFirstTrump: firstCard ? firstCard.isTrump : null
       };
 
     _.each(cids, function (cid) {

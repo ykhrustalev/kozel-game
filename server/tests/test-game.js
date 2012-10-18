@@ -562,6 +562,41 @@ module.exports = {
     });
   },
 
+  getCardsAllowed: function (test) {
+    var getCardsAllowed = g.utils.getCardsAllowed
+      , cids = ["d-Q", "c-8", "s-A", "s-K", "s-8", "s-7", "d-A", "d-9"]
+      , cidsTrumps = ["d-Q", "c-8"]
+      , cidsNonTrumps = ["s-A", "s-K", "s-8", "s-7", "d-A", "d-9"];
+
+    function assertCards(cids, firstCid, isShuffled, turn, round, expected, message) {
+      var allowed = getCardsAllowed(cids, firstCid, isShuffled, turn, round);
+      test.equals(_.intersection(allowed, expected).length, expected.length, message);
+    }
+
+    // fisrt card in turn
+    assertCards(cids, null, false, 1, 1, ["d-A"], "1st turn in 1st round should start with d-A");
+    assertCards(cids, null, true, 1, 1, ["d-A"], "1st turn in 1st round should start with d-A");
+    assertCards(cids, null, false, 2, 1, cidsNonTrumps, "1st round only non trumps allowed for all");
+    assertCards(cids, null, true, 2, 1, cidsNonTrumps, "1st round only on trumps allowed for all");
+    assertCards(cidsTrumps, null, true, 2, 1, cidsTrumps, "1st round trumps allowed only when left");
+    assertCards(cidsTrumps, null, false, 2, 1, cidsTrumps, "1st round trumps allowed only when left");
+    assertCards(cids, null, true, 2, 2, cidsNonTrumps, "shuffled team shouldn't trump");
+    assertCards(cids, null, false, 2, 2, cids, "non shuffled team can turn all");
+
+    assertCards(cids, "d-K", false, 1, 1, ["d-A", "d-9"], "cards should be in suite when possible");
+    assertCards(cids, "d-K", false, 1, 2, ["d-A", "d-9"], "cards should be in suite when possible");
+    assertCards(cids, "d-K", true, 1, 1, ["d-A", "d-9"], "cards should be in suite when possible");
+    assertCards(cids, "d-K", true, 1, 2, ["d-A", "d-9"], "cards should be in suite when possible");
+    assertCards(cids, "h-A", true, 1, 2, cids, "all cards should be when covering missing suite");
+    assertCards(cids, "h-A", false, 1, 2, cids, "all cards should be when covering missing suite");
+    assertCards(cids, "с-7", true, 1, 2, ["d-Q", "c-8"], "trumps should be in when possible if trumps");
+    assertCards(cids, "с-7", true, 1, 2, ["d-Q", "c-8"], "trumps should be in when possible if trumps");
+    assertCards(cidsNonTrumps, "с-7", true, 1, 2, cidsNonTrumps, "non trumps should be when no trumps available");
+    assertCards(cidsNonTrumps, "с-7", false, 1, 2, cidsNonTrumps, "non trumps should be when no trumps available");
+
+    test.done();
+  },
+
   _getPidForUser: function (test) {
     var p1 = createUser()
       , p2 = createUser()

@@ -355,7 +355,6 @@ GameSchema.methods._newTurn = function (firstPid) {
   turn.firstPid = turn.currentPid = firstPid || nextPid(this.round.shuffledPlayer);
 };
 
-
 // TODO: unit test
 // TODO: fix me
 GameSchema.methods._getTurnWinnerPid = function () {
@@ -386,6 +385,7 @@ GameSchema.methods.finish = function (callback) {
   this.remove(callback);
 };
 
+// TODO: notify the turn score on the 4th player
 GameSchema.methods._turn = function (user, cid, callback) {
 
   var pid = this._getPidForUser(user)
@@ -558,28 +558,53 @@ GameSchema.methods._pidForCid = function (cid) {
   return pid ? "player" + pid : pid;
 };
 
+/**
+ * // TODO: describe algorithm
+ * @param cids
+ * @param firstCid
+ * @param isShuffledTeam
+ * @param turnNumber
+ * @param roundNumber
+ * @return {*}
+ */
+function getCardsAllowed(cids, firstCid, isShuffledTeam, turnNumber, roundNumber) {
+  var grouped = deck.group(cids, firstCid)
+    , allowed = [];
+
+  // first card in turn
+  if (!firstCid) {
+    // first turn in game
+    if (turnNumber === 1) {
+      if (cids.indexOf(aceDiamonds) < 0) {
+        throw new Error("first player is incorrect");
+      }
+      return [aceDiamonds];
+    }
+    else if (isShuffledTeam || roundNumber === 1) {
+      return grouped.nonTrumps.length ? grouped.nonTrumps : cids;
+    } else {
+      return cids;
+    }
+  } else {
+    if (grouped.isFirstTrump) {
+      return grouped.trumps.length ? grouped.trumps : cids
+    } else {
+      return grouped.suite.length ? grouped.suite : cids;
+    }
+  }
+}
+
 GameSchema.methods._getCardsAllowed = function (pid) {
-  var round = this.round
-    , cards = round.cards[pid]
+  var players = this.players
+    , round = this.round
     , turn = round.turn
-    , shuffledTid = this.players[round.shuffledPlayer].tid
-    , playerTid = this.players[pid].tid
-    , sorted;
+    , shuffledTid = players[round.shuffledPlayer].tid
+    , playerTid = players[pid].tid;
 
   if (turn.currentPid !== pid) {
     return [];
   }
-
-  sorted = deck.group(cards, turn[turn.firstPid]);
-  if (pid !== turn.firstPid) {
-    return sorted.suite.length ? sorted.suite : cards;
-  } else if (turn.number === 1) {
-    return [aceDiamonds];
-  } else if (round.number === 1 || playerTid === shuffledTid) {
-    return sorted.nonTrumps.length ? sorted.nonTrumps : sorted.trumps;
-  } else {
-    return cards;
-  }
+  return getCardsAllowed(round.cards[pid], turn[turn.firstPid], playerTid === shuffledTid, turn.number, round.number);
 };
 
 module.exports = {
@@ -589,9 +614,10 @@ module.exports = {
   },
 
   utils: {
-    prevPid : prevPid,
-    nextPid : nextPid,
-    otherTid: otherTid
+    prevPid        : prevPid,
+    nextPid        : nextPid,
+    otherTid       : otherTid,
+    getCardsAllowed: getCardsAllowed
   },
 
   errors: errors
