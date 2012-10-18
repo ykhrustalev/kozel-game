@@ -9,6 +9,10 @@ define([
 
   "use strict";
 
+  function delay(callback, timeout) {
+    setTimeout(callback, timeout || 5000);
+  }
+
   var AppRouter = Backbone.Router.extend({
 
     routes: {
@@ -42,18 +46,13 @@ define([
 
       var router = this;
 
-      socket.on("game:created", function (game) {
-        router.showDesk(game);
-      });
-
       socket.on("game:list:available", function (games) {
         router.showDashboard(games);
       });
 
-      socket.on("game:current", function (data) {
-        router.showDesk(data);
+      socket.on("game:created", function (game) {
+        router.showDesk(game);
       });
-
       socket.on("game:joined", function (data) {
         router.showDesk(data);
       });
@@ -62,12 +61,26 @@ define([
         router.showDesk(game);
       });
 
-      socket.on("game:newTurn", function (data) {
+      socket.on("game:current", function (data) {
         router.showDesk(data);
       });
 
+      socket.on("game:newTurn", function (data) {
+        delay(function () {
+          router.showDesk(data);
+        });
+      });
+
       socket.on("game:newRound", function (game) {
-        router.showDesk(game);
+        delay(function () {
+          router.showDesk(game);
+        })
+      });
+
+      socket.on("game:queenCaught", function (game) {
+        delay(function () {
+          router.showDesk(game);
+        })
       });
 
       socket.on("game:update", function (game) {
