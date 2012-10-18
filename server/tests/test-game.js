@@ -38,7 +38,9 @@ module.exports = {
     connection = mongoose.createConnection('mongodb://localhost/test_1');
     connection.once('open', function () {
       Game = g.model(connection);
-      callback();
+      connection.db.dropDatabase(function () {
+        callback();
+      });
     });
   },
 
@@ -300,8 +302,8 @@ module.exports = {
       , u4 = createUser()
       , cids1 = ["d-Q", "c-8", "s-A", "s-K", "s-8", "h-K", "d-A", "d-9"]
       , cids2 = ["d-J", "c-10", "s-10", "h-A", "h-8", "h-7", "d-10", "d-7"]
-      , cids3 = ["c-7", "h-J", "c-9", "s-9", "s-7", "h-10", "h-9", "d-K"]
-      , cids4 = ["c-Q", "s-Q", "h-Q", "c-J", "s-J", "c-A", "c-K", "d-8"];
+      , cids3 = ["c-7", "h-J", "c-9", "s-9", "s-7", "h-10", "c-K", "d-K"]
+      , cids4 = ["c-Q", "s-Q", "h-Q", "c-J", "s-J", "c-A", "h-9", "d-8"];
 
     test.ok(!_.intersection(cids1, cids2, cids3, cids4).length);
 
@@ -312,6 +314,126 @@ module.exports = {
       return [cids1, cids2, cids3, cids4];
     };
 
+    function allowedCard(game, user) {
+      return game._getCardsAllowed(game._getPidForUser(user))[0];
+    }
+
+    // TODO: fix that crap
+    function doTurn(game, u1, cid1, u2, cid2, u3, cid3, u4, cid4, callback4, callback3, callback2, callback1) {
+      game._turn(u1, cid1, function (error, game, state) {
+        callback1 && callback1(error, game, state, 1);
+        game._turn(u2, cid2 || allowedCard(game, u2), function (error, game, state) {
+          callback2 && callback2(error, game, state, 2);
+          game._turn(u3, cid3 || allowedCard(game, u3), function (error, game, state) {
+            callback3 && callback3(error, game, state, 3);
+            game._turn(u4, cid4 || allowedCard(game, u4), function (error, game, state) {
+              test.ok(!error);
+              callback4 && callback4(error, game, state, 4);
+            });
+          });
+        });
+      })
+    }
+
+    function assertTurn1(game, callback) {
+
+      test.equals(game.round.shuffledPlayer, "player4", "shuffled player should be correct");
+      test.equals(game.round.turn.firstPid, "player1", "first player in game should be correct");
+      test.equals(game.round.turn.currentPid, "player1", "first turn player in game should be correct");
+      test.equals(game.round.number, 1, "it should be first round");
+      test.equals(game.round.turn.number, 1, "it should be first turn");
+      test.ok(game._getCardsAllowed("player1").length === 1);
+      test.ok(game._getCardsAllowed("player1").indexOf("d-A") >= 0);
+      test.ok(!game._getCardsAllowed("player2").length);
+      test.ok(!game._getCardsAllowed("player3").length);
+      test.ok(!game._getCardsAllowed("player4").length);
+
+      game._turn(u1, "d-9", function (error) {
+        test.ok(error, "incorrect card turn should raise error");
+        game._turn(u2, "d-A", function (error) {
+          test.ok(error, "incorrect player turn should raise error");
+          game._turn(u2, "d-10", function (error) {
+            test.ok(error, "turn with card from other player should raise error");
+            game._turn(createUser(), "d-A", function (error) {
+              test.ok(error, "turn by not in user game should raise error");
+              game._turn(u1, "d-A", function (error, game, state) {
+                test.ok(!error, "correct turn should not raise errors");
+                test.equals(state, "current", "state should be correct after the turn");
+
+                game._turn(u2, game._getCardsAllowed("player2")[0], function (error, game, state) {
+                  test.ok(!error, "correct turn should not raise errors");
+                  test.equals(state, "current", "state should be correct after the turn");
+
+                  game._turn(u3, game._getCardsAllowed("player3")[0], function (error, game, state) {
+                    test.ok(!error, "correct turn should not raise errors");
+                    test.equals(state, "current", "state should be correct after the turn");
+
+                    var count = 0;
+                    game._turn(u4, game._getCardsAllowed("player4")[0], function (error, game, state) {
+                      test.ok(!error, "correct turn should not raise errors");
+                      if (!count) {
+                        test.equals(state, "current", "state should be correct after the turn end");
+                        count++;
+                      } else if (count === 1) {
+                        test.equals(state, "newTurn", "state should be correct after the turn end");
+                        count++;
+                        callback(game);
+                      } else {
+                        test.ok(false, "forth player turn should not produce extra callbacks");
+                      }
+                    });
+                  });
+                });
+              })
+            })
+          })
+        })
+      });
+    }
+
+    function assertTurn2(game, callback) {
+      test.equals(game.round.turn.firstPid, "player1", "first player in 3rd turn should be correct");
+      test.equals(game.round.turn.currentPid, "player1", "first player in 3rd turn should be correct");
+      test.equals(game.round.score.team1, 25, "turn should calculate correct score");
+      test.equals(game.round.score.team2, 0, "turn should calculate correct score");
+      test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
+      test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
+      test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
+      test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
+      test.equals(_.intersect(game._getCardsAllowed("player1"), ["s-A", "s-K", "s-8", "h-K", "d-9"]).length, 5, "only non trumps should be available for turn");
+
+//      callback(game);
+//      return;
+      //TODO: complete challenge
+
+      doTurn(game, u1, "h-K", u2, "h-A", u3, "h-10", u4, "h-9", function (error, game, state, step) {
+        if (state === "newTurn") {
+          callback(game);
+        }
+      });
+    }
+
+    function assertTurn3(game, callback) {
+      test.equals(game.round.turn.firstPid, "player2", "first player in second turn should be correct");
+      test.equals(game.round.turn.currentPid, "player2", "first player in second turn should be correct");
+      test.equals(game.round.score.team1, 0, "turn should calculate correct score");
+      test.equals(game.round.score.team2, 25, "turn should calculate correct score");
+
+      callback(game);
+      return;
+
+      //TODO: can't finish turn3
+      var count = 0;
+      doTurn(game, u2, "d-7", u3, null, u4, null, u1, null, function (error, game, state, step) {
+        count++;
+        console.warn(state);
+        if (count == 2) {
+          test.equals(state, "gameEnd");
+          callback(game);
+        }
+      });
+    }
+
     createGame(u1, u2, u3, u4, function (game) {
       var cards = game.round.cards;
       test.equals(_.intersect(cards.player1, cids1).length, 8);
@@ -319,12 +441,15 @@ module.exports = {
       test.equals(_.intersect(cards.player3, cids3).length, 8);
       test.equals(_.intersect(cards.player4, cids4).length, 8);
 
-      test.equals(game.round.shuffledPlayer, "player4", "shuffled player should be correct");
-      test.equals(game.round.turn.firstPid, "player1", "first player in game should be correct");
-      test.equals(game.round.turn.currentPid, "player1", "first turn player in game should be correct");
+      assertTurn1(game, function (game) {
+        assertTurn2(game, function (game) {
+//          assertTurn3(game, function (game) {
+          deck.shuffle = oldShuffle;
+          test.done();
+//          })
+        })
+      });
 
-      deck.shuffle = oldShuffle;
-      test.done();
     });
   },
 
