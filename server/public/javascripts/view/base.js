@@ -1,7 +1,6 @@
 define([
   "backbone",
   "templates",
-  "backboneModelBinder",
   "backboneValidation"
 ], function (Backbone, Templates) {
 
@@ -28,7 +27,6 @@ define([
     _modelBinder: undefined,
 
     initialize: function () {
-      this._modelBinder = new Backbone.ModelBinder();
     },
 
     /**
@@ -41,7 +39,6 @@ define([
       }
       this.unbind();
       if (this.model) {
-        this._modelBinder.unbind();
         Backbone.Validation.unbind(this);
       }
     },

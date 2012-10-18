@@ -9,7 +9,6 @@ require.config({
     underscore         : "lib/underscore",
     backbone           : "lib/backbone",
     backboneValidation : "lib/backbone-validation-amd",
-    backboneModelBinder: "lib/Backbone.ModelBinder",
     hogan              : "lib/template-2.0.0",
     io                 : "lib/socket.io"
   },
@@ -30,10 +29,6 @@ require.config({
     backbone: {
       deps   : ["underscore", "jquery"],
       exports: "Backbone"
-    },
-
-    backboneModelbinding: {
-      deps: ["backbone", "underscore" ]
     }
   }
 

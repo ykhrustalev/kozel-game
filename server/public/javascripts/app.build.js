@@ -7,7 +7,6 @@
     'jquery' : 'lib/jquery',
     'underscore' : 'lib/underscore',
     'backbone' : 'lib/backbone',
-    'backboneModelBinder' : 'lib/Backbone.ModelBinder',
     'backboneValidation' : 'lib/backbone-validation-amd',
     'hogan' : 'lib/template-2.0.0',
     'io' : 'lib/socket.io',
