@@ -311,10 +311,12 @@ GameSchema.methods.forUser = function (user) {
     turn[order] = this.round.turn[j];
   }
 
+  var isNotifyExport = turn.player1 && turn.player2 && turn.player3 && turn.player4;
+
   return {
     meta        : this.meta,
     cards       : deck.sort(this.round.cards[pid]),
-    cardsAllowed: this.meta.active ? this._getCardsAllowed(pid) : null,
+    cardsAllowed: this.meta.active && !isNotifyExport ? this._getCardsAllowed(pid) : null,
     isTurn      : isTurn,
     status      : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
     players     : players,
