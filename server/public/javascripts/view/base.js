@@ -69,8 +69,6 @@ define([
           }
         });
 
-        // model view data flow
-        this._modelBinder.bind(this.model, this.el);
       }
 
       return this;
