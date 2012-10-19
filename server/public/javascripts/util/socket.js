@@ -1,3 +1,3 @@
 define(['io'], function (io) {
-  return io.connect('http://localhost');
+  return io.connect(window.location);
 });
