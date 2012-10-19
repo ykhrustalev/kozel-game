@@ -1,7 +1,8 @@
 define([
   "backbone",
   "templates",
-  "backboneValidation"
+  "backboneValidation",
+  "bootstrap"
 ], function (Backbone, Templates) {
 
   "use strict";

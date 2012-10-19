@@ -38,7 +38,12 @@ define([
     model: new Game(),
 
     events: {
-      'click .desk-card-element': "doTurn"
+      'click .desk-card-element': "doTurn",
+      'click .leaveGame'        : "leaveGame"
+    },
+
+    leaveGame: function () {
+      socket.emit("game:leave");
     },
 
     doTurn: function (e) {
