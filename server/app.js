@@ -48,10 +48,11 @@ server.listen(config.port);
 // game
 var Game = require('./game').model(db);
 
-
 var authHandler = require("./authHandler");
 
-authHandler(io, sessionStore);
+io.configure(function () {
+  io.set("authorization", authHandler.socialHandler(sessionStore));
+});
 
 var SocketHelpers = {
   emitAvailableGames: function (socket) {
@@ -213,7 +214,7 @@ io.sockets.on('connection', function (socket) {
   socket.on('disconnect', function () {
     console.log('user disconnected: ', arguments);
     // TODO: notify game
-    io.sockets.emit('user disconnected', user);
+//    io.sockets.emit('user disconnected', user);
   });
 
 
