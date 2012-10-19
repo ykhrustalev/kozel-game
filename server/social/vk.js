@@ -1,6 +1,9 @@
 var url = require('url')
   , crypto = require('crypto');
 
+var regExp = new RegExp("vk.com", "i");
+
+
 function parseUrl(request, callback, appId, appSecret) {
 
   var urlSchema = url.parse(request.headers.referer, true)
@@ -21,10 +24,16 @@ function parseUrl(request, callback, appId, appSecret) {
   }
 }
 
-module.exports = {
-  authHandler: function (appId, appSecret) {
-    return function (url, callback) {
-      return parseUrl(url, callback, appId, appSecret);
-    };
-  }
+exports.authHandler = function (appId, appSecret) {
+
+  return {
+
+    canHandle: function (requst) {
+      return regExp.test(requst.headers.referer);
+    },
+
+    handle: function (request, callback) {
+      return parseUrl(request, callback, appId, appSecret);
+    }
+  };
 };

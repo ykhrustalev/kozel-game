@@ -15,6 +15,7 @@
     "consolidate": "0.4.0",
     "hogan.js"   : "2.0.0",
     "crypto"     : "0.0.3",
+    "url"        : "0.7.9",
     "nodeunit"   : "0.7.4"
   },
   "engines"     : {

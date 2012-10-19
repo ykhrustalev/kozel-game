@@ -1,16 +1,12 @@
 var config = require("./config")
-  , utils = require("./utils")
   , cookie = require("cookie")
   , express = require("express")
   , Session = express.session.Session
-// TODO: remove config dependency, make it accept chain of social integration modules
 // previously was used from standalone module `connect`
-  , connectUtils = require("express/node_modules/connect/lib/utils")
-  , vkHandler = require("./vk").authHandler(config.vk.appId, config.vk.appSecret);
+  , connectUtils = require("express/node_modules/connect/lib/utils");
 
-var vkRegExp = new RegExp("vk.com", "i");
 
-var socialHandler = function (data, accept, sessionStore) {
+var socialHandler = function (data, accept, sessionStore, handlers) {
 
   // Deriving express cookie here to define whether user has already
   // established session
@@ -59,18 +55,21 @@ var socialHandler = function (data, accept, sessionStore) {
 
     // Resolve user, could be a locally mocked or from social network
     var handler;
-    if (vkRegExp.test(data.headers.referer)) {
-      handler = vkHandler;
-    } else if (config.env === "development") {
-      handler = utils.mockUser;
-    } else {
+    for (var i = 0, len = handlers.length; i < len; ++i) {
+      if (handlers[i].canHandle(data)) {
+        handler = handlers[i];
+        break;
+      }
+    }
+
+    if (!handler) {
       accept("unauthorized", false);
     }
 
     try {
       // pass request object to the handler in order to derive user
       // information
-      handler(data, function (error, authentificated, profile) {
+      handler.handle(data, function (error, authentificated, profile) {
         data.user = profile;
         data.session = new Session(data, session);
         accept(null, authentificated);
@@ -83,8 +82,25 @@ var socialHandler = function (data, accept, sessionStore) {
   });
 };
 
-exports.socialHandler = function (sessionStore) {
+/**
+ * Authorization handler, uses request to derive user information.
+ * Uses standalone modules to contact social networks.
+ * Handler should implement functions:
+ * - canHandle(request)
+ * - handle(request, callback)
+ *
+ * callback should take parameters:
+ * - {Mixed} error
+ * - {boolean} isAuthenticated
+ * - {Object} profile - {uid, first_name, last_name}
+ *
+ * @param sessionStore
+ * @param handlers
+ * @return {Function} wrapper for handlers
+ */
+
+exports.enable = function (sessionStore, handlers) {
   return function (data, accept) {
-    return socialHandler(data, accept, sessionStore)
+    return socialHandler(data, accept, sessionStore, handlers)
   }
 };

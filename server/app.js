@@ -45,14 +45,22 @@ http.createServer(app);
 
 server.listen(config.port);
 
-// game
-var Game = require('./game').model(db);
-
-var authHandler = require("./authHandler");
+// authentication
+var auth = require("./auth")
+  , social = require("./social");
 
 io.configure(function () {
-  io.set("authorization", authHandler.socialHandler(sessionStore));
+  var handlers = [
+    social.vk.authHandler(config.vk.appId, config.vk.appSecret)
+  ];
+  if (config.env === "development") {
+    handlers.push(social.mock.authHandler);
+  }
+  io.set("authorization", auth.enable(sessionStore, handlers));
 });
+
+// game
+var Game = require('./game').model(db);
 
 var SocketHelpers = {
   emitAvailableGames: function (socket) {

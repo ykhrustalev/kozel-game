@@ -1,12 +1,13 @@
 var url = require("url")
   , _ = require("underscore")._;
 
-module.exports = {
-  trace: function (message) {
-    console.warn("TRACE: " + message);
+exports.authHandler = {
+
+  canHandle: function (request) {
+    return true;
   },
 
-  mockUser: function (request, callback) {
+  handle: function (request, callback) {
     var queryParams = url.parse(request.headers.referer, true).query
       , uid = parseInt(queryParams.uid) || _.uniqueId();
     callback(null, true, {
@@ -15,5 +16,4 @@ module.exports = {
       last_name : ""
     });
   }
-
 };
