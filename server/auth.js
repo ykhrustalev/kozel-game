@@ -1,19 +1,18 @@
-var config = require("./config")
-  , cookie = require("cookie")
+var cookie = require("cookie")
   , express = require("express")
   , Session = express.session.Session
 // previously was used from standalone module `connect`
   , connectUtils = require("express/node_modules/connect/lib/utils");
 
 
-var socialHandler = function (data, accept, sessionStore, handlers) {
+var socialHandler = function (data, accept, sessionStore, handlers, secret) {
 
   // Deriving express cookie here to define whether user has already
   // established session
   try {
     var signedCookies = cookie.parse(decodeURIComponent(data.headers.cookie));
     console.log(data.cookie);
-    data.cookie = connectUtils.parseSignedCookies(signedCookies, config.secret);
+    data.cookie = connectUtils.parseSignedCookies(signedCookies, secret);
     // should be exactly `sessionID` as required by Session module
     data.sessionID = data.cookie['express.sid'];
   } catch (error) {
@@ -96,11 +95,12 @@ var socialHandler = function (data, accept, sessionStore, handlers) {
  *
  * @param sessionStore
  * @param handlers
+ * @param secret
  * @return {Function} wrapper for handlers
  */
 
-exports.enable = function (sessionStore, handlers) {
+exports.enable = function (sessionStore, handlers, secret) {
   return function (data, accept) {
-    return socialHandler(data, accept, sessionStore, handlers)
+    return socialHandler(data, accept, sessionStore, handlers, secret)
   }
 };

@@ -56,7 +56,7 @@ io.configure(function () {
   if (config.env === "development") {
     handlers.push(social.mock.authHandler);
   }
-  io.set("authorization", auth.enable(sessionStore, handlers));
+  io.set("authorization", auth.enable(sessionStore, handlers, config.secret));
 });
 
 // game
