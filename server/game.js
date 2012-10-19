@@ -86,7 +86,8 @@ var aceDiamonds = deck.cidFor(deck.suites.Diamonds, deck.types.Ace)
 var errors = {
   USER_ALREADY_JOINED_OTHER_GAME: "user already joined other game",
   GAME_HAS_NO_VACANT_PLACE      : "no place to add player",
-  USER_ALREADY_IN_GAME          : "already joined"
+  USER_ALREADY_IN_GAME          : "already joined",
+  USER_NOT_IN_GAME              : "user not in game"
 };
 
 /**
@@ -241,6 +242,38 @@ GameSchema.statics.join = function (gid, user, callback) {
         })
       });
     });
+  });
+};
+
+// Test
+GameSchema.statics.leave = function (user, callback) {
+  this.currentForUser(user, function (error, game) {
+    if (error) {
+      return callback(error);
+    }
+    if (!game) {// TODO: notify user
+      return callback(errors.USER_NOT_IN_GAME);
+    }
+    if (game.meta.active) {
+      return callback("game already started");
+    }
+
+    var pid = game._getPidForUser(user);
+    if (!pid) {
+      return callback(errors.USER_NOT_IN_GAME);
+    }
+
+    game.meta.playersCount -= 1;
+    game.players[pid] = null;
+    if (game.meta.playersCount === 0) {
+      game.finish(function (error) {
+        callback(error, game);
+      })
+    } else {
+      game.save(function (error) {
+        callback(error, game);
+      });
+    }
   });
 };
 
