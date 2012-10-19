@@ -1,12 +1,11 @@
 var config = require("./config")
   , utils = require("./utils")
   , cookie = require("cookie")
-  , connect = require("connect")
-  , Session = connect.middleware.session.Session
-// TODO: remove config dependency?
+  , express = require("express")
+// previously was used from standalone module `connect`
+  , connectUtils = require("express/node_modules/connect/lib/utils")
+  , Session = express.session.Session
   , vkHandler = require("./vk").authHandler(config.vk.appId, config.vk.appSecret);
-// TODO: check the express.session.MemoryStore
-// TODO: remove explicit dependency on the `connect` and `session`
 
 function handleAuth(io, sessionStore) {
 
@@ -20,10 +19,12 @@ function handleAuth(io, sessionStore) {
       // established session
       try {
         var signedCookies = cookie.parse(decodeURIComponent(data.headers.cookie));
-        data.cookie = connect.utils.parseSignedCookies(signedCookies, config.secret);
+        console.log(data.cookie);
+        data.cookie = connectUtils.parseSignedCookies(signedCookies, config.secret);
         // should be exactly `sessionID` as required by Session module
         data.sessionID = data.cookie['express.sid'];
       } catch (err) {
+        console.warn("faile parsing cookies: " + err);
         accept('Malformed cookie transmitted.', false);
         return;
       }

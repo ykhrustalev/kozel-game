@@ -1,24 +1,15 @@
-/**
- * Module dependencies.
- */
+var express = require("express")
+  , routes = require("./routes")
+  , http = require("http")
+  , path = require("path")
+  , app = express()
+  , server = http.createServer(app)
+  , MemoryStore = express.session.MemoryStore
+  , sessionStore = new MemoryStore()
+  , io = require("socket.io").listen(server)
+  , config = require("./config")
+  , db = require("./db").instance();
 
-var express = require("express"),
-  routes = require("./routes"),
-  http = require("http"),
-  path = require("path"),
-  app = express(),
-  server = http.createServer(app),
-  io = require("socket.io").listen(server),
-  config = require("./config"),
-  utils = require("./utils"),
-  db = require("./db").instance();
-
-var connect = require("connect")
-  , MemoryStore = connect.middleware.session.MemoryStore;
-//TODO check the express.session.MemoryStore
-// TODO: remove explicit dependency on the `connect` and `session`
-
-var store = new MemoryStore();
 
 app.configure(function () {
 //  app.set('port', process.env.PORT || 3000);
@@ -34,7 +25,7 @@ app.configure(function () {
   app.use(express.session({
     secret: config.secret,
     key   : 'express.sid',
-    store : store
+    store : sessionStore
   }));
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
@@ -60,7 +51,7 @@ var Game = require('./game').model(db);
 
 var authHandler = require("./authHandler");
 
-authHandler(io, store);
+authHandler(io, sessionStore);
 
 var SocketHelpers = {
   emitAvailableGames: function (socket) {
