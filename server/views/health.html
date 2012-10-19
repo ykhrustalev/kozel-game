@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Status page</title>
-    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    <link rel='stylesheet' href='/stylesheets/bootstrap.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
 </head>
 <body>
 
@@ -34,8 +35,9 @@ engine: {{process.versions.node}}
     <div class="desk-cards-wrapper">
         <ul class="deck-cards-list">
             {{#row}}
-            <li class="desk-card-element suite-{{suite}} desk-card-{{id}}"
-                data-id="{{id}}"></li>
+            <li class="desk-card-element-wrapper {{#allowed}}card-allowed{{/allowed}}">
+                <div class="desk-card-element suite-{{suite}} desk-card-{{id}}" data-id="{{id}}"></div>
+            </li>
             {{/row}}
 
             {{#suite}}
