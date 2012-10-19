@@ -177,6 +177,46 @@ module.exports = {
     });
   },
 
+  leave: function (test) {
+    var user1 = createUser()
+      , user2 = createUser()
+      , user3 = createUser()
+      , user4 = createUser();
+
+    Game.create(user1, function (error, game) {
+      Game.join(game.id, user2, function (error) {
+
+        Game.leave(user1, function (error, leftGame) {
+          test.ok(!error, "should leave game without error");
+          test.ok(leftGame, "left game should be in callback");
+          test.ok(game.id, leftGame.id, "left game should be created game");
+
+          Game.leave(user2, function (error, leftGame) {
+            test.ok(!error, "should leave game without error");
+            test.ok(leftGame, "left game should be in callback");
+            test.ok(game.id, leftGame.id, "left game should be created game");
+
+            Game.leave(createUser(), function (error) {
+              test.ok(error, "user should fail to leave game that he is not playing");
+
+              Game.currentForUser(user1, function (error, game) {
+                test.ok(!game, "left game should be deleted if only one person");
+
+                createGame(user1, user2, user3, user4, function (game) {
+                  Game.leave(user1, function (error) {
+                    test.ok(error, "user should fail to leave started game");
+
+                    test.done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  },
+
   _join: function (test) {
     var user1 = createUser()
       , user2 = createUser()
@@ -400,7 +440,7 @@ module.exports = {
       test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
       test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
       test.equals(game.round.cards.player1.length, 7, "cards should be less in new turn");
-      test.equals(_.intersect(game._getCardsAllowed("player1"), ["s-A", "s-K", "s-8", "h-K", "d-9"]).length, 5, "only non trumps should be available for turn");
+      test.equals(_.intersection(game._getCardsAllowed("player1"), ["s-A", "s-K", "s-8", "h-K", "d-9"]).length, 5, "only non trumps should be available for turn");
 
 //      callback(game);
 //      return;
@@ -436,10 +476,10 @@ module.exports = {
 
     createGame(u1, u2, u3, u4, function (game) {
       var cards = game.round.cards;
-      test.equals(_.intersect(cards.player1, cids1).length, 8);
-      test.equals(_.intersect(cards.player2, cids2).length, 8);
-      test.equals(_.intersect(cards.player3, cids3).length, 8);
-      test.equals(_.intersect(cards.player4, cids4).length, 8);
+      test.equals(_.intersection(cards.player1, cids1).length, 8);
+      test.equals(_.intersection(cards.player2, cids2).length, 8);
+      test.equals(_.intersection(cards.player3, cids3).length, 8);
+      test.equals(_.intersection(cards.player4, cids4).length, 8);
 
       assertTurn1(game, function (game) {
         assertTurn2(game, function (game) {
