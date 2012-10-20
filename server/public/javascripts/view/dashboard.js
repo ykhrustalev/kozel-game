@@ -22,7 +22,11 @@ define([
     },
 
     getData: function () {
-      return {games: this.collection.toJSON()};
+      var games = this.collection.toJSON();
+      return {
+        games: games,
+        gameCount: games.length || null
+      };
     },
 
     newGame: function () {

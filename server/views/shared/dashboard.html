@@ -1,8 +1,9 @@
+{{#gameCount}}
 <h2>Доступные игры</h2>
 <ul>
-  {{#games}}
-  <li><a class="joinGame" href="#" data-id="{{_id}}">{{meta.playersCount}} игроков</a></li>
-  {{/games}}
+    {{#games}}
+    <li><a class="joinGame" href="#" data-id="{{_id}}">{{meta.playersCount}} игроков</a></li>
+    {{/games}}
 </ul>
-<hr/>
-<button class="newGame">Создать игру</button>
+{{/gameCount}}
+<div class="btn btn-warning newGame">Создать</div>

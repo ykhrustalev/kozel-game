@@ -7,9 +7,10 @@ var _ = require("underscore")._
 
 // Helper schema for player
 var PlayerSchema = {
-  uid : Number,
-  tid : String, // team{1|2}
-  name: String
+  uid   : Number,
+  tid   : String, // team{1|2}
+  name  : String,
+  avatar: String
 };
 
 var FlagsSchema = {
@@ -307,7 +308,7 @@ GameSchema.methods.forUser = function (user) {
 
   for (var i = 1, j = nextPid(pid); i <= 4; j = nextPid(j), i++) {
     var order = "player" + i;
-    players[order] = this.players[j].name || "свободно";
+    players[order] = this.players[j];
     turn[order] = this.round.turn[j];
   }
 
@@ -318,7 +319,7 @@ GameSchema.methods.forUser = function (user) {
     cards       : deck.sort(this.round.cards[pid]),
     cardsAllowed: this.meta.active && !isNotifyExport ? this._getCardsAllowed(pid) : null,
     isTurn      : isTurn,
-    status      : !this.meta.active ? null : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
+    status      : !this.meta.active ? "Ожидание начала игры" : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
     players     : players,
     turn        : turn,
 
@@ -559,9 +560,10 @@ GameSchema.methods._join = function (user, callback) {
 
   var pid = "player" + meta.playersCount;
   ps[pid] = {
-    uid : user.uid,
-    tid : "team" + ((meta.playersCount % 2) ? 1 : 2),
-    name: user.first_name + ' ' + user.last_name
+    uid   : user.uid,
+    tid   : "team" + ((meta.playersCount % 2) ? 1 : 2),
+    name  : user.first_name + ' ' + user.last_name,
+    avatar: user.avatar
   };
 
   if (meta.playersCount !== 4) {

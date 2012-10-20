@@ -19,7 +19,9 @@ function parseUrl(request, callback, appId, appSecret) {
     if (params.auth_key !== md5.digest('hex')) {
       callback("auth key mismatched");
     } else {
-      callback(null, true, JSON.parse(params.api_result).response[0]);
+      var profile = JSON.parse(params.api_result).response[0];
+      profile.avatar = profile.photo;
+      callback(null, true, profile);
     }
   }
 }

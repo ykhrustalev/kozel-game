@@ -16,7 +16,7 @@ var socialHandler = function (data, accept, sessionStore, handlers, secret) {
     // should be exactly `sessionID` as required by Session module
     data.sessionID = data.cookie['express.sid'];
   } catch (error) {
-    console.warn("faile parsing cookies: " + error);
+    console.warn("failed parsing cookies: " + error);
     accept('Malformed cookie transmitted.', false);
     return;
   }

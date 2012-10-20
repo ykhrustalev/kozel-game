@@ -1,34 +1,37 @@
-<div class="desk-meta-wrapper">
-    <div class="desk-meta-container">
-        {{#meta.active}}
-        Партия: <strong>{{gameScore.team1}}</strong> - <strong>{{gameScore.team2}}</strong>
-        | Кон: <strong>{{roundScore.team1}}</strong> - <strong>{{roundScore.team2}}</strong>
-        {{#status}}
-        | @{{status}}
-        {{/status}}
-        {{/meta.active}}
-        {{^meta.active}}
-        Ожидание других игроков
-        {{/meta.active}}
-        {{^meta.active}}
-        <button class="leaveGame">Покинуть игру</button>
-        {{/meta.active}}
-    </div>
+<div class="desk-info">
+    {{#meta.active}}
+    вы <span class="badge badge-warning">{{gameScore.team1}}</span>
+    - <span class="badge badge-warning">{{gameScore.team2}}</span> соперник
+    {{/meta.active}}
+    {{^meta.active}}
+    <div class="btn btn-small leaveGame pull-right">Покинуть игру</div>
+    {{/meta.active}}
+    <em class="muted"><i class="icon-bullhorn"></i> {{status}}</em>
+
 </div>
 
-<div class="desk-board-wrapper">
+<div class="desk-board-wrapper clearfix">
     <div class="desk-board-container">
 
         <div class="desk-player-1-name">
-            <div class="helper">{{players.player1}}</div>
+            <div class="helper">
+                <img class="img-circle" src="{{players.player1.avatar}}"
+                     alt="">{{players.player1.name}}
+            </div>
         </div>
 
         <div class="desk-player-2-name">
-            <div class="helper">{{players.player2}}</div>
+            <div class="helper">
+                <img class="img-circle" src="{{players.player2.avatar}}"
+                     alt=""> {{players.player2.name}}
+            </div>
         </div>
 
         <div class="desk-player-3-name">
-            <div class="helper">{{players.player3}}</div>
+            <div class="helper">
+                <img class="img-circle" src="{{players.player3.avatar}}"
+                     alt=""> {{players.player3.name}}
+            </div>
         </div>
 
         {{#turn.player1}}
@@ -69,7 +72,6 @@
 
 <div class="desk-cards-wrapper">
     {{#meta.active}}
-    <h2>Ваши карты</h2>
     <ul class="deck-cards-list">
         {{#cards}}
         <li class="desk-card-element-wrapper {{#allowed}}card-allowed{{/allowed}}">

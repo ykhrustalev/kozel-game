@@ -12,8 +12,9 @@ exports.authHandler = {
       , uid = parseInt(queryParams.uid) || _.uniqueId();
     callback(null, true, {
       uid       : uid,
-      first_name: "user " + uid,
-      last_name : ""
+      first_name: "User" + uid,
+      last_name : "Surname",
+      avatar: "/images/default-avatar.png"
     });
   }
 };

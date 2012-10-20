@@ -1,5 +1,5 @@
 body {
-    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+    /*font: "Lucida Grande", Helvetica, Arial, sans-serif;*/
     margin: 0;
     padding: 0;
     background: #ffffff;
@@ -9,15 +9,36 @@ a {
     color: #00B7FF;
 }
 
-h2 {
-    color: #777777;
+.brand.logo-min {
+    background: url("../images/logo-small.png") no-repeat 0 5px;
+    padding-left: 35px;
+    padding-right: 30px;
 }
 
+
 .viewport{
-    width: 600px;
-    height: 500px;
-    border: 1px dotted #cccccc;
+    /*width: 600px;*/
+    /*height: 500px;*/
+    /*border: 1px dotted #cccccc;*/
+    background: #faf2cc;
 }
+
+.top-nav,
+.top-nav .navbar-inner{
+  background: #fcf8e3;
+}
+
+.top-nav {
+    margin: 0;
+}
+
+.desk-info {
+    /*border-bottom: 1px dotted #D4D4D4;*/
+    background: transparent;
+    padding: 5px;
+}
+
+.desk-info em {padding-left: 20px;}
 
 #container {
     padding: 10px;
@@ -25,7 +46,6 @@ h2 {
 
 .desk-meta-wrapper {
     height: 40px;
-    background: #F3F5F7;
 }
 
 .desk-meta-container {
@@ -34,8 +54,7 @@ h2 {
 
 .desk-board-wrapper {
     position: relative;
-    height: 240px;
-    clear: both;
+    height: 280px;
 }
 
 .desk-board-container {
@@ -71,7 +90,7 @@ h2 {
     position: absolute;
     top: 50%;
     right: 0;
-    width: 150px;
+    width: 250px;
     text-align: right;
 }
 
@@ -81,59 +100,22 @@ h2 {
 }
 
 /*onb board cards*/
-.desk-card-1 {
-    position: absolute;
-    top: 50%;
-    left: 30%
-}
+.desk-card-1 { position: absolute; top: 50%; left: 30% }
+.desk-card-1 .helper { position: relative; top: -50%; }
+.desk-card-1 .desk-card-element { margin-top: -50%; }
 
-.desk-card-1 .helper {
-    position: relative;
-    top: -50%;
-}
+.desk-card-2 { position: absolute; top: 50px; left: 50% }
+.desk-card-2 .helper { position: relative; left: -50% }
 
-.desk-card-1 .desk-card-element {
-    margin-top: -50%;
-}
+.desk-card-3 { position: absolute; top: 50%; right: 30% }
+.desk-card-3 .helper { position: relative; top: -50%; }
+.desk-card-3 .desk-card-element { margin-top: -50%; }
 
-.desk-card-2 {
-    position: absolute;
-    top: 30px;
-    left: 50%
-}
-
-.desk-card-2 .helper {
-    position: relative;
-    left: -50%
-}
-
-.desk-card-3 {
-    position: absolute;
-    top: 50%;
-    right: 30%
-}
-
-.desk-card-3 .helper {
-    position: relative;
-    top: -50%;
-}
-
-.desk-card-3 .desk-card-element {
-    margin-top: -50%;
-}
-
-.desk-card-4 {
-    position: absolute;
-    bottom: 0;
-    left: 50%
-}
-
-.desk-card-4 .helper {
-    position: relative;
-    left: -50%
-}
+.desk-card-4 { position: absolute; top: 155px; left: 50% }
+.desk-card-4 .helper { position: relative; left: -50% }
 
 .desk-cards-wrapper {
+    margin-top: 10px;
     /*background: #008800;*/
     /*height: 1%;*/
     /*min-height: 1%;*/
@@ -151,7 +133,7 @@ h2 {
     float: left;
     list-style: none;
     margin: 1px;
-    height: 100px;
+    height: 86px;
     padding: 10px 0 10px 0;
 }
 

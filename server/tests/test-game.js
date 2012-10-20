@@ -190,6 +190,7 @@ module.exports = {
           test.ok(!error, "should leave game without error");
           test.ok(leftGame, "left game should be in callback");
           test.ok(game.id, leftGame.id, "left game should be created game");
+          test.equals(leftGame.meta.playersCount, 1, "left game should recrement players count");
 
           Game.leave(user2, function (error, leftGame) {
             test.ok(!error, "should leave game without error");
