@@ -23,8 +23,15 @@ define([
 
     getData: function () {
       var games = this.collection.toJSON();
+      if (games.length) {
+        _.each(games, function (game) {
+          var cnt = game.meta.playersCount;
+          game.meta.playersCountStr = cnt + " " + (cnt === 1 ? "участник" : "участника");
+          console.log(game);
+        });
+      }
       return {
-        games: games,
+        games    : games,
         gameCount: games.length || null
       };
     },

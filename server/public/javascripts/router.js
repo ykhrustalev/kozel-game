@@ -4,8 +4,9 @@ define([
   "util/dispatcher",
   "util/socket",
   "view/dashboard",
-  "view/desk"
-], function (_, Backbone, dispatcher, socket, dashboardView, deskView) {
+  "view/desk",
+  "view/rules"
+], function (_, Backbone, dispatcher, socket, dashboardView, deskView, rulesView) {
 
   "use strict";
 
@@ -16,7 +17,13 @@ define([
   var AppRouter = Backbone.Router.extend({
 
     routes: {
+      "rules"   : "showRules",
       "*actions": "updateState"
+    },
+
+    showRules: function () {
+      console.log("rules called");
+      this.setActivePage(rulesView);
     },
 
     updateState: function () {
@@ -54,6 +61,9 @@ define([
         router.showDesk(game);
       });
       socket.on("game:joined", function (data) {
+        router.showDesk(data);
+      });
+      socket.on("game:left", function (data) {
         router.showDesk(data);
       });
 

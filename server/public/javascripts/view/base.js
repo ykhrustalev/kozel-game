@@ -49,28 +49,22 @@ define([
      * property defined in view.
      * @return `this`
      */
-    render: function () {
-      if (this.onRender) {
-        this.onRender();
-      }
+    render: function (animate) {
+      this.beforeRender && this.beforeRender();
+
       var template = Templates[this.tpl];
-      this.$el.html(template.render(this.getData()));
+      var self = this;
 
-      if (this.model) {
-
-        // validation rendering
-        Backbone.Validation.bind(this, {
-          valid  : function (view, attr) {
-            view.$el.find(".group-" + attr).removeClass("error");
-            view.$el.find(".validation-" + attr).html("").hide();
-          },
-          invalid: function (view, attr, error) {
-            view.$el.find(".group-" + attr).addClass("error");
-            view.$el.find(".validation-" + attr).html(error).show();
-          }
+      if (!animate) {
+        self.$el.html(template.render(self.getData()));
+      } else {
+        self.$el.fadeOut('fast', function () {
+          self.$el.html(template.render(self.getData()));
+          self.$el.fadeIn('fast');
         });
-
       }
+
+      this.afterRender && this.afterRender();
 
       return this;
     },

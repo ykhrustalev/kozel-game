@@ -32,6 +32,10 @@ a {
     margin: 0;
 }
 
+.top-nav .active a {
+    background-color: #f2f2f2 !important;
+}
+
 .desk-info {
     /*border-bottom: 1px dotted #D4D4D4;*/
     background: transparent;
@@ -41,7 +45,18 @@ a {
 .desk-info em {padding-left: 20px;}
 
 #container {
-    padding: 10px;
+    padding: 10px 20px;
+}
+
+.dashboard-list {
+    /*list-style: none;*/
+    margin: 0;
+    padding: 0 20px 10px;
+}
+.dashboard-list li img {
+    width: 20px;
+    border: 1px solid;
+    margin: 5px 0;
 }
 
 .desk-meta-wrapper {
