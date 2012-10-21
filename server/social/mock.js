@@ -11,10 +11,10 @@ exports.authHandler = {
     var queryParams = url.parse(request.headers.referer, true).query
       , uid = parseInt(queryParams.uid) || _.uniqueId();
     callback(null, true, {
-      uid       : uid,
+      uid       : "mock" + uid,
       first_name: "User" + uid,
       last_name : "Surname",
-      avatar: "/images/default-avatar.png"
+      avatar    : "/images/default-avatar.png"
     });
   }
 };

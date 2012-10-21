@@ -9,7 +9,7 @@ var _ = require('underscore')._
 
 function createUser() {
   return {
-    uid       : _.uniqueId(),
+    uid       : "mock"+_.uniqueId(),
     first_name: "first_name_" + _.uniqueId(),
     last_name : "last_name_" + _.uniqueId()
   };
@@ -89,6 +89,24 @@ module.exports = {
       test.ok(1);
     }
     test.done();
+  },
+
+  listAvailableOrder: function (test) {
+    test.expect(5);
+    Game.create(createUser(), function (error, game1) {
+      Game.create(createUser(), function (error, game2) {
+        Game.create(createUser(), function (error, game3) {
+          Game.listAvailable(function  (error, games) {
+            test.ok(games,"available games should be listed");
+            test.equals(games.length, 3, "number of available games should be correct");
+            test.equals(games[0].id, game1.id, "listed games should be sorted");
+            test.equals(games[1].id, game2.id, "listed games should be sorted");
+            test.equals(games[2].id, game3.id, "listed games should be sorted");
+            test.done();
+          })
+        });
+      });
+    });
   },
 
   listAvailable: function (test) {

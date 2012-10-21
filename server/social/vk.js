@@ -21,6 +21,7 @@ function parseUrl(request, callback, appId, appSecret) {
     } else {
       var profile = JSON.parse(params.api_result).response[0];
       profile.avatar = profile.photo;
+      profile.uid = "vk" + profile.uid;
       callback(null, true, profile);
     }
   }

@@ -7,7 +7,7 @@ var _ = require("underscore")._
 
 // Helper schema for player
 var PlayerSchema = {
-  uid   : Number,
+  uid   : String,
   tid   : String, // team{1|2}
   name  : String,
   avatar: String
@@ -319,7 +319,8 @@ GameSchema.methods.forUser = function (user) {
     cards       : deck.sort(this.round.cards[pid]),
     cardsAllowed: this.meta.active && !isNotifyExport ? this._getCardsAllowed(pid) : null,
     isTurn      : isTurn,
-    status      : !this.meta.active ? "Ожидание начала игры" : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
+    //TODO: make it with flags to customize in UI
+    status      : !this.meta.active ? "Ожидание подключения других игроков" : (isTurn ? "Ваш ход" : "Ходит " + this.players[turnCurrentPid].name),
     players     : players,
     turn        : turn,
 
