@@ -337,18 +337,22 @@ GameSchema.methods.forUser = function (user) {
 };
 
 // TODO: unit test
-GameSchema.methods._newRound = function (rate) {
+GameSchema.methods._newRound = function (keepShuffler) {
   var round = this.round;
 
   round.created = new Date();
   round.number += 1;
   round.score.team1 = 0;
   round.score.team2 = 0;
-  round.rate = rate || 1;
+  round.rate = round.rate || 1;
 
   do {
     this._shuffle();
   } while (this._requiresReshuffle());
+
+  if (keepShuffler){
+    return;
+  }
 
   if (round.shuffledPlayer) {
     round.shuffledPlayer = nextPid(round.shuffledPlayer);
@@ -434,7 +438,8 @@ GameSchema.methods._turn = function (user, cid, callback) {
     , isTurnComplete
     , isRoundComplete
     , winnerPid
-    , winnerTid;
+    , winnerTid
+    , keepShuffler = false;
 
   if (!pid)
     error = "user is not in game";
@@ -514,6 +519,8 @@ GameSchema.methods._turn = function (user, cid, callback) {
 
     if (score1 === score2) {
       round.rate *= 2;
+      // don't change the first hand
+      keepShuffler = true;
     } else {
       var minScore = Math.min(score1, score2)
         , value = minScore === 0 ? 6 : minScore <= 30 ? 4 : 2;
@@ -530,7 +537,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
     this.finish();
   } else {
     if (isRoundComplete) {
-      this._newRound();
+      this._newRound(keepShuffler);
       this._newTurn();
       callback(null, this, "newRound");
     } else if (isTurnComplete) {
