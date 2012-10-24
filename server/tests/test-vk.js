@@ -24,7 +24,7 @@ module.exports = {
   handleAuth: function (test) {
     var appId = "3128240"
       , appSecret = "MPaH8nH7lmyq9hM8LGli"
-      , handler = vk.authHandler(appId, appSecret)
+      , handler = vk.createHandler(appId, appSecret)
       , count = 0;
 
     referers.valid.forEach(function (r) {

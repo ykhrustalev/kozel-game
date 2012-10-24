@@ -34,6 +34,7 @@ app.configure('development', function () {
   app.use(express.errorHandler());
 });
 
+// server views
 app.get('/', routes.index);
 app.get('/health', routes.health);
 
@@ -41,23 +42,21 @@ app.get('/health', routes.health);
 require('./templates').api(app);
 
 http.createServer(app);
-
 server.listen(config.port);
 
 // authentication
-var auth = require("./auth")
+var authChain = []
   , vk = require("./social/vk")
-  , mock = require("./social/mock")
-  , socialHandlers = []
-  , authHandler
-  , gameHandler = require("./handlers/game");
+  , mock = require("./social/mock");
 
-socialHandlers.push(vk.authHandler(config.vk.appId, config.vk.appSecret));
+authChain.push(vk.createHandler(config.vk.appId, config.vk.appSecret));
 if (config.env === "development") {
-  socialHandlers.push(mock.authHandler);
+  authChain.push(mock.authHandler);
 }
 
-authHandler = auth.create(sessionStore, socialHandlers, config.secret);
+// io bindings
+var authHandler = require("./handlers/auth").create(sessionStore, authChain, config.secret)
+  , gameHandler = require("./handlers/game");
 
 io.configure(function () {
   io.set("authorization", authHandler.authorize);

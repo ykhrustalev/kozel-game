@@ -27,7 +27,7 @@ function parseUrl(request, callback, appId, appSecret) {
   }
 }
 
-exports.authHandler = function (appId, appSecret) {
+exports.createHandler = function (appId, appSecret) {
 
   return {
 
