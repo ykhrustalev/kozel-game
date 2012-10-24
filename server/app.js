@@ -63,6 +63,11 @@ io.configure(function () {
 var Game = require('./game').model(db);
 
 var SocketHelpers = {
+
+  getRoom: function (game) {
+    return "game:" + game.id;
+  },
+
   emitAvailableGames: function (socket) {
     Game.listAvailable(function (error, games) {
 
@@ -71,7 +76,7 @@ var SocketHelpers = {
         if (socket) {
           socket.emit("error", "internal error");
         } else {
-//          io.sockets
+          io.sockets.emit("error", "internal error");
         }
         return;
       }
@@ -84,20 +89,25 @@ var SocketHelpers = {
   },
 
   joinUserToGame: function (socket, game) {
-    var room = "game:" + game._id;
+    var room = this.getRoom(game);
     socket.leave("available");
     socket.join(room);
   },
 
 
-  leaveGame: function (socket, game) {
-    var room = "game:" + game._id;
-    socket.leave(room);
-    socket.join("available");
+  leaveRoom: function (socket, game) {
+    var room = this.getRoom(game)
+      , uid = socket.handshake.user.uid;
+    io.sockets.clients(room).forEach(function (socket) {
+      if (socket.handshake.user.uid === uid) {
+        socket.leave(room);
+        socket.join("available");
+      }
+    });
   },
 
   broadcastGame: function (game, state, socket) {
-    var room = "game:" + game._id;
+    var room = this.getRoom(game);
     (socket ? [socket] : io.sockets.clients(room)).forEach(function (socket) {
       socket.emit("game", {
         status: state,
@@ -215,7 +225,7 @@ io.sockets.on('connection', function (socket) {
         return;
       }
 
-      SocketHelpers.leaveGame(socket, game);
+      SocketHelpers.leaveRoom(socket, game);
       SocketHelpers.broadcastGame(game, "userleft");
       SocketHelpers.emitAvailableGames();
     });

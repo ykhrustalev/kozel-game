@@ -269,7 +269,7 @@ GameSchema.statics.leave = function (user, callback) {
     if (game.meta.playersCount === 0) {
       game.finish(function (error) {
         callback(error, game);
-      })
+      });
     } else {
       game.save(function (error) {
         callback(error, game);
