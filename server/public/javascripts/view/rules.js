@@ -1,7 +1,6 @@
 define([
-  "jquery",
   "view/base"
-], function ($, BaseView) {
+], function (BaseView) {
 
   "use strict";
 
@@ -12,13 +11,9 @@ define([
       "click .goBack": "goBack"
     },
 
-    afterRender: function  () {
-      $(".app-link-rules").addClass("active");
-    },
-
     goBack: function () {
       //TODO: route to main page?
-
+      window.history.back();
     }
   });
 

@@ -69,18 +69,17 @@ var SocketHelpers = {
       if (error) {
         console.warn("error: ", error);
         if (socket) {
-          socket.emit("game:error", "internal error");
+          socket.emit("error", "internal error");
         } else {
 //          io.sockets
         }
         return;
       }
 
-      if (socket) {
-        socket.emit("game:list:available", games);
-      } else {
-        io.sockets.in("available").emit("game:list:available", games);
-      }
+      (socket ? socket : io.sockets.in("available")).emit("games:list", {
+        filter : "available",
+        objects: games
+      });
     });
   },
 
@@ -97,11 +96,13 @@ var SocketHelpers = {
     socket.join("available");
   },
 
-  emitGameRoom: function (game, state) {
+  broadcastGame: function (game, state, socket) {
     var room = "game:" + game._id;
-    state = state || "current";
-    io.sockets.clients(room).forEach(function (socket) {
-      socket.emit(state, game.forUser(socket.handshake.user));
+    (socket ? [socket] : io.sockets.clients(room)).forEach(function (socket) {
+      socket.emit("game", {
+        status: state,
+        object: game.forUser(socket.handshake.user)
+      });
     });
   }
 };
@@ -112,7 +113,7 @@ io.sockets.on('connection', function (socket) {
   // connection is marked as required reload, need notify user only once
   // and close
   if (socket.handshake.reset) {
-    socket.emit("game:reload");
+    socket.emit("app:reload");
     socket.disconnect();
     return;
   }
@@ -145,11 +146,13 @@ io.sockets.on('connection', function (socket) {
    *
    */
 
-  socket.on("game:list:available:", function () {
-    SocketHelpers.emitAvailableGames(socket);
+  socket.on("games:list", function (data) {
+    if (data.filter === "available") {
+      SocketHelpers.emitAvailableGames(socket);
+    }
   });
 
-  socket.on("game:create", function () {
+  socket.on("games:create", function () {
     Game.create(user, function (error, game) {
 
       if (error) {
@@ -158,13 +161,13 @@ io.sockets.on('connection', function (socket) {
       }
 
       SocketHelpers.joinUserToGame(socket, game);
-      SocketHelpers.emitGameRoom(game, "game:created");
+      SocketHelpers.broadcastGame(game, "created");
       SocketHelpers.emitAvailableGames();
     });
   });
 
-  socket.on("game:join", function (data) {
-    Game.join(data.gid, user, function (error, game, state) {
+  socket.on("games:join", function (data) {
+    Game.join(data.gid, user, function (error, game, started) {
 
       if (error) {
         socket.emit("game:joinfailed", error);
@@ -172,23 +175,23 @@ io.sockets.on('connection', function (socket) {
       }
 
       SocketHelpers.joinUserToGame(socket, game);
-      SocketHelpers.emitGameRoom(game, "game:" + state);
+      SocketHelpers.broadcastGame(game, started ? "started" : "userjoined");
       SocketHelpers.emitAvailableGames();
     });
   });
 
-  socket.on("game:current", function () {
+  socket.on("app:current", function () {
     Game.currentForUser(user, function (error, game) {
 
       if (error) {
         console.warn("error: ", error);
-        socket.emit("game:error", "internal error");
+        socket.emit("error", "internal error");
         return;
       }
 
       if (game) {
         SocketHelpers.joinUserToGame(socket, game);
-        socket.emit("game:current", game.forUser(user));
+        SocketHelpers.broadcastGame(game, "current", socket);
       } else {
         SocketHelpers.emitAvailableGames(socket);
       }
@@ -201,7 +204,7 @@ io.sockets.on('connection', function (socket) {
         socket.emit("game:turnfailed", error);
         return;
       }
-      SocketHelpers.emitGameRoom(game, "game:" + state);
+      SocketHelpers.broadcastGame(game, state);
     });
   });
 
@@ -213,10 +216,9 @@ io.sockets.on('connection', function (socket) {
       }
 
       SocketHelpers.leaveGame(socket, game);
-      SocketHelpers.emitGameRoom(game, "game:left");
-      SocketHelpers.emitAvailableGames(socket);
+      SocketHelpers.broadcastGame(game, "userleft");
       SocketHelpers.emitAvailableGames();
-    })
+    });
   });
 
   socket.on('disconnect', function () {

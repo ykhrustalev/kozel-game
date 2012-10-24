@@ -1,12 +1,14 @@
 define([
+  "jquery",
   "underscore",
   "backbone",
   "util/dispatcher",
   "util/socket",
   "view/dashboard",
-  "view/desk",
-  "view/rules"
-], function (_, Backbone, dispatcher, socket, dashboardView, deskView, rulesView) {
+  "view/desk"
+  , "view/rules"
+  , "view/menu"
+], function ($, _, Backbone, dispatcher, socket, dashboardView, deskView, rulesView, menuView) {
 
   "use strict";
 
@@ -17,28 +19,32 @@ define([
   var AppRouter = Backbone.Router.extend({
 
     routes: {
+      ""        : "updateState",
       "rules"   : "showRules",
       "*actions": "updateState"
     },
 
-    showRules: function () {
-      console.log("rules called");
-      this.setActivePage(rulesView);
-    },
-
     updateState: function () {
-      socket.emit("game:current");
+      socket.emit("app:current");
     },
 
-    showDashboard: function (games) {
-      dashboardView.collection.reset();
-      dashboardView.collection.add(games);
+    showRules: function () {
+      this.setActivePage(rulesView);
+      menuView.toggleRules();
+    },
+
+    showDashboard: function () {
+      menuView.toggleCurrent();
       this.setActivePage(dashboardView);
     },
 
-    showDesk: function (data) {
-      deskView.model.set(data);
-      this.setActivePage(deskView);
+    showDesk: function (force) {
+      menuView.toggleCurrent();
+      if (deskView.isRendered()){
+        deskView.partialRender();
+      } else {//TODO: do it only when forced
+        this.setActivePage(deskView);
+      }
     },
 
     setActivePage: function (view) {
@@ -53,56 +59,26 @@ define([
 
       var router = this;
 
-      socket.on("game:list:available", function (games) {
-        router.showDashboard(games);
+      menuView.render();
+
+      dispatcher.on("games:updated", function (filter) {
+        return router.showDashboard(); //TODO: ???
+
+        if (filter === dashboardView.collection.filter) {
+          var activeView = router.activeView;
+          if (!activeView || activeView === dashboardView) {
+            router.setActivePage(dashboardView);
+          }
+        }
       });
 
-      socket.on("game:created", function (game) {
-        router.showDesk(game);
-      });
-      socket.on("game:joined", function (data) {
-        router.showDesk(data);
-      });
-      socket.on("game:left", function (data) {
-        router.showDesk(data);
-      });
+      dispatcher.on("desk:updated", router.showDesk, router);
 
-      socket.on("game:started", function (game) {
-        router.showDesk(game);
-      });
 
-      socket.on("game:current", function (data) {
-        router.showDesk(data);
-      });
-
-      socket.on("game:newTurn", function (data) {
-        delay(function () {
-          router.showDesk(data);
-        });
-      });
-
-      socket.on("game:newRound", function (game) {
-        delay(function () {
-          router.showDesk(game);
-        })
-      });
-
-      socket.on("game:queenCaught", function (game) {
-        delay(function () {
-          router.showDesk(game);
-        })
-      });
-
-      socket.on("game:update", function (game) {
-        router.updateState();
-      });
-
-      socket.on("game:reload", function () {
+      socket.on("app:reload", function () {
         window.location.reload();
       });
-
     }
-
   });
 
   return {

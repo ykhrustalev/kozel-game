@@ -3,7 +3,7 @@
 <ul class="dashboard-list">
     {{#games}}
     <li>
-        {{meta.playersCountStr}}
+        {{playersCountStr}}
         {{#players.player1.avatar}}
         <img class="img-circle" src="{{players.player1.avatar}}" alt="">
         {{/players.player1.avatar}}
@@ -19,7 +19,6 @@
 
         <a class="joinGame" href="#" data-id="{{_id}}">
             <div class="btn btn-small btn-primary"><i class="icon-plus icon-white"></i></div>
-            <!--{{meta.playersCountStr}}-->
         </a>
     </li>
     {{/games}}

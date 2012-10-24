@@ -239,7 +239,7 @@ GameSchema.statics.join = function (gid, user, callback) {
           return callback(error);
         }
         game.save(function (error) {
-          callback(error, game, started ? "started" : "joined");
+          callback(error, game, started);
         })
       });
     });
@@ -529,7 +529,7 @@ GameSchema.methods._turn = function (user, cid, callback) {
   }
 
   // notify players about opponent card
-  callback(null, this, "current");
+  callback(null, this, "turned");
 
   // handle game complete
   if (meta.score.team1 >= 12 || meta.score.team2 >= 12) {

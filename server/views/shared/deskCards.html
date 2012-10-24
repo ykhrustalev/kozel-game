@@ -1,0 +1,11 @@
+<ul class="deck-cards-list">
+    {{#meta.active}}
+
+    {{#cards}}
+    <li class="desk-card-element-wrapper {{#allowed}}card-allowed{{/allowed}}">
+        <div class="desk-card-element suite-{{suite}} desk-card-{{id}}" data-id="{{id}}"></div>
+    </li>
+    {{/cards}}
+
+    {{/meta.active}}
+</ul>

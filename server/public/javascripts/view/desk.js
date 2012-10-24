@@ -1,97 +1,71 @@
 define([
   "jquery",
-  "underscore",
   "view/base",
-  "model/game",
+  "model/desk",
   "util/dispatcher",
-  "util/socket"
-], function ($, _, BaseView, Game, dispatcher, socket) {
+  "templates"
+], function ($, BaseView, Desk, dispatcher, Templates) {
 
   "use strict";
-
-  var suites = {
-    's': '♠',
-    'h': '♥',
-    'd': '♦',
-    'c': '♣'
-  };
-
-  function getCardData(cid) {
-    if (!cid) {
-      return null;
-    }
-    var parts = cid.split("-")
-      , suite = parts[0]
-      , value = parts[1];
-    return {
-      id   : cid,
-      name : value + ' ' + suites[suite],
-      suite: suite
-    };
-  }
-
 
   var View = BaseView.extend({
 
     tpl: "desk",
 
-    model: new Game(),
+    model: new Desk(),
 
     events: {
       'click .desk-card-element': "doTurn",
       'click .leaveGame'        : "leaveGame"
     },
 
+    initialize:function  () {
+      // TODO: catch updates here?
+      var self = this;
+//      dispatcher.on("desk:update", function  (force) {
+//        if (self.isRendered()){
+//          self.partialRender();
+//        } else if (force){
+////          self.render();
+//        }
+//      });
+    },
+
     leaveGame: function () {
-      socket.emit("game:leave");
+      this.model.leave();
     },
 
     doTurn: function (e) {
       e.preventDefault();
-      var target = $(e.currentTarget);
-      var cid = target.data("id");
-      if (this.isCardAllowed(cid)) {
-        if (this.model.get("selected") === cid) {
-          socket.emit("game:turn", {cid: cid});
+      var target = $(e.currentTarget)
+        , cid = target.data("id")
+        , model = this.model;
+
+      if (model.isCidAllowed(cid)) {
+        if (this.selectedCid === cid) {
+          model.turn(cid);
         } else {
-          this.model.set("selected", cid);
+          this.selectedCid = cid;
           this.$el.find(".selected").removeClass("selected");
           target.addClass("selected");
         }
-      } else {
-        this.$el.find(".note").html("Карта не разрешена");//TODO: need text?
       }
       return false;
     },
 
-    isCardAllowed: function (cid) {
-      return _.contains(this.model.get("cardsAllowed"), cid);
+    getPartials: function  () {
+      return {
+        cards: this.getTemplate("deskCards"),
+        turnCards: this.getTemplate("deskTurn")
+      };
     },
 
-    getData: function () {
-      var data = this.model.toJSON()
-        , cardsOnHands = data.cards
-        , cardsAllowed = data.cardsAllowed
-        , cards = [];
-
-      if (cardsOnHands) {
-
-        // on hands cards
-        _.each(cardsOnHands, function (id) {
-          var card = getCardData(id);
-          card.allowed = _.contains(cardsAllowed, id);
-          cards.push(card);
-        });
-        data.cards = cards;
-
-        // turn cards
-        data.turn.player1 = getCardData(data.turn.player1);
-        data.turn.player2 = getCardData(data.turn.player2);
-        data.turn.player3 = getCardData(data.turn.player3);
-        data.turn.player4 = getCardData(data.turn.player4);
-      }
-
-      return data;
+    partialRender: function () {
+      var data = this.getData()
+        , cards = this.renderTemplate("deskCards", data)
+        , turnCards = this.renderTemplate("deskTurn", data);
+      this.$(".cards").html(cards);
+      this.$(".turnCards").html(turnCards);
     }
 
   });

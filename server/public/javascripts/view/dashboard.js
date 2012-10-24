@@ -1,10 +1,11 @@
 define([
   "jquery",
   "view/base",
-  "collection/games",
+  "view/dashboardItem",
+  "collection/dashboardList",
   "util/socket",
   "util/dispatcher"
-], function ($, BaseView, GameCollection, socket, dispatcher) {
+], function ($, BaseView, ItemView, DashBoardList, socket, dispatcher) {
 
   "use strict";
 
@@ -12,39 +13,22 @@ define([
 
     tpl: "dashboard",
 
-    initialize: function () {
-      this.collection = new GameCollection();
-    },
-
     events: {
-      "click .newGame" : "newGame",
+      "click .newGame": "newGame",
       "click .joinGame": "joinGame"
     },
 
-    getData: function () {
-      var games = this.collection.toJSON();
-      if (games.length) {
-        _.each(games, function (game) {
-          var cnt = game.meta.playersCount;
-          game.meta.playersCountStr = cnt + " " + (cnt === 1 ? "участник" : "участника");
-          console.log(game);
-        });
-      }
-      return {
-        games    : games,
-        gameCount: games.length || null
-      };
+    initialize: function () {
+      this.collection = new DashBoardList({filter: "available"});
     },
 
     newGame: function () {
-      socket.emit("game:create");
+      socket.emit("games:create");
     },
 
-    joinGame: function (e) {
-      e.preventDefault();
+    joinGame: function  (e) {
       var id = $(e.currentTarget).data("id");
-      socket.emit("game:join", {gid: id});
-      return false;
+      this.collection.get(id).join();
     }
 
   });
