@@ -42,11 +42,14 @@ define([
     },
 
     handleCallback: function (data) {
-      var force = false;
       switch (data.status) {
         case "created":
+          this.set(data.object);
+          dispatcher.trigger("desk:inGame");
+          dispatcher.trigger("desk:activated");
+          break;
+
         case "current":
-          force = true;
         case "userjoined":
         case "userleft":
         case "started":
@@ -55,7 +58,14 @@ define([
         case "newRound":
         case "queenCaught":
           this.set(data.object);
-          dispatcher.trigger("desk:updated", force);
+          dispatcher.trigger("desk:inGame");
+          dispatcher.trigger("desk:updated");
+          break;
+
+        case "gameEnd":
+          this.set(data.object);
+          dispatcher.trigger("desk:deactivated");
+          break;
       }
     },
 

@@ -19,18 +19,6 @@ define([
       'click .leaveGame'        : "leaveGame"
     },
 
-    initialize:function  () {
-      // TODO: catch updates here?
-      var self = this;
-//      dispatcher.on("desk:update", function  (force) {
-//        if (self.isRendered()){
-//          self.partialRender();
-//        } else if (force){
-////          self.render();
-//        }
-//      });
-    },
-
     leaveGame: function () {
       this.model.leave();
     },
@@ -53,11 +41,11 @@ define([
       return false;
     },
 
-    getPartials: function  () {
+    getPartials: function () {
       return {
-        cards: this.getTemplate("deskCards"),
+        cards    : this.getTemplate("deskCards"),
         turnCards: this.getTemplate("deskTurn"),
-        meta: this.getTemplate("deskMeta")
+        meta     : this.getTemplate("deskMeta")
       };
     },
 

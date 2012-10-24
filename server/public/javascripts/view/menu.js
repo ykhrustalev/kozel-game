@@ -11,23 +11,11 @@ define([
 
     tpl: "menu",
 
-    events: {
-//      "click .joinGame": "joinGame"
-    },
-
     initialize: function () {
       this.items = {
-        desk : {
-          active : false,
-          enabled: false,
-          updates: false
-        },
-        dashboard: {
-          active: false
-        },
-        rules: {
-          active: false
-        }
+        desk     : {},
+        dashboard: {},
+        rules    : {}
       };
     },
 
@@ -54,6 +42,17 @@ define([
 
     setDeskUpdates: function (state) {
       this.items.desk.updates = state;
+      return this;
+    },
+
+    setInGame: function (state) {
+      if (state) {
+        this.items.desk.enabled = true;
+        this.items.dashboard.enabled = false;
+      } else {
+        this.items.desk.enabled = false;
+        this.items.dashboard.enabled = true;
+      }
       return this;
     },
 

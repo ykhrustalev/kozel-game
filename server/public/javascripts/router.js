@@ -13,9 +13,11 @@ define([
   var AppRouter = Backbone.Router.extend({
 
     routes: {
-      ""        : "updateState",
-      "rules"   : "showRules",
-      "*actions": "updateState"
+      ""         : "updateState",
+      "desk"     : "showDesk",
+      "dashboard": "showDashboard",
+      "rules"    : "showRules",
+      "*actions" : "updateState"
     },
 
     updateState: function () {
@@ -27,21 +29,28 @@ define([
     },
 
     showRules: function () {
+      if (typeof this.isInGame === "undefined") {
+        socket.emit("app:current");
+      }
       menuView.toggleRules().render();
       this.setActivePage(rulesView);
     },
 
     showDashboard: function () {
-      menuView.toggleDashboard();
-      this.setActivePage(dashboardView);
+      if (this.isInGame) {
+        this.navigate("desk", {trigger: true});
+      } else {
+        this.setActivePage(dashboardView);
+        menuView.toggleDashboard().setInGame(false).render();
+      }
     },
 
-    showDesk: function (force) {
-      if (force || !this.activeView || this.activeView === deskView) {
+    showDesk: function () {
+      if (!this.isInGame) {
+        this.navigate("dashboard", {trigger: true});
+      } else {
         this.setActivePage(deskView);
         menuView.toggleDesk().setDeskUpdates(false).render();
-      } else {
-        menuView.setDeskUpdates(true).render();
       }
     },
 
@@ -59,6 +68,7 @@ define([
 
       menuView.render();
 
+
       dispatcher.on("games:updated", function (filter) {
         return router.showDashboard(); //TODO: ???
 
@@ -70,7 +80,38 @@ define([
         }
       });
 
-      dispatcher.on("desk:updated", router.showDesk, router);
+
+      dispatcher.on("desk:inGame", function () {
+        router.isInGame = true;
+        menuView.setInGame(true);
+      });
+
+      dispatcher.on("desk:activated", function () {
+        router.isInGame = true;
+        menuView.setInGame(true);
+        router.navigate("desk", {trigger: true});
+      });
+
+      dispatcher.on("desk:deactivated", function () {
+        router.isInGame = false;
+        menuView.setInGame(false);
+        router.navigate("desk", {trigger: true});
+      });
+
+      dispatcher.on("desk:updated", function () {
+        if (!router.isInGame) {
+          router.navigate("dashboard", {trigger: true});
+        } else if (!router.activeView || router.activeView === deskView) {
+          router.setActivePage(deskView);
+          menuView.toggleDesk().setDeskUpdates(false).render();
+        } else {
+          menuView.setDeskUpdates(true).render();
+        }
+      });
+
+      dispatcher.on("route", function (route) {
+        router.navigate(route, {trigger: true});
+      });
 
     }
   });
