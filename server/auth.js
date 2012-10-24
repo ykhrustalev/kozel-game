@@ -81,7 +81,7 @@ function socialHandler(data, accept, sessionStore, handlers, secret) {
 }
 
 // TODO: comments
-function connect(socket, chain) {
+function handleConnect(io, socket, chain) {
   // connection is marked as required reload, need notify user only once
   // and close
   if (socket.handshake.reset) {
@@ -116,6 +116,6 @@ exports.create = function (sessionStore, handlers, secret) {
       return socialHandler(data, accept, sessionStore, handlers, secret);
     },
 
-    connect: connect
+    handleConnect: handleConnect
   };
 };
