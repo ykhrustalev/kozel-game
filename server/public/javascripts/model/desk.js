@@ -51,17 +51,24 @@ define([
 
         case "current":
         case "userjoined":
-        case "userleft":
         case "started":
         case "turned":
-        case "newTurn":
-        case "newRound":
-        case "queenCaught":
           this.set(data.object);
           dispatcher.trigger("desk:inGame");
           dispatcher.trigger("desk:updated");
           break;
 
+        case "newTurn":
+        case "newRound":
+        case "queenCaught":
+          this.set(data.object);
+          dispatcher.trigger("desk:inGame");
+          setTimeout(function  () {
+            dispatcher.trigger("desk:updated");
+          }, 2000);
+          break;
+
+        case "userleft":
         case "gameEnd":
           this.set(data.object);
           dispatcher.trigger("desk:deactivated");

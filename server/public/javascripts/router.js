@@ -66,20 +66,12 @@ define([
 
       var router = this;
 
-      menuView.render();
-
-
-      dispatcher.on("games:updated", function (filter) {
-        return router.showDashboard(); //TODO: ???
-
-        if (filter === dashboardView.collection.filter) {
-          var activeView = router.activeView;
-          if (!activeView || activeView === dashboardView) {
-            router.setActivePage(dashboardView);
-          }
+      dispatcher.on("games:updated:available", function () {
+        if (!router.activeView || router.activeView === dashboardView) {
+          router.setActivePage(dashboardView);
+          menuView.toggleDashboard().render();
         }
       });
-
 
       dispatcher.on("desk:inGame", function () {
         router.isInGame = true;
@@ -99,9 +91,7 @@ define([
       });
 
       dispatcher.on("desk:updated", function () {
-        if (!router.isInGame) {
-          router.navigate("dashboard", {trigger: true});
-        } else if (!router.activeView || router.activeView === deskView) {
+        if (!router.activeView || router.activeView === deskView) {
           router.setActivePage(deskView);
           menuView.toggleDesk().setDeskUpdates(false).render();
         } else {

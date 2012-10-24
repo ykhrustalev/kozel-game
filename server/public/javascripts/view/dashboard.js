@@ -1,11 +1,10 @@
 define([
   "jquery",
   "view/base",
-  "view/dashboardItem",
   "collection/dashboardList",
   "util/socket",
   "util/dispatcher"
-], function ($, BaseView, ItemView, DashBoardList, socket, dispatcher) {
+], function ($, BaseView, DashBoardList, socket, dispatcher) {
 
   "use strict";
 
@@ -19,7 +18,7 @@ define([
     },
 
     initialize: function () {
-      this.collection = new DashBoardList({filter: "available"});
+      this.collection = new DashBoardList();
     },
 
     newGame: function () {

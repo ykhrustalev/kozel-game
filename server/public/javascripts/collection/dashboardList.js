@@ -13,14 +13,12 @@ define([
 
     initialize: function (options) {
 
-      this.filter = options.filter;
-
       var self = this;
       socket.on("games:list", function (data) {
-        if (data.filter === self.filter) {
+        if (data.filter === "available") {
           self.reset();
           self.add(data.objects);
-          dispatcher.trigger("games:updated", self.filter);
+          dispatcher.trigger("games:updated:available");
         }
       });
     },
@@ -31,10 +29,6 @@ define([
         games    : games,
         gameCount: games.length || null
       };
-    },
-
-    fetch: function () {
-      socket.emit("games:list", {filter: self.filter});
     }
 
   });
