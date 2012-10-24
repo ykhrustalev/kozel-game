@@ -78,6 +78,11 @@ define([
         menuView.setInGame(true);
       });
 
+      dispatcher.on("desk:leftGame", function () {
+        router.isInGame = false;
+        menuView.setInGame(true);
+      });
+
       dispatcher.on("desk:activated", function () {
         router.isInGame = true;
         menuView.setInGame(true);

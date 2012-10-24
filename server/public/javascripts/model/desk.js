@@ -51,6 +51,7 @@ define([
 
         case "current":
         case "userjoined":
+        case "userleft":
         case "started":
         case "turned":
           this.set(data.object);
@@ -63,12 +64,11 @@ define([
         case "queenCaught":
           this.set(data.object);
           dispatcher.trigger("desk:inGame");
-          setTimeout(function  () {
+          setTimeout(function () {
             dispatcher.trigger("desk:updated");
           }, 2000);
           break;
 
-        case "userleft":
         case "gameEnd":
           this.set(data.object);
           dispatcher.trigger("desk:deactivated");
@@ -78,6 +78,8 @@ define([
 
     leave: function () {
       socket.emit("game:leave");
+      dispatcher.trigger("desk:leftGame");
+      dispatcher.trigger("route", "dashboard");
     },
 
     turn: function (cid) {
