@@ -1,20 +1,14 @@
 define([
-  "jquery",
-  "underscore",
   "backbone",
   "util/dispatcher",
   "util/socket",
   "view/dashboard",
-  "view/desk"
-  , "view/rules"
-  , "view/menu"
-], function ($, _, Backbone, dispatcher, socket, dashboardView, deskView, rulesView, menuView) {
+  "view/desk",
+  "view/rules",
+  "view/menu"
+], function (Backbone, dispatcher, socket, dashboardView, deskView, rulesView, menuView) {
 
   "use strict";
-
-  function delay(callback, timeout) {
-    setTimeout(callback, timeout || 5000);
-  }
 
   var AppRouter = Backbone.Router.extend({
 
@@ -26,29 +20,33 @@ define([
 
     updateState: function () {
       socket.emit("app:current");
+      if (this.activeView) {
+        this.activeView.close();
+        this.activeView = null;
+      }
     },
 
     showRules: function () {
+      menuView.toggleRules().render();
       this.setActivePage(rulesView);
-      menuView.toggleRules();
     },
 
     showDashboard: function () {
-      menuView.toggleCurrent();
+      menuView.toggleDashboard();
       this.setActivePage(dashboardView);
     },
 
     showDesk: function (force) {
-      menuView.toggleCurrent();
-      if (deskView.isRendered()){
-        deskView.partialRender();
-      } else {//TODO: do it only when forced
+      if (force || !this.activeView || this.activeView === deskView) {
         this.setActivePage(deskView);
+        menuView.toggleDesk().setDeskUpdates(false).render();
+      } else {
+        menuView.setDeskUpdates(true).render();
       }
     },
 
     setActivePage: function (view) {
-      if (this.activeView) {
+      if (this.activeView && this.activeView !== view) {
         this.activeView.close();
       }
       this.activeView = view;
@@ -74,10 +72,6 @@ define([
 
       dispatcher.on("desk:updated", router.showDesk, router);
 
-
-      socket.on("app:reload", function () {
-        window.location.reload();
-      });
     }
   });
 

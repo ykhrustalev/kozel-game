@@ -1,3 +1,9 @@
 define(['io'], function (io) {
-  return io.connect(window.location);
+  var socket = io.connect(window.location);
+
+  socket.on("app:reload", function () {
+    window.location.reload();
+  });
+
+  return socket;
 });

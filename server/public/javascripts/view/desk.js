@@ -56,16 +56,16 @@ define([
     getPartials: function  () {
       return {
         cards: this.getTemplate("deskCards"),
-        turnCards: this.getTemplate("deskTurn")
+        turnCards: this.getTemplate("deskTurn"),
+        meta: this.getTemplate("deskMeta")
       };
     },
 
     partialRender: function () {
-      var data = this.getData()
-        , cards = this.renderTemplate("deskCards", data)
-        , turnCards = this.renderTemplate("deskTurn", data);
-      this.$(".cards").html(cards);
-      this.$(".turnCards").html(turnCards);
+      var data = this.getData();
+      this.$(".cards").html(this.renderTemplate("deskCards", data));
+      this.$(".turnCards").html(this.renderTemplate("deskTurn", data));
+      this.$(".desk-info").html(this.renderTemplate("deskMeta", data));
     }
 
   });

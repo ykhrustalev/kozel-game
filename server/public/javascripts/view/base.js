@@ -58,25 +58,26 @@ define([
     render: function (options) {
       options = options || {};
       var self = this;
-      this.beforeRender && this.beforeRender();
 
-//      if (this.isRendered()) {
-//        self.partialRender();
-//      } else {
-        var html = this.renderTemplate(this.tpl, this.getData(), this.getPartials());
-        if (!options.animate) {
+      if (this.isRendered() && self.partialRender) {
+        self.partialRender();
+        return this;
+      }
+
+      var html = this.renderTemplate(this.tpl, this.getData(), this.getPartials());
+      self.beforeRender && this.beforeRender();
+      if (!options.animate) {
+        self.$el.html(html);
+        self._isRendered = true;
+        self.afterRender && self.afterRender();
+      } else {
+        self.$el.fadeOut('fast', function () {
           self.$el.html(html);
+          self.$el.fadeIn('fast');
           self._isRendered = true;
           self.afterRender && self.afterRender();
-        } else {
-          self.$el.fadeOut('fast', function () {
-            self.$el.html(html);
-            self.$el.fadeIn('fast');
-            self._isRendered = true;
-            self.afterRender && self.afterRender();
-          });
-        }
-//      }
+        });
+      }
 
       return this;
     },

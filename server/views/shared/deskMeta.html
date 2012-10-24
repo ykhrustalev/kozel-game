@@ -1,0 +1,8 @@
+{{#meta.active}}
+вы <span class="badge badge-warning">{{gameScore.team1}}</span>
+- <span class="badge badge-warning">{{gameScore.team2}}</span> соперник
+{{/meta.active}}
+{{^meta.active}}
+<div class="btn btn-small btn-danger leaveGame pull-right">Покинуть игру</div>
+{{/meta.active}}
+<em class="muted"><i class="icon-bullhorn"></i> {{status}}</em>

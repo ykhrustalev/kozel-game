@@ -1,4 +1,7 @@
-define(["view/base"], function (Base) {
+define([
+  "underscore",
+  "view/base"
+], function (_, Base) {
 
   "use strict";
 
@@ -14,20 +17,44 @@ define(["view/base"], function (Base) {
 
     initialize: function () {
       this.items = {
-        "rules": {
+        desk : {
+          active : false,
+          enabled: false,
+          updates: false
+        },
+        dashboard: {
+          active: false
+        },
+        rules: {
           active: false
         }
-      }
+      };
     },
 
     toggleRules: function () {
+      this.items.desk.active = false;
+      this.items.dashboard.active = false;
       this.items.rules.active = true;
-      this.render();
+      return this;
     },
 
-    toggleCurrent: function () {
+    toggleDashboard: function () {
+      this.items.desk.active = false;
+      this.items.dashboard.active = true;
       this.items.rules.active = false;
-      this.render();
+      return this;
+    },
+
+    toggleDesk: function () {
+      this.items.desk.active = true;
+      this.items.dashboard.active = false;
+      this.items.rules.active = false;
+      return this;
+    },
+
+    setDeskUpdates: function (state) {
+      this.items.desk.updates = state;
+      return this;
     },
 
     getData: function () {
