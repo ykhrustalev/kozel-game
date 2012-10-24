@@ -417,21 +417,21 @@ module.exports = {
               test.ok(error, "turn by not in user game should raise error");
               game._turn(u1, "d-A", function (error, game, state) {
                 test.ok(!error, "correct turn should not raise errors");
-                test.equals(state, "current", "state should be correct after the turn");
+                test.equals(state, "turned", "state should be correct after the turn");
 
                 game._turn(u2, game._getCardsAllowed("player2")[0], function (error, game, state) {
                   test.ok(!error, "correct turn should not raise errors");
-                  test.equals(state, "current", "state should be correct after the turn");
+                  test.equals(state, "turned", "state should be correct after the turn");
 
                   game._turn(u3, game._getCardsAllowed("player3")[0], function (error, game, state) {
                     test.ok(!error, "correct turn should not raise errors");
-                    test.equals(state, "current", "state should be correct after the turn");
+                    test.equals(state, "turned", "state should be correct after the turn");
 
                     var count = 0;
                     game._turn(u4, game._getCardsAllowed("player4")[0], function (error, game, state) {
                       test.ok(!error, "correct turn should not raise errors");
                       if (!count) {
-                        test.equals(state, "current", "state should be correct after the turn end");
+                        test.equals(state, "turned", "state should be correct after the turn end");
                         count++;
                       } else if (count === 1) {
                         test.equals(state, "newTurn", "state should be correct after the turn end");
