@@ -4,8 +4,7 @@ var cookie = require("cookie")
 // previously was used from standalone module `connect`
   , connectUtils = require("express/node_modules/connect/lib/utils");
 
-
-var socialHandler = function (data, accept, sessionStore, handlers, secret) {
+function socialHandler(data, accept, sessionStore, handlers, secret) {
 
   // Deriving express cookie here to define whether user has already
   // established session
@@ -79,7 +78,19 @@ var socialHandler = function (data, accept, sessionStore, handlers, secret) {
     }
 
   });
-};
+}
+
+// TODO: comments
+function connect(socket, chain) {
+  // connection is marked as required reload, need notify user only once
+  // and close
+  if (socket.handshake.reset) {
+    socket.emit("app:reload");
+    socket.disconnect();
+  } else {
+    chain(socket);
+  }
+}
 
 /**
  * Authorization handler, uses request to derive user information.
@@ -96,11 +107,15 @@ var socialHandler = function (data, accept, sessionStore, handlers, secret) {
  * @param sessionStore
  * @param handlers
  * @param secret
- * @return {Function} wrapper for handlers
+ * @return {Object} wrapper for handlers
  */
 
-exports.enable = function (sessionStore, handlers, secret) {
-  return function (data, accept) {
-    return socialHandler(data, accept, sessionStore, handlers, secret)
-  }
+exports.create = function (sessionStore, handlers, secret) {
+  return {
+    authorize: function (data, accept) {
+      return socialHandler(data, accept, sessionStore, handlers, secret);
+    },
+
+    connect: connect
+  };
 };

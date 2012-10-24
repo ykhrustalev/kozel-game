@@ -47,22 +47,50 @@ server.listen(config.port);
 
 // authentication
 var auth = require("./auth")
-  , social = require("./social");
+  , social = require("./social")
+  , socialHandlers = []
+  , authHandler;
+
+socialHandlers.push(social.vk.authHandler(config.vk.appId, config.vk.appSecret));
+if (config.env === "development") {
+  socialHandlers.push(social.mock.authHandler);
+}
+
+authHandler = auth.create(sessionStore, socialHandlers, config.secret);
 
 io.configure(function () {
-  var handlers = [
-    social.vk.authHandler(config.vk.appId, config.vk.appSecret)
-  ];
-  if (config.env === "development") {
-    handlers.push(social.mock.authHandler);
-  }
-  io.set("authorization", auth.enable(sessionStore, handlers, config.secret));
+  io.set("authorization", authHandler.authorize);
 });
 
 // game
 var Game = require('./game').model(db);
 
+
+var socketsKeeper = {
+  byUid: {}
+};
+var _ = require("underscore")._;
 var SocketHelpers = {
+
+  registerSocket: function  (socket) {
+    var store = socketsKeeper.byUid
+      , uid = socket.handshake.user.uid;
+    if (!store[uid]) {
+      store[uid]= [];
+    }
+    store[uid].push(socket);
+  },
+
+  unregisterSocket: function  (socket) {
+    console.log("called unregister");
+    var store = socketsKeeper.byUid
+      , uid = socket.handshake.user.uid;
+    if (store[uid]) {
+      console.log("store before remove: "+store.length);
+      store[uid]= _.without(store[uid], socket);
+      console.log("store after remove: "+store.length);
+    }
+  },
 
   getRoom: function (game) {
     return "game:" + game.id;
@@ -88,10 +116,16 @@ var SocketHelpers = {
     });
   },
 
-  joinUserToGame: function (socket, game) {
-    var room = this.getRoom(game);
-    socket.leave("available");
-    socket.join(room);
+  joinRoom: function (socket, game) {
+    var room = this.getRoom(game)
+      , uid = socket.handshake.user.uid;
+    // TODO: is it too expensive to lookup for all sockets from user?\
+    io.sockets.clients("available").forEach(function (socket) {
+      if (socket.handshake.user.uid === uid) {
+        socket.leave("available");
+        socket.join(room);
+      }
+    });
   },
 
 
@@ -106,7 +140,7 @@ var SocketHelpers = {
     });
   },
 
-  broadcastGame: function (game, state, socket) {
+  broadcastRoom: function (game, state, socket) {
     var room = this.getRoom(game);
     (socket ? [socket] : io.sockets.clients(room)).forEach(function (socket) {
       socket.emit("game", {
@@ -117,16 +151,13 @@ var SocketHelpers = {
   }
 };
 
-
 io.sockets.on('connection', function (socket) {
 
-  // connection is marked as required reload, need notify user only once
-  // and close
-  if (socket.handshake.reset) {
-    socket.emit("app:reload");
-    socket.disconnect();
-    return;
-  }
+  authHandler.connect(socket, function  (socket) {
+
+  });
+
+  SocketHelpers.registerSocket(socket);
 
   var user = socket.handshake.user;
 
@@ -170,8 +201,8 @@ io.sockets.on('connection', function (socket) {
         return;
       }
 
-      SocketHelpers.joinUserToGame(socket, game);
-      SocketHelpers.broadcastGame(game, "created");
+      SocketHelpers.joinRoom(socket, game);
+      SocketHelpers.broadcastRoom(game, "created");
       SocketHelpers.emitAvailableGames();
     });
   });
@@ -184,8 +215,8 @@ io.sockets.on('connection', function (socket) {
         return;
       }
 
-      SocketHelpers.joinUserToGame(socket, game);
-      SocketHelpers.broadcastGame(game, started ? "started" : "userjoined");
+      SocketHelpers.joinRoom(socket, game);
+      SocketHelpers.broadcastRoom(game, started ? "started" : "userjoined");
       SocketHelpers.emitAvailableGames();
     });
   });
@@ -200,8 +231,8 @@ io.sockets.on('connection', function (socket) {
       }
 
       if (game) {
-        SocketHelpers.joinUserToGame(socket, game);
-        SocketHelpers.broadcastGame(game, "current", socket);
+        SocketHelpers.joinRoom(socket, game);
+        SocketHelpers.broadcastRoom(game, "current", socket);
       } else {
         SocketHelpers.emitAvailableGames(socket);
       }
@@ -214,7 +245,7 @@ io.sockets.on('connection', function (socket) {
         socket.emit("game:turnfailed", error);
         return;
       }
-      SocketHelpers.broadcastGame(game, state);
+      SocketHelpers.broadcastRoom(game, state);
     });
   });
 
@@ -226,13 +257,13 @@ io.sockets.on('connection', function (socket) {
       }
 
       SocketHelpers.leaveRoom(socket, game);
-      SocketHelpers.broadcastGame(game, "userleft");
+      SocketHelpers.broadcastRoom(game, "userleft");
       SocketHelpers.emitAvailableGames();
     });
   });
 
   socket.on('disconnect', function () {
-    console.log('user disconnected: ', arguments);
+    SocketHelpers.unregisterSocket(socket);
     // TODO: notify game
 //    io.sockets.emit('user disconnected', user);
   });
