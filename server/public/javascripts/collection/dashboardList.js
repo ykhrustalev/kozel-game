@@ -18,7 +18,7 @@ define([
         if (data.filter === "available") {
           self.reset();
           self.add(data.objects);
-          dispatcher.trigger("games:updated:available");
+          dispatcher.trigger("dashboard:change");
         }
       });
     },

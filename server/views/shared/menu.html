@@ -2,26 +2,24 @@
     <div class="navbar-inner">
         <a class="brand logo-min" href="#">Козёл</a>
         <ul class="nav">
-            {{#desk.enabled}}
             {{#desk}}
             <li class="link-game {{#active}}active{{/active}}">
-                <a href="#"><i class="icon-fire"></i> Игра {{#updates}}<span
+                <a href="#desk"><i class="icon-fire"></i> Игра {{#updates}}<span
                         class="badge badge-important">!</span>{{/updates}}
                 </a></li>
             {{/desk}}
-            {{/desk.enabled}}
-            {{#dashboard.enabled}}
             {{#dashboard}}
             <li class="link-game {{#active}}active{{/active}}">
-                <a href="#"><i class="icon-list"></i> Начать игру</a></li>
+                <a href="#dashboard"><i class="icon-list"></i> Начать игру</a></li>
             {{/dashboard}}
-            {{/dashboard.enabled}}
             <!--<li><a href="#"><i class="icon-list"></i> Играть</a></li>-->
             <!--<li><a href="#"><i class="icon-star-empty"></i> Статистика</a></li>-->
         </ul>
         <ul class="nav pull-right">
-            <li class="pull-right {{#rules.active}}active{{/rules.active}}"><a href="#rules"><i
+            {{#rules}}
+            <li class="pull-right {{#active}}active{{/active}}"><a href="#rules"><i
                     class="icon-info-sign"></i> Правила</a></li>
+            {{/rules}}
         </ul>
     </div>
 </div>

@@ -1,7 +1,8 @@
 define([
   "underscore",
-  "view/base"
-], function (_, Base) {
+  "view/base",
+  "util/dispatcher"
+], function (_, Base, dispatcher) {
 
   "use strict";
 
@@ -15,7 +16,9 @@ define([
       this.items = {
         desk     : {},
         dashboard: {},
-        rules    : {}
+        rules    : {
+          enabled: true
+        }
       };
     },
 
@@ -57,7 +60,20 @@ define([
     },
 
     getData: function () {
-      return _.clone(this.items);
+      var items = this.items
+        , data = {};
+
+      if (items.desk.enabled) {
+        data.desk = items.desk;
+      }
+      if (items.dashboard.enabled) {
+        data.dashboard = items.dashboard;
+      }
+      if (items.rules.enabled) {
+        data.rules = items.rules;
+      }
+
+      return data;
     }
 
   });

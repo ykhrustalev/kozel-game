@@ -42,44 +42,46 @@ define([
     },
 
     handleCallback: function (data) {
+      var self = this;
       switch (data.status) {
         case "created":
+        case "current":
           this.set(data.object);
-          dispatcher.trigger("desk:inGame");
-          dispatcher.trigger("desk:activated");
+          dispatcher.trigger("desk:change", "init");
           break;
 
-        case "current":
         case "userjoined":
         case "userleft":
         case "started":
         case "turned":
           this.set(data.object);
-          dispatcher.trigger("desk:inGame");
-          dispatcher.trigger("desk:updated");
+          dispatcher.trigger("desk:change", "update");
           break;
 
         case "newTurn":
         case "newRound":
         case "queenCaught":
-          this.set(data.object);
-          dispatcher.trigger("desk:inGame");
           setTimeout(function () {
-            dispatcher.trigger("desk:updated");
+            self.set(data.object);
+            dispatcher.trigger("desk:change", "update");
           }, 2000);
           break;
 
         case "gameEnd":
-          this.set(data.object);
-          dispatcher.trigger("desk:deactivated");
+          setTimeout(function () {
+            self.set(data.object);
+            dispatcher.trigger("desk:change", "update");
+            setTimeout(function () {
+              dispatcher.trigger("desk:change", "remove");
+            }, 2000);
+          }, 2000);
           break;
       }
     },
 
     leave: function () {
       socket.emit("game:leave");
-      dispatcher.trigger("desk:leftGame");
-      dispatcher.trigger("route", "dashboard");
+      dispatcher.trigger("desk:change", "remove");
     },
 
     turn: function (cid) {
