@@ -37,51 +37,55 @@ define([
       var self = this;
 
       socket.on("game", function (data) {
-        self.handleCallback(data);
+        self.update(data);
       });
     },
 
-    handleCallback: function (data) {
+    update: function (data) {
       var self = this;
       switch (data.status) {
         case "created":
+        case "joined":
         case "current":
-          this.set(data.object);
-          dispatcher.trigger("desk:change", "init");
+          this.set(_.extend(data.object, {message: "init"}));
           break;
 
         case "userjoined":
         case "userleft":
         case "started":
         case "turned":
-          this.set(data.object);
-          dispatcher.trigger("desk:change", "update");
+          this.set(_.extend(data.object, {message: "update"}));
           break;
 
         case "newTurn":
         case "newRound":
         case "queenCaught":
           setTimeout(function () {
-            self.set(data.object);
-            dispatcher.trigger("desk:change", "update");
+            self.set(_.extend(data.object, {message: "update"}));
           }, 2000);
           break;
 
         case "gameEnd":
           setTimeout(function () {
-            self.set(data.object);
-            dispatcher.trigger("desk:change", "update");
+            self.set(_.extend(data.object, {message: "update"}));
             setTimeout(function () {
-              dispatcher.trigger("desk:change", "remove");
+              self.clear();
+              // TODO: pass remove message
+//              dispatcher.trigger("desk:change", "remove");
             }, 2000);
           }, 2000);
+          break;
+
+        case "left":
+          self.clear();
+          // TODO: pass remove message
+          dispatcher.trigger("desk:change", "remove");
           break;
       }
     },
 
     leave: function () {
       socket.emit("game:leave");
-      dispatcher.trigger("desk:change", "remove");
     },
 
     turn: function (cid) {

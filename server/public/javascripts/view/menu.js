@@ -1,8 +1,9 @@
 define([
   "underscore",
   "view/base",
-  "util/dispatcher"
-], function (_, Base, dispatcher) {
+  "util/dispatcher",
+  "view/desk"
+], function (_, Base, dispatcher, deskView) {
 
   "use strict";
 
@@ -20,6 +21,29 @@ define([
           enabled: true
         }
       };
+
+      deskView.model.on("change", function  (model, changed) {
+        if (this.route !=="desk") {
+          this.setDeskUpdates(true).render();
+        }
+      }, this);
+
+      dispatcher.on("route", function (route) {
+        this.route = route;
+        switch (route){
+          case"desk":
+            this.setDeskUpdates(false).toggleDesk().render();
+            break;
+          case"dashboard":
+            this.toggleDashboard().render();
+            break;
+          case"rules":
+            this.toggleRules().render();
+            break;
+        }
+      }, this);
+
+      dispatcher.on("inGame", this.setInGame, this);
     },
 
     toggleRules: function () {

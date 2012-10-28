@@ -5,6 +5,9 @@ define([
   "use strict";
 
   var View = BaseView.extend({
+
+    el: "#container",
+
     tpl: "rules",
 
     events: {

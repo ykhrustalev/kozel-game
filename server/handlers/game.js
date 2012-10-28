@@ -2,8 +2,7 @@ var db = require("../db").instance()
   , Game = require('../game').model(db)
   , _ = require("underscore")._;
 
-function IoHolder(io) {
-  this.io = io;
+function IoHolder() {
   this.byUid = {};
 }
 
@@ -19,18 +18,15 @@ IoHolder.prototype = {
   },
 
   unregisterSocket: function (socket) {
-    console.log("called unregister");
-    var store = this.byUid
-      , uid = socket.handshake.user.uid;
+    console.log("unregister called");
+    var uid = socket.handshake.user.uid
+      , store = this.byUid;
     if (store[uid]) {
-      console.log("store before remove: " + store.length);
       store[uid] = _.without(store[uid], socket);
-      console.log("store after remove: " + store.length);
+      if (!store[uid].length) {
+        delete this.byUid[uid];
+      }
     }
-  },
-
-  getRoom: function (game) {
-    return "game:" + game.id;
   },
 
   emitAvailableGames: function (socket) {
@@ -55,41 +51,49 @@ IoHolder.prototype = {
   },
 
   joinRoom: function (socket, game) {
-    var io = this.io
-      , room = this.getRoom(game)
+    var room = this.getRoom(game)
       , uid = socket.handshake.user.uid;
-    // TODO: is it too expensive to lookup for all sockets from user?\
-    io.sockets.clients("available").forEach(function (socket) {
-      if (socket.handshake.user.uid === uid) {
-        socket.leave("available");
-        socket.join(room);
-      }
+    this.getSocketsForUid(uid).forEach(function (socket) {
+      socket.leave("available");
+      socket.join(room);
     });
   },
-
 
   leaveRoom: function (socket, game) {
-    var io = this.io
-      , room = this.getRoom(game)
+    var room = this.getRoom(game)
       , uid = socket.handshake.user.uid;
-    io.sockets.clients(room).forEach(function (socket) {
-      if (socket.handshake.user.uid === uid) {
-        socket.leave(room);
-        socket.join("available");
-      }
+    this.getSocketsForUid(uid).forEach(function (socket) {
+      socket.leave(room);
+      socket.join("available");
     });
   },
 
-  broadcastRoom: function (game, state, socket) {
+  emitClient: function (socket, message, data) {
+    var uid = socket.handshake.user.uid;
+    this.getSocketsForUid(uid).forEach(function (socket) {
+      socket.emit(message, data);
+    });
+  },
+
+  emitRoom: function (game, state) {
     var io = this.io
       , room = this.getRoom(game);
-    (socket ? [socket] : io.sockets.clients(room)).forEach(function (socket) {
+    io.sockets.clients(room).forEach(function (socket) {
       socket.emit("game", {
         status: state,
         object: game.forUser(socket.handshake.user)
       });
     });
+  },
+
+  getRoom: function (game) {
+    return "game:" + game.id;
+  },
+
+  getSocketsForUid: function (uid) {
+    return this.byUid[uid] || [];
   }
+
 };
 
 
@@ -138,7 +142,10 @@ function handle(ioHolder, socket, user) {
       }
 
       ioHolder.joinRoom(socket, game);
-      ioHolder.broadcastRoom(game, "created");
+      ioHolder.emitClient(socket, "game", {
+        status: "created",
+        object: game.forUser(user)
+      });
       ioHolder.emitAvailableGames();
     });
   });
@@ -151,8 +158,26 @@ function handle(ioHolder, socket, user) {
         return;
       }
 
+      ioHolder.emitRoom(game, started ? "started" : "userjoined");
       ioHolder.joinRoom(socket, game);
-      ioHolder.broadcastRoom(game, started ? "started" : "userjoined");
+      ioHolder.emitClient(socket, "game", {
+        status: "joined",
+        object: game.forUser(user)
+      });
+      ioHolder.emitAvailableGames();
+    });
+  });
+
+  socket.on("game:leave", function () {
+    Game.leave(user, function (error, game) {
+      if (error) {
+        socket.emit("game:leavefail", error);
+        return;
+      }
+
+      ioHolder.leaveRoom(socket, game);
+      ioHolder.emitRoom(game, "userleft");
+      ioHolder.emitClient(socket, "game", {status: "left"});
       ioHolder.emitAvailableGames();
     });
   });
@@ -168,7 +193,7 @@ function handle(ioHolder, socket, user) {
 
       if (game) {
         ioHolder.joinRoom(socket, game);
-        ioHolder.broadcastRoom(game, "current", socket);
+        socket.emit("game", {status: "current", object: game.forUser(user)});
       } else {
         ioHolder.emitAvailableGames(socket);
       }
@@ -181,20 +206,7 @@ function handle(ioHolder, socket, user) {
         socket.emit("game:turnfailed", error);
         return;
       }
-      ioHolder.broadcastRoom(game, state);
-    });
-  });
-
-  socket.on("game:leave", function () {
-    Game.leave(user, function (error, game) {
-      if (error) {
-        socket.emit("game:leavefail", error);
-        return;
-      }
-
-      ioHolder.leaveRoom(socket, game);
-      ioHolder.broadcastRoom(game, "userleft");
-      ioHolder.emitAvailableGames();
+      ioHolder.emitRoom(game, state);
     });
   });
 
@@ -203,7 +215,11 @@ function handle(ioHolder, socket, user) {
     // TODO: notify game
   });
 }
-exports.handle = function (io, socket, chain) {
-  handle(new IoHolder(io), socket, socket.handshake.user);
-  chain(socket);
+exports.create = function () {
+  var ioHolder = new IoHolder();
+  return function (io, socket, chain) {
+    ioHolder.io = io;
+    handle(ioHolder, socket, socket.handshake.user);
+    chain(socket);
+  };
 };

@@ -5,26 +5,7 @@
 <div class="desk-board-wrapper clearfix">
     <div class="desk-board-container">
 
-        <div class="desk-player-1-name">
-            <div class="helper">
-                <img class="img-circle" src="{{players.player1.avatar}}"
-                     alt="">{{players.player1.name}}
-            </div>
-        </div>
-
-        <div class="desk-player-2-name">
-            <div class="helper">
-                <img class="img-circle" src="{{players.player2.avatar}}"
-                     alt=""> {{players.player2.name}}
-            </div>
-        </div>
-
-        <div class="desk-player-3-name">
-            <div class="helper">
-                <img class="img-circle" src="{{players.player3.avatar}}"
-                     alt=""> {{players.player3.name}}
-            </div>
-        </div>
+        <div class="players">{{>players}}</div>
 
         <div class="turnCards">{{>turnCards}}</div>
 

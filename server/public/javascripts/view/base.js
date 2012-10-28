@@ -1,16 +1,10 @@
 define([
   "backbone",
   "templates",
-  "backboneValidation", //TODO: remove dependency
   "bootstrap"
 ], function (Backbone, Templates) {
 
   "use strict";
-
-  // force models to be updated with failed validation values
-  Backbone.Validation.configure({
-    forceUpdate: true
-  });
 
   /**
    * Base view class for the application. Overrides the render method and
@@ -20,12 +14,10 @@ define([
   return Backbone.View.extend({
 
     // base binding DOM node for application views
-    el : "#container",
+    el : "",
 
     // template name to use
     tpl: "",
-
-    _modelBinder: undefined,
 
     initialize: function () {
       this._isRendered = false;
@@ -56,11 +48,12 @@ define([
      * @return `this`
      */
     render: function (options) {
-      options = options || {};
       var self = this;
 
+      options = options || {};
+
       if (this.isRendered() && self.partialRender) {
-        self.partialRender();
+        self.partialRender(options);
         return this;
       }
 

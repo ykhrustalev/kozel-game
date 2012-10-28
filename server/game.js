@@ -296,7 +296,7 @@ GameSchema.methods.forUser = function (user) {
 
   var pid = this._getPidForUser(user);
   if (!pid) {
-    console.trace("player is not in game", user, this);
+    console.warn("player is not in game", user, this);
     throw new Error("player not found");
   }
 

@@ -16,9 +16,7 @@ define([
       var self = this;
       socket.on("games:list", function (data) {
         if (data.filter === "available") {
-          self.reset();
-          self.add(data.objects);
-          dispatcher.trigger("dashboard:change");
+          self.reset(data.objects);
         }
       });
     },

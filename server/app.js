@@ -56,7 +56,7 @@ if (config.env === "development") {
 
 // io bindings
 var authHandler = require("./handlers/auth").create(sessionStore, authChain, config.secret)
-  , gameHandler = require("./handlers/game");
+  , gameHandler = require("./handlers/game").create();
 
 io.configure(function () {
   io.set("authorization", authHandler.authorize);
@@ -64,7 +64,7 @@ io.configure(function () {
 
 io.sockets.on('connection', function (socket) {
   authHandler.handleConnect(io, socket, function (socket) {
-    gameHandler.handle(io, socket, function (socket) {
+    gameHandler(io, socket, function (socket) {
 
     });
   });
