@@ -240,7 +240,7 @@ GameSchema.statics.join = function (gid, user, callback) {
         }
         game.save(function (error) {
           callback(error, game, started);
-        })
+        });
       });
     });
   });
