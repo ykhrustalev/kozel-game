@@ -22,15 +22,15 @@ define([
         }
       };
 
-      deskView.model.on("change", function  (model, changed) {
-        if (this.route !=="desk") {
+      deskView.model.on("change", function (model, changed) {
+        if (this.route !== "desk") {
           this.setDeskUpdates(true).render();
         }
       }, this);
 
       dispatcher.on("route", function (route) {
         this.route = route;
-        switch (route){
+        switch (route) {
           case"desk":
             this.setDeskUpdates(false).toggleDesk().render();
             break;
@@ -80,6 +80,7 @@ define([
         this.items.desk.enabled = false;
         this.items.dashboard.enabled = true;
       }
+      this.render();
       return this;
     },
 

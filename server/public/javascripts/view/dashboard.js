@@ -46,8 +46,10 @@ define([
     update: function (model, changed) {
       console.log("update dashboard");
       var activeView = this.activeView;
-      if ((!activeView && !this.inGame)|| activeView === this) {
+      if (typeof this.inGame === "undefined") {
         dispatcher.trigger("inGame", false);
+      }
+      if ((!activeView && !this.inGame) || activeView === this) {
         dispatcher.trigger("route", "dashboard");
         dispatcher.trigger("activeView", this, {changes: changed.changes});
       }
