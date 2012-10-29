@@ -1,2 +1,5 @@
 
 *.iml
+build
+target
+node_modules

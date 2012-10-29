@@ -1,20 +1,23 @@
 ({
-  appDir: "../",
-  baseUrl: "javascripts",
-  dir: "../../build",
-  outDir: "../../build",
+  appDir        : "..",
+  baseUrl       : "javascripts",
+  dir           : "../../target",
+  optimizeCss   : 'standard',
+  mainConfigFile: "main.js",
+
   paths: {
-    'jquery' : 'lib/jquery',
-    'underscore' : 'lib/underscore',
-    'backbone' : 'lib/backbone',
-    'backboneValidation' : 'lib/backbone-validation-amd',
-    'hogan' : 'lib/template-2.0.0',
-    'io' : 'lib/socket.io',
-    'json2' : 'lib/json2'
+    'jquery'    : 'lib/jquery',
+    'underscore': 'lib/underscore',
+    'backbone'  : 'lib/backbone',
+    'hogan'     : 'lib/template-2.0.0',
+    'io'        : 'lib/socket.io',
+    'json2'     : 'lib/json2',
+    'bootstrap' : 'lib/bootstrap'
   },
+
   modules: [
     {
-      name: "config"
+      name: "main"
     }
   ]
 })
