@@ -68,6 +68,7 @@ define([
       if (!route) {
         route = this.inGame ? "desk" : "dashboard";
       }
+      console.log("updateRoute:" + route + ":" + trigger);
       this.navigate(route, {trigger: trigger});
     },
 

@@ -55,7 +55,6 @@ define([
     },
 
     update: function (model, changed) {
-      console.log("desk:update", changed);
       var message = model.get("message")
         , activeView = this.activeView;
 
@@ -66,7 +65,7 @@ define([
 
       } else if (message === "update") {
         dispatcher.trigger("inGame", true);
-        if ((!activeView && this.inGame) || activeView === this) {
+        if (!activeView || activeView === this) {
           dispatcher.trigger("route", "desk");
           dispatcher.trigger("activeView", this, {changes: changed.changes});
         }
