@@ -297,7 +297,7 @@ GameSchema.methods.forUser = function (user) {
   var pid = this._getPidForUser(user);
   if (!pid) {
     console.warn("player is not in game", user, this);
-    throw new Error("player not found");
+    throw new Error("player not found, " + user.uid);
   }
 
   var turnCurrentPid = this.round.turn.currentPid
@@ -350,7 +350,7 @@ GameSchema.methods._newRound = function (keepShuffler) {
     this._shuffle();
   } while (this._requiresReshuffle());
 
-  if (keepShuffler){
+  if (keepShuffler) {
     return;
   }
 
@@ -549,24 +549,20 @@ GameSchema.methods._turn = function (user, cid, callback) {
 };
 
 GameSchema.methods._join = function (user, callback) {
-  var uid = user.uid
-    , ps = this.players
+  var ps = this.players
     , meta = this.meta;
 
   if (meta.playersCount >= 4) {
     return callback(errors.GAME_HAS_NO_VACANT_PLACE);
   }
 
-  if (ps.player1.uid === uid
-    || ps.player2.uid === uid
-    || ps.player3.uid === uid
-    || ps.player4.uid === uid) {
+  if (this._getPidForUser(user)) {
     return callback(errors.USER_ALREADY_IN_GAME);
   }
 
   meta.playersCount += 1;
 
-  var pid = "player" + meta.playersCount;
+  var pid = "player" + (!ps.player1.uid ? 1 : !ps.player2.uid ? 2 : !ps.player3.uid ? 3 : 4);
   ps[pid] = {
     uid   : user.uid,
     tid   : "team" + ((meta.playersCount % 2) ? 1 : 2),

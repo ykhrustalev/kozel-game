@@ -9,7 +9,7 @@ var _ = require('underscore')._
 
 function createUser() {
   return {
-    uid       : "mock"+_.uniqueId(),
+    uid       : "mock" + _.uniqueId(),
     first_name: "first_name_" + _.uniqueId(),
     last_name : "last_name_" + _.uniqueId()
   };
@@ -96,8 +96,8 @@ module.exports = {
     Game.create(createUser(), function (error, game1) {
       Game.create(createUser(), function (error, game2) {
         Game.create(createUser(), function (error, game3) {
-          Game.listAvailable(function  (error, games) {
-            test.ok(games,"available games should be listed");
+          Game.listAvailable(function (error, games) {
+            test.ok(games, "available games should be listed");
             test.equals(games.length, 3, "number of available games should be correct");
             test.equals(games[0].id, game1.id, "listed games should be sorted");
             test.equals(games[1].id, game2.id, "listed games should be sorted");
@@ -234,6 +234,28 @@ module.exports = {
         });
       });
     });
+  },
+
+  joinLeave: function (test) {
+
+    var user1 = createUser()
+      , user2 = createUser()
+      , user3 = createUser();
+
+    Game.create(user1, function (error, game) {
+      Game.join(game.id, user2, function (error, game) {
+        Game.leave(user1, function (error, game) {
+          Game.join(game.id, user3, function (error, game) {
+            test.equals(game.players.player1.uid, user3.uid, "joined user should be assigned to lowest free place");
+            Game.join(game.id, user1, function (error, game) {
+              test.equals(game.players.player3.uid, user1.uid, "joined user should be assigned to lowest free place");
+              test.done();
+            });
+          });
+        });
+      });
+    });
+
   },
 
   _join: function (test) {
