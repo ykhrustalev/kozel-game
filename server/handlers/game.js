@@ -210,7 +210,7 @@ function handle(ioHolder, socket, user) {
     });
   });
 
-  socket.on('disconnect', function () {
+  socket.on("disconnect", function () {
     ioHolder.unregisterSocket(socket);
     // TODO: notify game
   });
