@@ -43,6 +43,6 @@ require.config({
 require([
   "router",
   "json2"
-], function (Router) {
-  Router.initialize();
+], function (router) {
+  router.initialize();
 });
