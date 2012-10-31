@@ -139,16 +139,12 @@ module.exports = {
       return true;
     } else if (!a.isTrump && d.isTrump) {
       return false;
-    } else if (!a.isTrump && !d.isTrump) {
+    } else {
       if (a.suite.id !== d.suite.id) {
         return false;
       } else {
         return ntA < ntD;
       }
-    } else {
-      var message = "could not compare: a: " + attackCid + " d: " + defendCid;
-      console.warn(message);
-      throw new Error(message);
     }
   },
 

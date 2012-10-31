@@ -29,7 +29,7 @@ app.configure(function () {
     store : sessionStore
   }));
   app.use(app.router);
-  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(path.join(__dirname, '../public')));
 });
 
 app.configure('development', function () {
@@ -51,7 +51,7 @@ if (isDev) {
     res.send(templates.getContents(wrapperFile));
   });
 } else {
-  var compiledFile = __dirname + "/public/javascripts/templates.js";
+  var compiledFile = __dirname + "/../public/javascripts/templates.js";
   fs.writeFileSync(compiledFile, templates.getContents(wrapperFile), "utf8");
 }
 

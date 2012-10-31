@@ -1,16 +1,15 @@
 ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 Version := $(git rev-parse --verify HEAD)
 
+MOCHA := ./node_modules/.bin/mocha
 
 test:
-	./node_modules/.bin/mocha \
-		-r should \
-		-R html-cov > coverage.html
+	$(MOCHA) -r should
 
 coverage:
+	rm -rf lib-cov
 	jscoverage lib lib-cov
-	mkdir report
-	EXAMPLE_COV=1 ./node_modules/mocha/bin/mocha -r should -R html-cov > report/coverage.html
+	APP_COV=1 ./node_modules/mocha/bin/mocha -r should -R html-cov > report/coverage.html
 	rm -rf lib-cov
 
 build:
