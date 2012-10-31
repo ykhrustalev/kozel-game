@@ -1,8 +1,9 @@
 {
-  "name"        : "kozelcards",
-  "author"      : "Yuri Khrustalev <yuri.khrustalev@gmail.com>",
-  "version"     : "0.0.1",
-  "private"     : true,
+  "name"   : "kozelcards",
+  "author" : "Yuri Khrustalev <yuri.khrustalev@gmail.com>",
+  "version": "0.0.1",
+  "private": true,
+
   "scripts"     : {
     "start": "node app"
   },
@@ -18,7 +19,13 @@
     "url"        : "0.7.9",
     "nodeunit"   : "0.7.4"
   },
-  "engines"     : {
+
+  "devDependencies": {
+    "mocha" : "~ 1.4.2",
+    "should": "~ 1.1.0"
+  },
+
+  "engines": {
     "node": ">=0.8.1"
   }
 }
