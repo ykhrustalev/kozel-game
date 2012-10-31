@@ -16,7 +16,7 @@ _.each(deck.suites, function (suite) {
   });
 });
 
-exports.heath = function (req, res) {
+module.exports = function (req, res) {
   res.render('health', {
     version: "0.0.1",
     process: process,

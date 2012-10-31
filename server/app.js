@@ -38,7 +38,7 @@ app.configure('development', function () {
 
 // server views
 app.get('/', routes.index);
-app.get('/health', routes.health);
+app.get('/health', require("./routes/health"));
 
 // templates
 var scanDir = __dirname + "/views/shared/"
@@ -55,7 +55,7 @@ if (isDev) {
   fs.writeFileSync(compiledFile, templates.getContents(wrapperFile), "utf8");
 }
 
-http.createServer(app);
+//http.createServer(app);
 server.listen(config.port);
 
 // authentication
@@ -63,7 +63,7 @@ var authChain = []
   , vk = require("./social/vk")
   , mock = require("./social/mock");
 
-authChain.push(vk.createHandler(config.vk.appId, config.vk.appSecret));
+authChain.push(vk(config.vk.appId, config.vk.appSecret));
 if (isDev) {
   authChain.push(mock.authHandler);
 }
@@ -83,3 +83,7 @@ io.sockets.on('connection', function (socket) {
     });
   });
 });
+
+module.exports = function () {
+
+}
