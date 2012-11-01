@@ -6,25 +6,25 @@ var cookie = require("cookie")
 
 function socialHandler(data, accept, sessionStore, handlers, secret) {
 
-  // Deriving express cookie here to define whether user has already
-  // established session
   try {
+    // Deriving express cookie here to define whether user has already
+    // established session
     var signedCookies = cookie.parse(decodeURIComponent(data.headers.cookie));
-    console.log(data.cookie);
+
+    // Creating structure for the Session module that looks like request
     data.cookie = connectUtils.parseSignedCookies(signedCookies, secret);
-    // should be exactly `sessionID` as required by Session module
     data.sessionID = data.cookie['express.sid'];
+    data.sessionStore = sessionStore;
+
   } catch (error) {
     console.warn("failed parsing cookies: " + error);
-    accept('Malformed cookie transmitted.', false);
+    accept('Malformed cookie transmitted', false);
     return;
   }
-  // required for session
-  data.sessionStore = sessionStore;
 
+  //
   sessionStore.load(data.sessionID, function (error, session) {
     if (error) {
-      // error in session storage
       console.warn("error in session storage: ", error);
       accept("Server error", false);
       return;
@@ -34,19 +34,15 @@ function socialHandler(data, accept, sessionStore, handlers, secret) {
       // Cookie exists but session is missing in storage. Probably it could
       // be due to server reset or cache flush. So need to create a new
       // session but notify the end user.
-      console.warn("could not find session for cookie: ", session);
-
       // Client is actually not allowed to get session but in order to
       // allow auto refresh on client we grand new session but mark it with
       // `reload` flag to allow just one message to be send back with
-      // notification that connection reqiores reestablish
+      // notification that connection should be reestablish
+      console.warn("could not find session for cookie: ", data.sessionID);
       data.reset = true;
       data.session = new Session(data, session);
       accept(null, true);
-      // the following should be used to fully deny connectio but it would
-      // not make any client notification instead of request fail without
-      // knowing the actuall reason, also hard to catch in client
-      // javascript
+      // the following should be used to fully deny connection
       // accept("Error", false);
       return;
     }
@@ -62,19 +58,26 @@ function socialHandler(data, accept, sessionStore, handlers, secret) {
 
     if (!handler) {
       accept("unauthorized", false);
+      return;
     }
 
     try {
       // pass request object to the handler in order to derive user
       // information
-      handler.handle(data, function (error, authentificated, profile) {
+      handler.handle(data, function (error, profile) {
+        if (error) {
+          accept(error, false);
+          return;
+        }
+        // TODO: validate profile
+        //           if (!profile.uid || !profile.first_name || !profile.last_name || !profile.avatar)
         data.user = profile;
         data.session = new Session(data, session);
-        accept(null, authentificated);
+        accept(null, true);
       });
     } catch (e) {
       accept("failed handle request", false);
-      console.trace("failed handle request, error:" + e);
+      console.warn("failed handle request, error:", e, " handler:", handler);
     }
 
   });

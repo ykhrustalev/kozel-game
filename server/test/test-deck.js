@@ -1,8 +1,7 @@
-var libpath = process.env["APP_COV"] ? '../lib-cov' : '../lib';
-var should = require("should");
-var deck = require(libpath + "/deck"),
-  _ = require("underscore")._;
-
+var libpath = process.env["APP_COV"] ? "../lib-cov" : "../lib"
+  , should = require("should")
+  , _ = require("underscore")._
+  , deck = require(libpath + "/deck");
 
 describe("deck", function () {
   describe("#shuffle()", function () {

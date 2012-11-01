@@ -1,16 +1,12 @@
-var url = require("url")
-  , _ = require("underscore")._;
-
-exports.authHandler = {
+module.exports.authHandler = {
 
   canHandle: function (request) {
-    return true;
+    return typeof request.query.uid !== "undefined";
   },
 
   handle: function (request, callback) {
-    var queryParams = url.parse(request.headers.referer, true).query
-      , uid = parseInt(queryParams.uid) || _.uniqueId();
-    callback(null, true, {
+    var uid = request.query.uid;
+    callback(null, {
       uid       : "mock" + uid,
       first_name: "User" + uid,
       last_name : "Surname",
