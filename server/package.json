@@ -11,13 +11,15 @@
     "express"    : "3.0.0rc3",
     "socket.io"  : "0.9.10",
     "cookie"     : "0.0.4",
+    "lodash"     : "0.9.1",
     "underscore" : "1.4.2",
+    //TODO: remove
     "mongoose"   : "3.1.1",
+    "redis"      : "0.8.2",
     "consolidate": "0.4.0",
     "hogan.js"   : "2.0.0",
     "crypto"     : "0.0.3",
-    "url"        : "0.7.9",
-    "nodeunit"   : "0.7.4"
+    "url"        : "0.7.9"
   },
 
   "devDependencies": {
@@ -28,4 +30,6 @@
   "engines": {
     "node": ">=0.8.1"
   }
+
+  //TODO: add test section
 }

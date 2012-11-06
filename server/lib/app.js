@@ -68,6 +68,18 @@ if (isDev) {
   authChain.push(mock.authHandler);
 }
 
+
+var redis = require('redis');
+var RedisStore = require('socket.io/lib/stores/redis')
+  , pub = redis.createClient()
+  , sub = redis.createClient()
+  , client = redis.createClient();
+io.set('store', new RedisStore({
+  redisPub   : pub,
+  redisSub   : sub,
+  redisClient: client
+}));
+
 // io bindings
 var authHandler = require("./handlers/auth").create(sessionStore, authChain, config.secret)
   , gameHandler = require("./handlers/game").create();
