@@ -72,7 +72,7 @@ module.exports = function (Game, gameDao) {
               callback(error);
             } else if (isEmpty) {
               gameDao.remove(game, function (error) {
-                callback(error, null);
+                callback(error, game, true);
               });
             } else {
               gameDao.persist(game, callback);
