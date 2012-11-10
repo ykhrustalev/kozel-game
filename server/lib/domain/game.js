@@ -39,7 +39,7 @@ module.exports = function (deck) {
   var gameDefaults = {
 
     meta: {
-      created     : Date.now(),
+      created     : null,
       started     : null,
       active      : false,
       playersCount: 0,
@@ -97,9 +97,9 @@ module.exports = function (deck) {
    * @param {Object} data - game state
    * @constructor
    */
-  var Game = function (data) {
+  function Game(data) {
     this.setData(data);
-  };
+  }
 
   Game.prototype = {
 
@@ -113,7 +113,8 @@ module.exports = function (deck) {
      * @public
      */
     setData: function (data) {
-      this.data = _.merge((data || {}), gameDefaults);
+      this.data = _.merge(_.merge((this.data || {}), gameDefaults), (data || {}));
+      this.data.meta.created = this.data.meta.created || Date.now();
     },
 
     /**
@@ -123,7 +124,7 @@ module.exports = function (deck) {
      * @public
      */
     getData: function () {
-      return _.clone(this.data, true);
+      return this.data;
     },
 
     /**

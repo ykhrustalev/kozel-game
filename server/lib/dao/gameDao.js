@@ -1,7 +1,7 @@
 var Schema = require("mongoose").Schema
   , _ = require('lodash');
 
-module.exports = function (db, Game) {
+module.exports = function (connection, Game) {
 
   // Helpers
   var PlayerSchema = {
@@ -78,7 +78,7 @@ module.exports = function (db, Game) {
 
   });
 
-  var schema = db.model("Game", GameSchema);
+  var schema = connection.model("Game", GameSchema);
 
   /**
    * Convert db values to game object
@@ -87,9 +87,14 @@ module.exports = function (db, Game) {
    * @return {*}
    * @private
    */
-  var wrapSingle = function (object) {
-    return new Game(object);
-  };
+  function wrapSingle(object, model) {
+    if (model) {
+      model.setData(object);
+      return model;
+    } else {
+      return new Game(object);
+    }
+  }
 
   /**
    * Convert db values to game objects
@@ -98,14 +103,13 @@ module.exports = function (db, Game) {
    * @return {Array}
    * @private
    */
-  var wrapCollection = function (objects) {
-    var self = this
-      , entities = [];
+  function wrapCollection(objects) {
+    var entities = [];
     objects.forEach(function (object) {
       entities.push(wrapSingle(object));
     });
     return entities;
-  };
+  }
 
   /**
    * Save game state to db.
@@ -116,18 +120,16 @@ module.exports = function (db, Game) {
    * @param callback
    * @private
    */
-  var persist = function (object, game, callback) {
-    _.(object, game.getData());
-    object.save(function (error) {
+  function persist(object, game, callback) {
+    _.defaults(object, game.getData());
+    object.save(function (error, object) {
       if (error) {
         callback(error);
       } else {
-        // TODO: what is passed to `save` callback???
-        game.setData(arguments[1]);
-        callback(null, game);
+        callback(null, wrapSingle(object, game));
       }
     })
-  };
+  }
 
   return {
 
@@ -140,7 +142,7 @@ module.exports = function (db, Game) {
      * @public
      */
     findInactive: function (limit, callback) {
-      schema.this.find()
+      schema.find()
         .where("meta.active").equals(false)
         .where("meta.playersCount").lt(4)
         .limit(limit)
@@ -177,7 +179,7 @@ module.exports = function (db, Game) {
           if (error) {
             callback(error);
           } else {
-            callback(null, wrapSingle(object));
+            callback(null, wrapCollection(object));
           }
         });
     },
@@ -211,11 +213,11 @@ module.exports = function (db, Game) {
      * @public
      */
     persist: function (game, callback) {
-      var id = game.id;
+      var id = game.getData().id;
       if (!id) {
         persist(new schema(), game, callback);
       } else {
-        schema.find({id: id}, function (error, object) {
+        schema.findOne({_id: id}, function (error, object) {
           if (error) {
             callback(error);
           } else {
@@ -235,12 +237,7 @@ module.exports = function (db, Game) {
      */
     remove: function (game, callback) {
       schema.remove({id: game.id}, callback);
-    },
-
-    // Privates
-
-    wrapObject : wrapSingle,
-    wrapObjects: wrapCollection
+    }
 
   }
 };
