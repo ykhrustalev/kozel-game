@@ -6,6 +6,7 @@ RMJS=rmdir.js
 RMV=node $(RMJS)
 # change this if using linux or others
 BROWSE=start
+TESTS?=\.*
 
 all: | test-all coverage
 
@@ -19,7 +20,7 @@ rmtools:
 
 test-all:
 	@echo 'Testing...'
-	@mocha --compilers coffee:coffee-script -R list
+	@mocha --compilers coffee:coffee-script -R list -g '$(TESTS)'
 
 compile-coffee: $(RMJS)
 	@$(RMV) lib-js
@@ -31,12 +32,11 @@ clean-compile:
 	@$(RMV) -p
 
 jscoverage:
-	APP_COV=1 
 	@jscoverage lib-js lib-cov
 
 mocha-html-cov:
 	@echo 'Testing and generating coverage report...'
-	@mocha --compilers coffee:coffee-script -R html-cov > $(REPORT_FILE)
+	@APP_COV=1 mocha --compilers coffee:coffee-script -R html-cov > $(REPORT_FILE)
 
 clean-coverage:
 	@$(RMV) lib-js

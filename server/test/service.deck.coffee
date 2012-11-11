@@ -1,7 +1,7 @@
 libpath = if process.env.APP_COV then "../lib-cov" else "../lib"
 should = require "should"
 _ = require("underscore")._
-deck = require "#{libpath}/domain/deck"
+deck = require "#{libpath}/service/deck"
 
 describe "deck", ->
   describe "#shuffle()", ->

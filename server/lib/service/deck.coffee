@@ -1,34 +1,43 @@
-_ = require("underscore")._
+_ = require("lodash")
+
 
 cidFor = (suite, type) -> "#{suite.id}-#{type.id}"
 
 suites =
   Spades  :
-    {id: 's'}
+    id: 's'
   Hearts  :
-    {id: 'h'}
+    id: 'h'
   Diamonds:
-    {id: 'd'}
+    id: 'd'
   Clubs   :
-    {id: 'c'}
+    id: 'c'
 
 types =
   Queen:
-    {id: 'Q', score: 3}
+    id   : 'Q'
+    score: 3
   Jack :
-    {id: 'J', score: 2}
+    id   : 'J'
+    score: 2
   King :
-    {id: 'K', score: 4}
+    id   : 'K'
+    score: 4
   Ace  :
-    {id: 'A', score: 11}
+    id   : 'A'
+    score: 11
   T10  :
-    {id: '10', score: 10}
+    id   : '10'
+    score: 10
   T9   :
-    {id: '9', score: 0}
+    id   : '9'
+    score: 0
   T8   :
-    {id: '8', score: 0}
+    id   : '8'
+    score: 0
   T7   :
-    {id: '7', score: 0}
+    id   : '7'
+    score: 0
 
 orderTable =
 
@@ -84,14 +93,13 @@ module.exports =
 
   suites: suites
 
-  types: types
+  types  : types
 
+  # Shuffle deck for specified number of parts.
+  #
+  # @param {Number} count
+  # @return {Array}
   shuffle: (count) ->
-    ###
-    Shuffle deck for specified number of parts.
-    @param {Number} count
-    @return {Array}
-    ###
     randomized = randomize(v for k, v of initialDeck)
     groups = _.groupBy randomized, (value, index) -> index % count
     group.map((card) -> card.id) for k, group of groups
@@ -133,6 +141,7 @@ module.exports =
       else
         groups[card.suite.id].push cid
 
+    # TODO: check that works without braces
     [].concat(
       _.sortBy groups.trumps, (cid) -> orderTable.trumps.indexOf cid
       _.sortBy groups[suites.Spades.id], (cid) -> orderTable.nonTrumpsTypes.indexOf initialDeck[cid].type.id

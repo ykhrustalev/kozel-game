@@ -1,4 +1,4 @@
-var deck = require("../deck")
+var deck = require("../service/deck")
   , _ = require("underscore")._
   , cards = [];
 

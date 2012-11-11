@@ -1,5 +1,5 @@
 var _ = require("underscore")._
-  , deck = require("./deck")
+  , deck = require("./service/deck")
   , mongoose = require("mongoose")
   , Schema = mongoose.Schema;
 

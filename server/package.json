@@ -13,7 +13,6 @@
     "cookie"     : "0.0.4",
     "lodash"     : "0.9.1",
     "underscore" : "1.4.2",
-    //TODO: remove
     "mongoose"   : "3.1.1",
     "redis"      : "0.8.2",
     "consolidate": "0.4.0",
@@ -23,7 +22,7 @@
   },
 
   "devDependencies": {
-    "mocha" : "1.6.0",
+    "mocha" : "1.7.0",
     "should": "~ 1.1.0"
   },
 
@@ -31,5 +30,4 @@
     "node": ">=0.8.1"
   }
 
-  //TODO: add test section
 }
