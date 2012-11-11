@@ -2,34 +2,21 @@ ROOT := $(dir $(lastword $(MAKEFILE_LIST)))
 Version := $(git rev-parse --verify HEAD)
 
 REPORT_FILE=coverage.html
-RMJS=rmdir.js
-RMV=node $(RMJS)
-# change this if using linux or others
-BROWSE=start
 TESTS?=\.*
 
 all: | test-all coverage
-
-# use this to cross platform
-$(RMJS):
-	@echo 'var f=require("fs"),t=require("path");var r=function(a){var b=f.readdirSync(a);for(var c=0;c<b.length;c++){var d=b[c];if(d!=="."&&d!=".."){d=t.join(a,d);if(f.statSync(d).isDirectory()){r(d)}else{try{f.unlinkSync(d)}catch(e){}}}}try{f.rmdirSync(a)}catch(e){}};try{r(process.argv[2])}catch(e){}' > $(RMJS)
-
-# use this to cross platform
-rmtools:
-	@coffee -e "require('fs').unlink 'rmdir.js'"
 
 test-all:
 	@echo 'Testing...'
 	@mocha --compilers coffee:coffee-script -R list -g '$(TESTS)'
 
-compile-coffee: $(RMJS)
-	@$(RMV) lib-js
+compile-coffee:
+	@rm -rf lib-js
 	@echo 'CoffeeScript -> JavaScript compiling...'
 	@coffee -o lib-js -c lib
-	@$(RMV) -p
 
 clean-compile:
-	@$(RMV) -p
+	@rm -rf lib-js
 
 jscoverage:
 	@jscoverage lib-js lib-cov
@@ -39,21 +26,17 @@ mocha-html-cov:
 	@APP_COV=1 mocha --compilers coffee:coffee-script -R html-cov > $(REPORT_FILE)
 
 clean-coverage:
-	@$(RMV) lib-js
-	@$(RMV) lib-cov
-
-open-coverage:
-	@echo 'Openning report in your default browser...'
-	#@$(BROWSE) $(REPORT_FILE)
+	@rm -rf lib-js
+	@rm -rf lib-cov
 
 clean-report:
-	@$(RMV) $(REPORT_FILE)
+	@rm -rf $(REPORT_FILE)
 
-compile: | $(RMJS) compile-coffee rmtools
+compile: | compile-coffee
 
-coverage: | $(RMJS) compile-coffee jscoverage mocha-html-cov clean-coverage rmtools open-coverage
+coverage: | compile-coffee jscoverage mocha-html-cov clean-coverage
 
-clean: | $(RMJS) clean-compile clean-coverage clean-report rmtools
+clean: | clean-compile clean-coverage clean-report
 
-.PHONY: all test-all compile-coffee clean-compile jscoverage mocha-html-cov clean-coverage open-coverage clean-report compile coverage clean rmtoos
+.PHONY: all test-all compile-coffee clean-compile jscoverage mocha-html-cov clean-coverage clean-report compile coverage clean
 

@@ -5,3 +5,5 @@ target
 node_modules
 .ignore
 lib-cov
+lib-js
+coverage.html
