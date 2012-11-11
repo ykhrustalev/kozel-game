@@ -108,10 +108,10 @@ module.exports = (connection) ->
   # @param callback - execution callback
   findByUid   : (uid, limit, callback) ->
     schema.find().or([
-      "players.player1.uid": uid
-      "players.player2.uid": uid
-      "players.player3.uid": uid
-      "players.player4.uid": uid
+      {"players.player1.uid": uid}
+      {"players.player2.uid": uid}
+      {"players.player3.uid": uid}
+      {"players.player4.uid": uid}
     ])
       .limit(limit or 10)
       .sort("+meta.created")
