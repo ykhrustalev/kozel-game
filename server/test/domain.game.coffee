@@ -65,21 +65,33 @@ describe "domain.game", () ->
           savedGame.id.should.equal savedId
           done()
 
-  describe "#findInactive", () ->
+    it "should update object", (done) ->
+      game = domain.new()
+      domain.persist game, (error, savedGame) ->
+        updated = savedGame.meta.updated
+        should.exist updated
+        updated.should.be.below (new Date)
+
+        domain.persist game, (error, savedGame) ->
+          savedGame.meta.updated.should.be.above updated
+          savedGame.meta.updated.should.be.below (new Date)
+          done()
+
+  describe "#findVacant", () ->
     it "should list empty query", (done) ->
-      domain.findInactive 2, (error, games) ->
+      domain.findVacant 2, (error, games) ->
         should.not.exist(error)
         games.should.be.instanceOf(Array)
         done()
 
     it "should respect limit", (done) ->
       bulkPersist [domain.new(), domain.new(), domain.new()], (models) ->
-        domain.findInactive 2, (error, models) ->
+        domain.findVacant 2, (error, models) ->
           should.not.exist error
           models.should.have.length 2
           assertModelArray models
 
-          domain.findInactive 10, (error, models) ->
+          domain.findVacant 10, (error, models) ->
             should.not.exist error
             models.should.have.length 3
             assertModelArray models
@@ -105,15 +117,15 @@ describe "domain.game", () ->
           playersCount: 3
 
       bulkPersist [game1, game2, game3], (models) ->
-        domain.findInactive 10, (error, models) ->
+        domain.findVacant 10, (error, models) ->
           should.not.exist error
-          models.should.have.length 1
+          models.should.have.length 2
           assertModelArray models
           done()
 
     it "should respect game order", (done) ->
       bulkPersist [domain.new(), domain.new(), domain.new()], (savedModels) ->
-        domain.findInactive 10, (error, models) ->
+        domain.findVacant 10, (error, models) ->
           should.not.exist error
           models.should.have.length 3
           for i in [0...savedModels.length]

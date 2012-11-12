@@ -8,7 +8,7 @@ module.exports = (domain, service) ->
           callback error, game, started
 
   listAvailable: (callback) ->
-    domain.findInactive(10, callback)
+    domain.findVacant(10, callback)
 
   create: (user, callback) ->
     domain.findByUid user.uid, 1, (error, games) ->
