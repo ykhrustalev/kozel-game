@@ -3,7 +3,7 @@ should = require "should"
 _ = require("underscore")._
 deck = require "#{libpath}/service/deck"
 
-describe "deck", ->
+describe "service.deck", ->
   describe "#shuffle()", ->
     it "should shuffle unique cards", (done) ->
       split = deck.shuffle(4)
